@@ -28,10 +28,13 @@ body {
 	margin: 0;
 	padding-top: env(safe-area-inset-top, 0);
 	padding-bottom: env(safe-area-inset-bottom, 0);
-	background: url("/textures/moon.webp");
+	background-color: #000;
 	background-size: cover;
 	width: 100vw;
 	height: 100vh;
+}
+body.loaded {
+	background-image: url("/textures/moon.webp") ;
 }
 button {
 	border: none;
@@ -171,16 +174,16 @@ footer:last-of-type section button:first-of-type {
 	right: 0;
 }
 footer:last-of-type section button:nth-of-type(2) {
-	bottom: 0;
-	right: calc(72px + 32px);
-}
-footer:last-of-type section button:nth-of-type(3) {
 	bottom: calc(72px + 32px);
 	right: 0;
 }
-footer:last-of-type section button:nth-of-type(4) {
+footer:last-of-type section button:nth-of-type(3) {
 	bottom: 72px;
 	right: 72px;
+}
+footer:last-of-type section button:nth-of-type(4) {
+	bottom: 0;
+	right: calc(72px + 32px);
 }
 #fps {
 	position: absolute;

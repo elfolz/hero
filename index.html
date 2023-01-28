@@ -4,13 +4,10 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 		<meta name="description" content="Hero - Desenvolviemnto de game 3D no navegador">
-		<link rel="manifest" href="./manifest.json">
-		<link rel="icon" type="image/x-icon" href="./favicon.ico">
-		<link rel="apple-touch-icon" href="./img/icons/android-chrome-192x192.png">
-		<link rel="preload" as="script" href="./js/main.js" crossOrigin>
-		<link rel="preload" as="script" href="./js/three.module.js" crossOrigin>
-		<link rel="preload" as="script" href="./js/gltfLoader.module.js" crossOrigin>
-		<link rel="preload" as="style" href="./stylesheet.css" onload="this.rel='stylesheet'">
+		<link rel="manifest" href="/manifest.json">
+		<link rel="icon" type="image/x-icon" href="/favicon.ico">
+		<link rel="apple-touch-icon" href="/img/icons/android-chrome-192x192.png">
+		<link rel="preload" as="style" href="/stylesheet.css" onload="this.rel='stylesheet'">
 		<meta property="og:url" content="https://hero.elfolz.app.br" />
 		<meta property="og:title" content="Hero">
 		<meta property="og:image" content="https://hero.elfolz.app.br/img/promo.jpg">
@@ -19,9 +16,59 @@
 		<meta property="og:image:height" content="512" />
 		<meta property="og:description" content="Hero - Desenvolviemnto de game 3D no navegador">
 		<title>Hero</title>
+		<style>
+			html {
+				background-color: #000;
+			}
+			progress, progress::-webkit-progress-bar {
+				width: 100%;
+				height: 32px;
+				padding: 2px 2px 4px;
+				border-radius: 6px;
+				background-color: #808080;
+				overflow: hidden;
+			}
+			progress::-webkit-progress-value {
+				background-color: #000;
+				border-radius: 6px;
+			}
+			figure {
+				position: fixed;
+				top: 50%;
+				left: 50%;
+				width: 50vw;
+				text-align: center;
+				transform: translate(-50%, -50%);
+				margin: 0;
+				z-index: 100;
+			}
+			figure span {
+				display: inline-block;
+				perspective: 1000px;
+				margin-bottom: 12px;
+			}
+			figure img {
+				display: block;
+				margin: 0;
+				animation: loading 3s linear infinite;
+			}
+			@keyframes loading {
+				from {
+					transform: rotateY(0deg)
+				}
+				to {
+					transform: rotateY(360deg)
+				}
+			}
+		</style>
 	</head>
 	<body>
-		<article></article>
+		<figure>
+			<span>
+				<img src="/img/icons/android-chrome-192x192.png">
+			</span>
+			<progress value="0" max="100"></progress>
+		</figure>
 		<canvas id="fps" width="80" height="20"></canvas>
 		<header style="display:none;">
 			<button id="button-config">
@@ -54,42 +101,42 @@
 			<section>
 				<button id="button-forward" data-move="walk">
 					<svg data-mobile data-move="walk" xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px"><path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></svg>
-					<label data-pc data-move="walk">W</label>
+					<!-- <label data-pc data-move="walk">W</label> -->
 				</button>
 				<button id="button-left" data-move="turn-left">
 					<svg data-mobile data-move="turn-left" xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-					<label data-pc data-move="turn-left">A</label>
+					<!-- <label data-pc data-move="turn-left">A</label> -->
 				</button>
 				<button id="button-right" data-move="turn-right">
 					<svg data-mobile data-move="turn-right" xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
-					<label data-pc data-move="turn-right">D</label>
+					<!-- <label data-pc data-move="turn-right">D</label> -->
 				</button>
 				<button id="button-backward" data-move="step-back">
 					<svg data-mobile data-move="step-back" xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px"><path d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"/></svg>
-					<label data-pc data-move="step-back">S</label>
+					<!-- <label data-pc data-move="step-back">S</label> -->
 				</button>
 			</section>
 		</footer>
 		<footer style="display:none;">
 			<section>
 				<button id="button-run">
-					<svg data-mobile xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path d="M20.8,7c0-2.2-1.8-4-4-4s-4,1.8-4,4s1.8,4,4,4S20.8,9.2,20.8,7z M38,36l-0.8-4l-9.8,2l-3.2-16.2l3.6,1.4V26h4v-9.4l-10.4-4.4c-0.6,0-1-0.2-1.6-0.2c-1.4,0-2.6,0.8-3.4,2l-2,3.2C12.8,20,9.6,22,5.8,22v4c4.4,0,8.4-2,11-5l1.2,6l-4.2,4v15h4V34l4.2-4l2,8.8L38,36z"/></svg>
-					<svg data-pc xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px" ><path d="M18 9v4H6V9H4v6h16V9z"/></svg>
+					<svg data-mobile xmlns="http://www.w3.org/2000/svg" width="48px" height="48px" viewBox="0 0 48 48"><path d="M20.8,7c0-2.2-1.8-4-4-4s-4,1.8-4,4s1.8,4,4,4S20.8,9.2,20.8,7z M38,36l-0.8-4l-9.8,2l-3.2-16.2l3.6,1.4V26h4v-9.4 l-10.4-4.4c-0.6,0-1-0.2-1.6-0.2c-1.4,0-2.6,0.8-3.4,2l-2,3.2C12.8,20,9.6,22,5.8,22v4c4.4,0,8.4-2,11-5l1.2,6l-4.2,4v15h4V34l4.2-4 l2,8.8L38,36z"/></svg>
+					<!-- <svg data-keyboard xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px" ><path d="M18 9v4H6V9H4v6h16V9z"/></svg> -->
+				</button>
+				<button id="button-jump">
+					<svg data-mobile xmlns="http://www.w3.org/2000/svg" width="48px" height="48px" viewBox="0 0 48 48"><path d="M38,9.5c0.4-0.8,0-1.8-0.8-2.2c-0.9-0.4-1.9,0-2.3,0.9l-2.6,5.7l-5.6-0.1c-0.3,0-0.7,0.1-1.1,0.2l-3.7,1.3l-5.2-0.6l-4-4.6 c-0.6-0.7-1.7-0.8-2.4-0.2c-0.7,0.6-0.8,1.7-0.2,2.4l4.4,5.1c0.2,0.3,0.6,0.5,1,0.6l7.7,1.2l2,5.3l-3.6-0.8c-1.3-0.3-2.6,0.4-3,1.7 l-2.5,7.8c-0.4,1.3,0.3,2.8,1.7,3.2c1.3,0.4,2.8-0.3,3.2-1.7l1.8-5.6l4.8,1l-1.7,3.6c-0.6,1.1-0.2,2.5,0.9,3.2l7,4.6 c0.4,0.3,0.9,0.4,1.4,0.4c0.8,0,1.6-0.4,2.1-1.2c0.8-1.2,0.5-2.8-0.7-3.6l-5.2-3.4l2.1-4.5c0.4-0.7,0.3-1.3,0-2.2 c-0.3-0.7-3.7-9.7-3.7-9.7h3.6l0,0c0.7,0,1.3-0.4,1.6-1L38,9.5z M26.2,9.9c0-2.1-1.7-3.8-3.8-3.8s-3.8,1.7-3.8,3.8s1.7,3.8,3.8,3.8 S26.3,12,26.2,9.9z"/></svg>
+					<!-- <label data-keyboard>J</label> -->
+				</button>
+				<button id="button-kick">
+					<svg data-mobile xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48px" height="48px"><polygon points="3,3.4 11.5,12 12,22 14,22 14.5,13 17.7,11.2 18,12.5 16,16 17.7,17 20.2,12.8 19,8.5 13.3,5.2 16,2.4 14.6,1 10,5.6 13.6,7.7 12.4,8.7 4.2,2"/><circle cx="19" cy="5" r="2"/></svg>
+					<!-- <label data-keyboard>K</label> -->
 				</button>
 				<button id="button-attack">
 					<svg data-mobile xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 1280.000000 1028.000000"><g transform="translate(0.000000,1028.000000) scale(0.100000,-0.100000)" fill="#000000" stroke="none"> <path d="M5812 10135 c-348 -80 -650 -153 -670 -162 -94 -44 -169 -154 -286 -414 -91 -205 -119 -260 -166 -329 -112 -163 -223 -217 -431 -208 -108 5 -113 6 -444 125 -40 14 -102 27 -145 30 -73 5 -87 1 -580 -141 -278 -81 -518 -152 -535 -158 -136 -52 -232 -198 -375 -573 -122 -321 -188 -444 -284 -533 -56 -51 -111 -78 -204 -97 -92 -20 -177 -19 -350 6 -180 25 -315 23 -382 -7 -41 -19 -772 -493 -849 -551 -81 -62 -105 -200 -105 -608 -1 -354 17 -586 66 -870 16 -96 44 -185 135 -440 63 -176 157 -437 208 -580 107 -298 624 -1740 721 -2010 36 -99 156 -434 267 -745 l203 -565 39 -20 c32 -15 66 -20 165 -23 457 -14 1415 259 1465 418 3 11 -61 268 -145 582 -300 1114 -432 1606 -485 1803 -184 681 -394 1463 -397 1479 -3 17 15 24 157 57 88 21 167 38 176 38 11 1 22 -20 37 -76 11 -43 188 -692 392 -1443 204 -751 461 -1696 571 -2100 273 -1004 261 -961 283 -981 34 -33 118 -42 321 -36 639 18 1736 316 1790 486 3 10 -107 526 -245 1147 -437 1965 -780 3518 -777 3521 9 8 343 79 348 74 4 -3 21 -67 37 -141 17 -74 121 -522 232 -995 245 -1050 353 -1513 430 -1840 32 -137 109 -466 170 -730 62 -264 140 -599 174 -744 69 -298 67 -292 165 -311 173 -32 646 15 1146 115 827 166 1415 379 1415 513 0 14 -211 1083 -470 2376 -258 1294 -470 2359 -470 2368 0 11 23 21 88 36 164 38 252 55 257 51 4 -5 147 -649 800 -3594 142 -641 231 -1026 241 -1036 64 -70 395 -78 804 -18 681 99 1306 306 1385 459 12 24 9 55 -35 301 -27 151 -96 544 -155 874 -58 330 -155 877 -215 1215 -60 338 -123 694 -140 790 -17 96 -80 452 -140 790 -126 713 -139 786 -265 1500 -52 294 -104 564 -116 600 -89 279 -391 830 -623 1135 -82 108 -182 206 -236 232 l-45 22 -155 -24 c-85 -13 -375 -58 -645 -100 -269 -41 -511 -82 -537 -91 -69 -22 -148 -78 -283 -198 -144 -129 -234 -187 -352 -227 -74 -26 -100 -30 -164 -27 -141 6 -262 86 -580 387 -287 272 -400 349 -517 357 -46 3 -181 -25 -690 -141zM11440 6642 c0 -10 11 -79 25 -153 13 -74 60 -336 104 -584 44 -247 103 -578 131 -735 28 -157 86 -485 130 -730 44 -245 124 -698 180 -1008 55 -310 103 -587 106 -616 4 -30 1 -85 -5 -122 -45 -259 -308 -461 -794 -608 -86 -26 -662 -171 -1977 -496 -1609 -398 -1520 -375 -1546 -407 -166 -207 -281 -687 -233 -972 15 -85 52 -165 90 -192 l29 -21 393 37 c215 20 532 49 702 65 493 46 2481 225 2955 266 184 15 370 113 561 291 151 142 256 293 304 437 l26 78 39 1017 c22 559 62 1601 90 2315 28 714 49 1300 48 1301 -2 2 -284 179 -627 395 -343 216 -648 408 -677 426 -47 30 -54 32 -54 16z"/></g></svg>
-					<svg data-pc xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px"><path d="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.41L5.83 13H21V7z"/></svg>
-				</button>
-				<button id="button-kick">
-					<svg data-mobile xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48px" height="48px"><polygon points="3,3.4 11.5,12 12,22 14,22 14.5,13 17.7,11.2 18,12.5 16,16 17.7,17 20.2,12.8 19,8.5 13.3,5.2 16,2.4 14.6,1 10,5.6 13.6,7.7 12.4,8.7 4.2,2"/> <circle cx="19" cy="5" r="2"/></svg>
-					<label data-pc>K</label>
-				</button>
-				<button id="button-jump">
-					<svg data-mobile xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"> <path d="M34.5,16.9c0.7,0,1.4-0.4,1.7-1.1l3.2-7.3c0.4-0.9,0-2-1-2.4c-0.9-0.4-2,0-2.4,1l-2.7,6.2l-6-0.1c-0.4,0-0.8,0.1-1.2,0.2l-4,1.4l-5.8-0.9l-4.3-5C11.3,8.1,10.2,8,9.4,8.6c-0.8,0.7-0.9,1.8-0.2,2.6l4.7,5.5c0.3,0.3,0.7,0.6,1.1,0.6l8.3,1.3l2.2,5.8l-3.9-0.8c-1.4-0.3-2.8,0.5-3.2,1.9l-2.6,8.4c-0.5,1.5,0.4,3,1.8,3.5c1.5,0.5,3-0.4,3.5-1.8l1.9-6l5.2,1.1l-1.8,3.9c-0.6,1.2-0.1,2.7,1,3.5l7.6,5c0.5,0.3,1,0.5,1.5,0.5c0.9,0,1.8-0.4,2.3-1.3c0.8-1.3,0.5-3-0.8-3.8l-5.6-3.7l2.2-4.9c0.4-0.8,0.3-1.5-0.1-2.4c-0.3-0.8-4-10.5-4-10.5L34.5,16.9C34.5,16.9,34.5,16.9,34.5,16.9z"/><circle cx="24.2" cy="8.9" r="4.1"/></svg>
-					<label data-pc>J</label>
+					<!-- <svg data-keyboard xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px"><path d="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.41L5.83 13H21V7z"/></svg> -->
 				</button>
 			</section>
 		</footer>
-		<script src="./js/main.js" type="module"></script>
+		<script src="/js/main.js" type="module"></script>
 	</body>
 </html>
