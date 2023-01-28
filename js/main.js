@@ -2,12 +2,10 @@ import * as THREE from '/js/three.module.js'
 import { GLTFLoader } from '/js/gltfLoader.module.js'
 import { FBXLoader } from '/js/fbxLoader.module.js'
 
-if (location.protocol.startsWith('https')) {
-	navigator.serviceWorker.register('service-worker.js')
-	navigator.serviceWorker.onmessage = m => {
-		console.info('Update found!')
-		if (m?.data == 'update') location.reload(true)
-	}
+navigator.serviceWorker.register('service-worker.js')
+navigator.serviceWorker.onmessage = m => {
+	console.info('Update found!')
+	if (m?.data == 'update') location.reload(true)
 }
 
 const UP = 12
