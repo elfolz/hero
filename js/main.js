@@ -41,10 +41,11 @@ const keysPressed = {}
 var hero
 var animations
 var mixer
-var idleAction, walkAction, walkBackAction, runAction, jumpAction, rotateLeftAction, rotateRightAction, punchRightAction, punchLeftAction
+var idleAction, walkAction, walkBackAction, runAction, jumpAction, jumpRunningAction, backflipAction, rotateLeftAction, rotateRightAction, punchRightAction, punchLeftAction, kickAction
 
+var fps = 0
 var frames = 0
-var fpsLimit = 1 / 60
+var fpsLimit = isPC() ? null : 1 / 60
 var gamepad
 var gamepadVibrating = false
 var jumping = false
@@ -60,14 +61,14 @@ var dummyCamera
 var mixer
 var animations = []
 var actions = []
-var isWalking, isRunning, isRotating, isSteppingBack, isPunching, isJumping
+var isWalking, isRunning, isRotating, isSteppingBack, isPunching, isKicking, isJumping, isBackingFlip
 var lastAction
 var bgmVolume = 0.5
 
 scene.background = null
 renderer.outputEncoding = sRGBEncoding
 hemisphereLight.position.set(0, -50, -50)
-dirLight.position.set(0, -25, 15)
+dirLight.position.set(0, 0, 5)
 dirLight.castShadow = true
 renderer.setClearColor(0x000000, 0)
 scene.add(hemisphereLight)
@@ -132,6 +133,20 @@ function loadAnimations() {
 	}, undefined, error => {
 		console.log(error)
 	})
+	fbxLoader.load('./models/jumpingRunning.fbx', fbx => {
+		let animation = fbx.animations[0]
+		animations.push(animation)
+		jumpRunningAction = mixer.clipAction(animation)
+	}, undefined, error => {
+		console.log(error)
+	})
+	fbxLoader.load('./models/backflip.fbx', fbx => {
+		let animation = fbx.animations[0]
+		animations.push(animation)
+		backflipAction = mixer.clipAction(animation)
+	}, undefined, error => {
+		console.log(error)
+	})
 	fbxLoader.load('./models/punchingRight.fbx', fbx => {
 		let animation = fbx.animations[0]
 		animations.push(animation)
@@ -150,6 +165,13 @@ function loadAnimations() {
 		let animation = fbx.animations[0]
 		animations.push(animation)
 		rotateLeftAction = mixer.clipAction(animation)
+	}, undefined, error => {
+		console.log(error)
+	})
+	fbxLoader.load('./models/kick.fbx', fbx => {
+		let animation = fbx.animations[0]
+		animations.push(animation)
+		kickAction = mixer.clipAction(animation)
 	}, undefined, error => {
 		console.log(error)
 	})
@@ -193,13 +215,13 @@ function animate() {
 	updateCamera()
 	updateActions()
 	/* updateGamepad() */
-	fpsLimit ? clockDelta = clockDelta % fpsLimit : clockDelta = clockDelta
+	clockDelta = fpsLimit ? clockDelta % fpsLimit : clockDelta % (1 / Math.max(fps, 30))
 }
 
 function updateFPSCounter() {
 	frames++
 	if (performance.now() < lastFrameTime + 1000) return
-	let fps = Math.round(( frames * 1000 ) / ( performance.now() - lastFrameTime ))
+	fps = Math.round(( frames * 1000 ) / ( performance.now() - lastFrameTime ))
 	if (!Number.isNaN(fps)) {
 		let ctx = document.querySelector('#fps').getContext('2d')
 		ctx.font = 'bold 20px sans-serif'
@@ -253,76 +275,83 @@ function updateActions() {
 	let w = actions.includes('walk')
 	let r = actions.includes('run')
 	let p = actions.includes('punch')
+	let k = actions.includes('kick')
 	let t = actions.find(el => el == 'turn-left' || el == 'turn-right')
 	let sb = actions.includes('step-back')
+	let b = actions.includes('backflip')
 	let j = actions.includes('jump')
-	if (!p) {
-		if (actions.includes('turn-left')) hero.rotation.y += 0.025
-		if (actions.includes('turn-right')) hero.rotation.y -= 0.025
-		if (w && !isWalking) {
-			executeCrossFade(lastAction, walkAction, 0.5)
-			isWalking = true
-		} else if (!w && isWalking) {
-			executeCrossFade(lastAction, idleAction, 0.5)
-			isWalking = false
-			isRunning = false
-		}
-		if (w) {
-			updateWalk(r)
-			if (r && !isRunning) {
-				executeCrossFade(lastAction, runAction, 0.5)
-				isRunning = true
-			} else if (!r && isRunning) {
-				executeCrossFade(lastAction, walkAction, 0.5)
-				isRunning = false
-			}
-		} else {
-			if (!isJumping && j) {
-				executeCrossFade(lastAction, jumpAction, 0.25)
-				isJumping = true
-			} else if (isJumping && !j) {
-				executeCrossFade(lastAction, idleAction, 0.25)
-				isJumping = false
-			}
-			if (!j) {
-				if (sb && !isSteppingBack) {
-					executeCrossFade(lastAction, walkBackAction, 0.5)
-					isSteppingBack = true
-				} else if (!sb && isSteppingBack) {
-					executeCrossFade(lastAction, idleAction, 0.5)
-					isSteppingBack = false
-				}
-				if (sb) {
-					updateWalk(false, true)
-				} else {
-					if (!isRotating && t) {
-						executeCrossFade(lastAction, actions.includes('turn-left') ? rotateLeftAction : rotateRightAction, 0.25)
-						isRotating = true
-					} else if (isRotating && !t) {
-						executeCrossFade(lastAction, idleAction, 0.25)
-						isRotating = false
-					}
-				}
-			}
-		}
-	}
+	let returnAction = w ? (r ? runAction : walkAction) : idleAction
 	if (!isPunching && p) {
 		isPunching = true
 		syncPunchActions()
 	} else if (isPunching && !p) {
 		isPunching = false
+		executeCrossFade(lastAction, returnAction, 0.25)
+	}
+	if (p) return
+	if (!isKicking && k) {
+		executeCrossFade(lastAction, kickAction, 0.25)
+		isKicking = true
+	} else if (isKicking && !k) {
+		executeCrossFade(lastAction, returnAction, 0.25)
+		isKicking = false
+	}
+	if (k) return
+	if (actions.includes('turn-left')) hero.rotation.y += r ? 0.025 : 0.01
+	if (actions.includes('turn-right')) hero.rotation.y -= r ? 0.025 : 0.01
+	if (w && !isWalking) {
+		executeCrossFade(lastAction, walkAction, 0.25)
+		isWalking = true
+	} else if (!w && isWalking) {
 		executeCrossFade(lastAction, idleAction, 0.25)
+		isWalking = false
+		isRunning = false
+	}
+	if (w) {
+		updateWalk(r)
+		if (r && !isRunning) {
+			executeCrossFade(lastAction, runAction, 0.25)
+			isRunning = true
+		} else if (!r && isRunning) {
+			executeCrossFade(lastAction, returnAction, 0.25)
+			isRunning = false
+		}
+	}
+	if (!isJumping && j) {
+		executeCrossFade(lastAction, w ? jumpRunningAction : jumpAction, 0.25)
+		isJumping = true
+	} else if (isJumping && !j) {
+		executeCrossFade(lastAction, returnAction, 0.25)
+		isJumping = false
+	}
+	if (w) return
+	if (sb && !isSteppingBack) {
+		executeCrossFade(lastAction, walkBackAction, 0.25)
+		isSteppingBack = true
+	} else if (!sb && isSteppingBack) {
+		executeCrossFade(lastAction, returnAction, 0.25)
+		isSteppingBack = false
+	}
+	if (sb) updateWalk(false, true, 0.025)
+	if (sb) return
+	if (!isRotating && t) {
+		executeCrossFade(lastAction, actions.includes('turn-left') ? rotateLeftAction : rotateRightAction, 0.25)
+		isRotating = true
+	} else if (isRotating && !t) {
+		executeCrossFade(lastAction, returnAction, 0.25)
+		isRotating = false
 	}
 }
 
-function updateWalk(running=false, back=false) {
+function updateWalk(running=false, back=false, speed=0.1) {
 	let dir = camera.getWorldDirection(hero.clone().position)
 	if (back) {
 		dir.x *= -1
 		dir.y *= -1
 		dir.z *= -1
 	}
-	hero.position.add(dir.multiplyScalar(running ? 0.25 : 0.1))
+	if (isBackingFlip) setTimeout(() => {hero.position.add(dir.multiplyScalar(0.1))}, 500)
+	else hero.position.add(dir.multiplyScalar(running ? 0.25 : speed))
 }
 
 function synchronizeCrossFade(startAction, endAction, duration) {
@@ -336,6 +365,7 @@ function synchronizeCrossFade(startAction, endAction, duration) {
 }
 
 function executeCrossFade(startAction, endAction, duration) {
+	if (!startAction || !endAction) return
 	lastAction = endAction
 	endAction.enabled = true
 	endAction.setEffectiveTimeScale(1)
@@ -417,8 +447,10 @@ window.onkeydown = e => {
 	if (keysPressed[65] && !actions.includes('turn-left')) actions.push('turn-left')
 	if (keysPressed[68] && !actions.includes('turn-right')) actions.push('turn-right')
 	if (keysPressed[87] && !actions.includes('walk')) actions.push('walk')
+	/* if (keysPressed[83] && !actions.includes('backflip')) actions.push('backflip') */
 	if (keysPressed[83] && !actions.includes('step-back')) actions.push('step-back')
-	if ((keysPressed[17] || keysPressed[39]) && !actions.includes('jump')) actions.push('jump')
+	if (keysPressed[74] && !actions.includes('jump')) actions.push('jump')
+	if (keysPressed[75] && !actions.includes('kick')) actions.push('kick')
 }
 window.onkeyup = e => {
 	keysPressed[e.keyCode] = false
@@ -427,8 +459,10 @@ window.onkeyup = e => {
 	if (e.keyCode == 65) actions.splice(actions.findIndex(el => el == 'turn-left'), 1)
 	if (e.keyCode == 68) actions.splice(actions.findIndex(el => el == 'turn-right'), 1)
 	if (e.keyCode == 87) actions.splice(actions.findIndex(el => el == 'walk'), 1)
+	/* if (e.keyCode == 83) actions.splice(actions.findIndex(el => el == 'backflip'), 1) */
 	if (e.keyCode == 83) actions.splice(actions.findIndex(el => el == 'step-back'), 1)
-	if ([17, 39].includes(e.keyCode)) actions.splice(actions.findIndex(el => el == 'jump'), 1)
+	if (e.keyCode == 74) actions.splice(actions.findIndex(el => el == 'jump'), 1)
+	if (e.keyCode == 75) actions.splice(actions.findIndex(el => el == 'kick'), 1)
 }
 
 function initControls() {
@@ -526,6 +560,12 @@ function initControls() {
 	document.querySelector('#button-attack').ontouchend = () => {
 		actions.splice(actions.findIndex(el => el == 'punch'), 1)
 	}
+	document.querySelector('#button-kick').ontouchstart = () => {
+		if (!actions.includes('kick')) actions.push('kick')
+	}
+	document.querySelector('#button-kick').ontouchend = () => {
+		actions.splice(actions.findIndex(el => el == 'kick'), 1)
+	}
 	document.querySelector('#button-jump').ontouchstart = () => {
 		if (!actions.includes('jump')) actions.push('jump')
 	}
@@ -593,10 +633,9 @@ function initAudio() {
 }
 
 window.onresize = () => resizeScene()
-window.oncontextmenu = () => {return isLocalhost()}
+window.oncontextmenu = e => {e.preventDefault(); return false}
 
 document.body.appendChild(renderer.domElement)
-
 /* document.onreadystatechange = () => {
 	if (document.readyState != 'complete') return
 } */

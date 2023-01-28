@@ -30,7 +30,6 @@ body {
 	padding-bottom: env(safe-area-inset-bottom, 0);
 	background: url("/textures/moon.webp");
 	background-size: cover;
-	background-position: bottom;
 	width: 100vw;
 	height: 100vh;
 }
@@ -40,7 +39,7 @@ button {
 	cursor: pointer;
 	padding: 0;
 }
-svg path, svg circle {
+svg path, svg circle, svg polygon {
 	fill: var(--color-button);
 }
 audio {
@@ -173,15 +172,29 @@ footer:last-of-type section button:first-of-type {
 }
 footer:last-of-type section button:nth-of-type(2) {
 	bottom: 0;
-	right: 72px;
+	right: calc(72px + 32px);
 }
 footer:last-of-type section button:nth-of-type(3) {
-	bottom: 72px;
+	bottom: calc(72px + 32px);
 	right: 0;
+}
+footer:last-of-type section button:nth-of-type(4) {
+	bottom: 72px;
+	right: 72px;
 }
 #fps {
 	position: absolute;
 	top: calc(24px + env(safe-area-inset-top, 0));
 	right: 12px;
 	z-index: 5;
+}
+@media (orientation: portrait) {
+	body {
+		background-position: bottom;
+	}
+}
+@media (orientation: landscape) {
+	body {
+		background-position: center;
+	}
 }
