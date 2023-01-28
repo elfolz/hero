@@ -2,12 +2,12 @@ import {Clock, RepeatWrapping, WebGLRenderer, Scene, PerspectiveCamera, sRGBEnco
 import { GLTFLoader } from './gltfLoader.module.js'
 import { FBXLoader } from './fbxLoader.module.js'
 
-if (!isLocalhost()) {
-	navigator.serviceWorker?.register('service-worker.js')
-	/* navigator.serviceWorker.onmessage = m => {
+if (location.protocol.startsWith('https')) {
+	navigator.serviceWorker.register('service-worker.js')
+	navigator.serviceWorker.onmessage = m => {
 		console.info('Update found!')
 		if (m?.data == 'update') location.reload(true)
-	} */
+	}
 }
 
 const UP = 12
