@@ -60,6 +60,7 @@ const keyTurnLeft = 65
 const keyTurnRight = 68
 const keyStepBack = 83
 const keyRoll = 82
+const keyBackflip = 76
 
 const clock = new THREE.Clock()
 const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true})
@@ -94,7 +95,7 @@ var dummyCamera
 var mixer
 var animations = []
 var actions = []
-var isWalking, isRunning, isRotating, isSteppingBack, isPunching, isKicking, isJumping, isBackingFlip, isRolling
+var waitForAnimation, isWalking, isRunning, isRotating, isSteppingBack, isPunching, isKicking, isJumping, isBackingflip, isRolling
 var lastAction
 var bgmVolume = 0.5
 var keyboardActive = true
@@ -372,7 +373,6 @@ function updateCamera() {
 	camera.quaternion.slerp(target.quaternion, 0.25)
 }
 
-var waitForAnimation = false
 function updateActions() {
 	let w = actions.includes('walk')
 	let r = actions.includes('run')
@@ -383,8 +383,10 @@ function updateActions() {
 	let b = actions.includes('backflip')
 	let j = actions.includes('jump')
 	let rl = actions.includes('rolling')
+	let bf = actions.includes('backflip')
 	if (actions.length <= 0) synchronizeCrossFade(lastAction, idleAction, 0.25)
 	let returnAction = w ? (r ? runAction : walkAction) : idleAction
+
 	if (!isPunching && p && !k) {
 		isPunching = true
 		waitForAnimation = true
@@ -393,7 +395,7 @@ function updateActions() {
 		isPunching = false
 		synchronizeCrossFade(lastAction, returnAction, 0.25)
 	}
-	if (p) return
+	if (p || waitForAnimation) return
 	if (!isKicking && k) {
 		isKicking = true
 		waitForAnimation = true
@@ -402,8 +404,18 @@ function updateActions() {
 		synchronizeCrossFade(lastAction, returnAction, 0.25)
 		isKicking = false
 	}
-	if (waitForAnimation) return
-	if (k) return
+	if (k || waitForAnimation) return
+
+	/* if (!isBackingflip && bf) {
+		isBackingflip = true
+		executeCrossFade(lastAction, backflipAction, 0.1)
+		hero.position.z -= 1
+	} else if (isBackingflip && !bf) {
+		synchronizeCrossFade(lastAction, returnAction, 0.25)
+		isBackingflip = false
+	}
+	if (isBackingflip) return updateBackflip() */
+
 	if (actions.includes('turn-left')) hero.rotation.y += r ? 0.025 : 0.01
 	if (actions.includes('turn-right')) hero.rotation.y -= r ? 0.025 : 0.01
 	if (w && !isWalking) {
@@ -435,7 +447,7 @@ function updateActions() {
 		isRolling = true
 		executeCrossFade(lastAction, rollAction, 0.25)
 	} else if (isRolling && !rl) {
-		synchronizeCrossFade(rollAction, returnAction, 0.25)
+		synchronizeCrossFade(lastAction, returnAction, 0.25)
 		isRolling = false
 	}
 	if (w || rl) return
@@ -464,8 +476,7 @@ function updateWalk(running=false, back=false, speed=0.1) {
 		dir.y *= -1
 		dir.z *= -1
 	}
-	if (isBackingFlip) hero.position.add(dir.multiplyScalar(speed/2))
-	else hero.position.add(dir.multiplyScalar(running ? speed*3 : speed))
+	hero.position.add(dir.multiplyScalar(running ? speed*2.5 : speed))
 }
 
 function synchronizeCrossFade(startAction, endAction, duration, loop='repeat') {
@@ -543,6 +554,11 @@ function updateGamepad() {
 	} else if (actions.includes('jump')) {
 		actions.splice(actions.findIndex(el => el == 'jump'), 1)
 	}
+	if (gamepad.buttons[B].pressed) {
+		if (!actions.includes('backflip')) actions.push('backflip')
+	} else if (actions.includes('backflip')) {
+		actions.splice(actions.findIndex(el => el == 'backflip'), 1)
+	}
 	if (gamepad.buttons[RB].pressed) {
 		if (!actions.includes('punch')) actions.push('punch')
 	} else if (actions.includes('punch')) {
@@ -612,7 +628,7 @@ function initControls() {
 		if (keysPressed[keyTurnLeft] && !actions.includes('turn-left')) actions.push('turn-left')
 		if (keysPressed[keyTurnRight] && !actions.includes('turn-right')) actions.push('turn-right')
 		if (keysPressed[keyWalk] && !actions.includes('walk')) actions.push('walk')
-		/* if (keysPressed[keyStepBack] && !actions.includes('backflip')) actions.push('backflip') */
+		if (keysPressed[keyBackflip] && !actions.includes('backflip')) actions.push('backflip')
 		if (keysPressed[keyStepBack] && !actions.includes('step-back')) actions.push('step-back')
 		if (keysPressed[keyJump] && !actions.includes('jump')) actions.push('jump')
 		if (keysPressed[keyKick] && !actions.includes('kick')) actions.push('kick')
@@ -625,7 +641,7 @@ function initControls() {
 		if (e.keyCode == keyTurnLeft) actions.splice(actions.findIndex(el => el == 'turn-left'), 1)
 		if (e.keyCode == keyTurnRight) actions.splice(actions.findIndex(el => el == 'turn-right'), 1)
 		if (e.keyCode == keyWalk) actions.splice(actions.findIndex(el => el == 'walk'), 1)
-		/* if (e.keyCode == keyStepBack) actions.splice(actions.findIndex(el => el == 'backflip'), 1) */
+		if (e.keyCode == keyBackflip) actions.splice(actions.findIndex(el => el == 'backflip'), 1)
 		if (e.keyCode == keyStepBack) actions.splice(actions.findIndex(el => el == 'step-back'), 1)
 		if (e.keyCode == keyJump) actions.splice(actions.findIndex(el => el == 'jump'), 1)
 		if (e.keyCode == keyKick) actions.splice(actions.findIndex(el => el == 'kick'), 1)
