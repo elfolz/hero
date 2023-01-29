@@ -2,10 +2,38 @@ import * as THREE from '/js/three.module.js'
 import { GLTFLoader } from '/js/gltfLoader.module.js'
 import { FBXLoader } from '/js/fbxLoader.module.js'
 
-navigator.serviceWorker.register('service-worker.js')
-navigator.serviceWorker.onmessage = m => {
-	console.info('Update found!')
-	if (m?.data == 'update') location.reload(true)
+const isLocalhost = ['localhost', '127.0.0.1'].includes(location.hostname)
+
+if (location.protocol.startsWith('https') || isLocalhost) {
+	navigator.serviceWorker.register('service-worker.js')
+	navigator.serviceWorker.onmessage = m => {
+		console.info('Update found!')
+		if (m?.data == 'update') location.reload(true)
+	}
+}
+
+const device = {
+	get name() {
+		if (/(iphone)/i.test(navigator.userAgent)) return 'iphone'
+		else if (/(ipad)/i.test(navigator.userAgent)) return 'ipad'
+		else if (/(android)/i.test(navigator.userAgent)) return 'android'
+		else if (/(windows)/i.test(navigator.userAgent)) return 'windows'
+		else if (/(mac|macos|macintosh)/i.test(navigator.userAgent)) return 'mac'
+		else return null
+	},
+	get osVersion() {
+		if (this.name == 'iphone') return parseInt(/OS\s(\d+)_(\d+)_?(\d+)?/i.exec(navigator.userAgent)[1] || '0')
+		else return parseInt(/(?:windows|android|mac)\s([\.\_\d]+)/i.exec(navigator.userAgent)[1] || '0')
+	},
+	get memory() {
+		return navigator.deviceMemory ?? 0
+	},
+	get isPC() {
+		return ['windows', 'mac'].includes(this.name)
+	},
+	get isApple() {
+		return ['iphone', 'ipad', 'mac'].includes(this.name)
+	}
 }
 
 const UP = 12
@@ -31,12 +59,11 @@ const keyJump = 74
 const keyTurnLeft = 65
 const keyTurnRight = 68
 const keyStepBack = 83
-
-const isPC = /(windows|macintosh)/i.test(navigator.userAgent)
+const keyRoll = 82
 
 const clock = new THREE.Clock()
 const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true})
-const camera = new THREE.PerspectiveCamera(75, document.documentElement.clientWidth / document.documentElement.clientHeight, 0.1, 1000)
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth /window.innerHeight, 0.1, 1000)
 const hemisphereLight = new THREE.HemisphereLight(0xddeeff, 0x0f0e0d, 0.25)
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
 const gltfLoader = new GLTFLoader()
@@ -49,12 +76,12 @@ const keysPressed = {}
 var hero
 var animations
 var mixer
-var idleAction, walkAction, walkBackAction, runAction, jumpAction, jumpRunningAction, backflipAction, rotateLeftAction, rotateRightAction, punchRightAction, punchLeftAction, kickAction
+var idleAction, walkAction, walkBackAction, runAction, jumpAction, jumpRunningAction, punchRightAction, punchLeftAction, kickAction, backflipAction, rollAction
 
+var fpsLimit = device.isPC ? null : (window.devicePixelRatio > 2 || device.memory >= 4 || device.isApple) ? 1 / 60 : 1 / 30
 var gameStarted = false
 var fps = 0
 var frames = 0
-var fpsLimit = isPC ? null : 1 / 60
 var gamepad
 var clockDelta = 0
 var bgmSource
@@ -67,17 +94,18 @@ var dummyCamera
 var mixer
 var animations = []
 var actions = []
-var isWalking, isRunning, isRotating, isSteppingBack, isPunching, isKicking, isJumping, isBackingFlip
+var isWalking, isRunning, isRotating, isSteppingBack, isPunching, isKicking, isJumping, isBackingFlip, isRolling
 var lastAction
 var bgmVolume = 0.5
 var keyboardActive = true
+
 var progress = new Proxy({}, {
 	set: function(target, key, value) {
 		target[key] = value
 		let values = Object.values(target).slice()
 		let progressbar = document.querySelector('progress')
 		let total = values.reduce((a, b) => a + b, 0)
-		total = total / 12
+		total = total / 11
 		if (progressbar) progressbar.value = parseInt(total || 0)
 		if (total >= 100) setTimeout(() => initGame(), 500)
 		return true
@@ -149,6 +177,7 @@ function loadAnimations() {
 		let animation = fbx.animations[0]
 		animations.push(animation)
 		idleAction = mixer.clipAction(animation)
+		idleAction.name = 'idle'
 		lastAction = idleAction
 		idleAction.play()
 	}, xhr => {
@@ -160,6 +189,7 @@ function loadAnimations() {
 		let animation = fbx.animations[0]
 		animations.push(animation)
 		walkAction = mixer.clipAction(animation)
+		walkAction.name = 'walk'
 	}, xhr => {
 		progress['walking'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -169,6 +199,7 @@ function loadAnimations() {
 		let animation = fbx.animations[0]
 		animations.push(animation)
 		walkBackAction = mixer.clipAction(animation)
+		walkBackAction.name = 'step-back'
 	}, xhr => {
 		progress['walkingBack'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -178,6 +209,7 @@ function loadAnimations() {
 		let animation = fbx.animations[0]
 		animations.push(animation)
 		runAction = mixer.clipAction(animation)
+		runAction.name = 'run'
 	}, xhr => {
 		progress['running'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -187,6 +219,7 @@ function loadAnimations() {
 		let animation = fbx.animations[0]
 		animations.push(animation)
 		jumpAction = mixer.clipAction(animation)
+		jumpAction.name = 'jump'
 	}, xhr => {
 		progress['jumping'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -196,6 +229,7 @@ function loadAnimations() {
 		let animation = fbx.animations[0]
 		animations.push(animation)
 		jumpRunningAction = mixer.clipAction(animation)
+		jumpRunningAction.name = 'jump-running'
 	}, xhr => {
 		progress['jumpingRunning'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -205,6 +239,7 @@ function loadAnimations() {
 		let animation = fbx.animations[0]
 		animations.push(animation)
 		backflipAction = mixer.clipAction(animation)
+		backflipAction.name = 'backflip'
 	}, xhr => {
 		progress['backflip'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -214,6 +249,7 @@ function loadAnimations() {
 		let animation = fbx.animations[0]
 		animations.push(animation)
 		punchRightAction = mixer.clipAction(animation)
+		punchRightAction.name = 'punch-right'
 	}, xhr => {
 		progress['punchingRight'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -223,12 +259,33 @@ function loadAnimations() {
 		let animation = fbx.animations[0]
 		animations.push(animation)
 		punchLeftAction = mixer.clipAction(animation)
+		punchLeftAction.name = 'punch-left'
 	}, xhr => {
 		progress['punchingLeft'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
 		reject(error)
 	})
-	fbxLoader.load('/models/turningLeft.fbx', fbx => {
+	fbxLoader.load('/models/kick.fbx', fbx => {
+		let animation = fbx.animations[0]
+		animations.push(animation)
+		kickAction = mixer.clipAction(animation)
+		kickAction.name = 'kick'
+	}, xhr => {
+		progress['kick'] = (xhr.loaded / xhr.total) * 100
+	}, error => {
+		console.error(error)
+	})
+	fbxLoader.load('/models/rolling.fbx', fbx => {
+		let animation = fbx.animations[0]
+		animations.push(animation)
+		rollAction = mixer.clipAction(animation)
+		rollAction.name = 'roll'
+	}, xhr => {
+		progress['roll'] = (xhr.loaded / xhr.total) * 100
+	}, error => {
+		console.error(error)
+	})
+	/* fbxLoader.load('/models/turningLeft.fbx', fbx => {
 		let animation = fbx.animations[0]
 		animations.push(animation)
 		rotateLeftAction = mixer.clipAction(animation)
@@ -236,17 +293,8 @@ function loadAnimations() {
 		progress['turningLeft'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
 		console.error(error)
-	})
-	fbxLoader.load('/models/kick.fbx', fbx => {
-		let animation = fbx.animations[0]
-		animations.push(animation)
-		kickAction = mixer.clipAction(animation)
-	}, xhr => {
-		progress['kick'] = (xhr.loaded / xhr.total) * 100
-	}, error => {
-		console.error(error)
-	})
-	fbxLoader.load('/models/turningRight.fbx', fbx => {
+	}) */
+	/* fbxLoader.load('/models/turningRight.fbx', fbx => {
 		let animation = fbx.animations[0]
 		animations.push(animation)
 		rotateRightAction = mixer.clipAction(animation)
@@ -254,7 +302,7 @@ function loadAnimations() {
 		progress['turningRight'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
 		console.error(error)
-	})
+	}) */
 }
 
 function initGame() {
@@ -273,16 +321,17 @@ function initGame() {
 		document.querySelector('#menu-button-touch-off').classList.add('off')
 		document.querySelectorAll('footer')?.forEach(el => el.classList.add('hide'))
 	}
-	if (isPC) document.querySelectorAll('footer').forEach(el => {el.style.setProperty('display', 'none')})
+	if (device.isPC) document.querySelectorAll('footer').forEach(el => {el.style.setProperty('display', 'none')})
 	initControls()
 	resizeScene()
 	animate()
 }
 
 function resizeScene() {
-	camera.aspect = document.documentElement.clientWidth / document.documentElement.clientHeight
+	camera.aspect = window.innerWidth /window.innerHeight
 	camera.updateProjectionMatrix()
-	renderer.setSize(document.documentElement.clientWidth, document.documentElement.clientHeight)
+	if (device.isPC && device.memory >= 8) renderer.setPixelRatio(window.devicePixelRatio)
+	renderer.setSize(window.innerWidth,window.innerHeight)
 }
 
 function animate() {
@@ -323,6 +372,7 @@ function updateCamera() {
 	camera.quaternion.slerp(target.quaternion, 0.25)
 }
 
+var waitForAnimation = false
 function updateActions() {
 	let w = actions.includes('walk')
 	let r = actions.includes('run')
@@ -332,28 +382,33 @@ function updateActions() {
 	let sb = actions.includes('step-back')
 	let b = actions.includes('backflip')
 	let j = actions.includes('jump')
+	let rl = actions.includes('rolling')
+	if (actions.length <= 0) synchronizeCrossFade(lastAction, idleAction, 0.25)
 	let returnAction = w ? (r ? runAction : walkAction) : idleAction
-	if (!isPunching && p) {
+	if (!isPunching && p && !k) {
 		isPunching = true
+		waitForAnimation = true
 		syncPunchActions()
 	} else if (isPunching && !p) {
 		isPunching = false
-		executeCrossFade(lastAction, returnAction, 0.25)
+		synchronizeCrossFade(lastAction, returnAction, 0.25)
 	}
 	if (p) return
 	if (!isKicking && k) {
-		executeCrossFade(lastAction, kickAction, 0.25)
 		isKicking = true
+		waitForAnimation = true
+		executeCrossFade(lastAction, kickAction, 0.25)
 	} else if (isKicking && !k) {
-		executeCrossFade(lastAction, returnAction, 0.25)
+		synchronizeCrossFade(lastAction, returnAction, 0.25)
 		isKicking = false
 	}
+	if (waitForAnimation) return
 	if (k) return
 	if (actions.includes('turn-left')) hero.rotation.y += r ? 0.025 : 0.01
 	if (actions.includes('turn-right')) hero.rotation.y -= r ? 0.025 : 0.01
 	if (w && !isWalking) {
-		executeCrossFade(lastAction, walkAction, 0.25)
 		isWalking = true
+		synchronizeCrossFade(lastAction, walkAction, 0.25)
 	} else if (!w && isWalking) {
 		executeCrossFade(lastAction, idleAction, 0.25)
 		isWalking = false
@@ -362,24 +417,31 @@ function updateActions() {
 	if (w) {
 		updateWalk(r)
 		if (r && !isRunning) {
-			executeCrossFade(lastAction, runAction, 0.25)
 			isRunning = true
+			synchronizeCrossFade(lastAction, w ? runAction : walkAction, 0.25)
 		} else if (!r && isRunning) {
-			executeCrossFade(lastAction, returnAction, 0.25)
+			synchronizeCrossFade(lastAction, returnAction, 0.25)
 			isRunning = false
 		}
 	}
 	if (!isJumping && j) {
-		executeCrossFade(lastAction, w ? jumpRunningAction : jumpAction, 0.25)
 		isJumping = true
+		executeCrossFade(lastAction, w ? jumpRunningAction : jumpAction, 0.25)
 	} else if (isJumping && !j) {
-		executeCrossFade(lastAction, returnAction, 0.25)
+		synchronizeCrossFade(lastAction, returnAction, 0.25)
 		isJumping = false
 	}
-	if (w) return
+	if (!isRolling && rl) {
+		isRolling = true
+		executeCrossFade(lastAction, rollAction, 0.25)
+	} else if (isRolling && !rl) {
+		synchronizeCrossFade(rollAction, returnAction, 0.25)
+		isRolling = false
+	}
+	if (w || rl) return
 	if (sb && !isSteppingBack) {
-		executeCrossFade(lastAction, walkBackAction, 0.25)
 		isSteppingBack = true
+		synchronizeCrossFade(lastAction, walkBackAction, 0.25)
 	} else if (!sb && isSteppingBack) {
 		executeCrossFade(lastAction, returnAction, 0.25)
 		isSteppingBack = false
@@ -387,8 +449,8 @@ function updateActions() {
 	if (sb) updateWalk(false, true, 0.025)
 	if (sb) return
 	if (!isRotating && t) {
-		executeCrossFade(lastAction, walkAction, 0.25)
 		isRotating = true
+		synchronizeCrossFade(lastAction, walkAction, 0.25)
 	} else if (isRotating && !t) {
 		executeCrossFade(lastAction, returnAction, 0.25)
 		isRotating = false
@@ -406,9 +468,11 @@ function updateWalk(running=false, back=false, speed=0.1) {
 	else hero.position.add(dir.multiplyScalar(running ? speed*3 : speed))
 }
 
-function synchronizeCrossFade(startAction, endAction, duration) {
+function synchronizeCrossFade(startAction, endAction, duration, loop='repeat') {
+	if (startAction == idleAction || startAction == endAction) return executeCrossFade(startAction, endAction, duration, loop)
 	mixer.addEventListener('loop', onLoopFinished)
 	function onLoopFinished(event) {
+		waitForAnimation = false
 		if (event.action === startAction) {
 			mixer.removeEventListener('loop', onLoopFinished)
 			executeCrossFade(startAction, endAction, duration)
@@ -417,8 +481,8 @@ function synchronizeCrossFade(startAction, endAction, duration) {
 }
 
 function executeCrossFade(startAction, endAction, duration, loop='repeat') {
-	if (!startAction || !endAction || (startAction == endAction)) return
 	lastAction = endAction
+	if (!startAction || !endAction || startAction == endAction) return
 	endAction.enabled = true
 	endAction.setEffectiveTimeScale(1)
 	endAction.setEffectiveWeight(1)
@@ -429,18 +493,18 @@ function executeCrossFade(startAction, endAction, duration, loop='repeat') {
 }
 
 function syncPunchActions() {
-	let netxAction = punchRightAction
-	executeCrossFade(idleAction, punchRightAction, 0.5)
+	executeCrossFade(lastAction, punchRightAction, 0.25)
 	mixer.addEventListener('loop', onLoopFinished)
 	function onLoopFinished(event) {
 		if (!isPunching) {
-			return mixer.removeEventListener('loop', onLoopFinished)
+			waitForAnimation = false
+			mixer.removeEventListener('loop', onLoopFinished)
+			executeCrossFade(event.action, lastAction, 0.25)
 		} else if (event.action === punchRightAction) {
-			netxAction = punchLeftAction
-		} else if (event.action === punchLeftAction) {
-			netxAction = punchRightAction
+			executeCrossFade(event.action, punchLeftAction, 0.25)
+		} else {
+			executeCrossFade(event.action, punchRightAction, 0.25)
 		}
-		executeCrossFade(event.action, netxAction, 0.25)
 	}
 }
 
@@ -552,6 +616,7 @@ function initControls() {
 		if (keysPressed[keyStepBack] && !actions.includes('step-back')) actions.push('step-back')
 		if (keysPressed[keyJump] && !actions.includes('jump')) actions.push('jump')
 		if (keysPressed[keyKick] && !actions.includes('kick')) actions.push('kick')
+		if (keysPressed[keyRoll] && !actions.includes('rolling')) actions.push('rolling')
 	}
 	window.onkeyup = e => {
 		keysPressed[e.keyCode] = false
@@ -564,6 +629,7 @@ function initControls() {
 		if (e.keyCode == keyStepBack) actions.splice(actions.findIndex(el => el == 'step-back'), 1)
 		if (e.keyCode == keyJump) actions.splice(actions.findIndex(el => el == 'jump'), 1)
 		if (e.keyCode == keyKick) actions.splice(actions.findIndex(el => el == 'kick'), 1)
+		if (e.keyCode == keyRoll) actions.splice(actions.findIndex(el => el == 'rolling'), 1)
 	}
 	document.querySelector('#button-config').onclick = e => {
 		e.stopPropagation()
@@ -730,31 +796,6 @@ function initAudio() {
 	}) */
 }
 
-window.onresize = () => resizeScene()
-window.oncontextmenu = e => {e.preventDefault(); return false}
-
-document.body.appendChild(renderer.domElement)
-/* document.onreadystatechange = () => {
-	if (document.readyState != 'complete') return
-} */
-document.onclick = () => {
-	/* document.querySelector('#menu-config').classList.remove('opened') */
-	if (!audioAuthorized) {
-		initAudio()
-		audioAuthorized = true
-	}
-}
-document.onvisibilitychange = () => {
-	if (document.hidden) {
-		if (audioGain) audioGain.gain.value = 0
-		document.querySelectorAll('footer section button').forEach(el => {
-			el.classList.remove('active')
-		})
-	} else {
-		if (audioGain) audioGain.gain.value = bgmVolume
-	}
-}
-
 function playBGM() {
 	if (!audioContext || !bgmBuffer || localStorage.getItem('bgm') == 'false') return
 	bgmSource = audioContext.createBufferSource()
@@ -780,6 +821,28 @@ function playSE(buffer, loop=false) {
 	return src
 }
 
-function isLocalhost() {
-	return ['localhost', '127.0.0.1'].includes(location.hostname)
+window.onresize = () => resizeScene()
+window.oncontextmenu = e => {e.preventDefault(); return false}
+
+/* document.onreadystatechange = () => {
+	if (document.readyState != 'complete') return
+} */
+document.onclick = () => {
+	/* document.querySelector('#menu-config').classList.remove('opened') */
+	if ('requestFullscreen' in document.documentElement && !device.isPC) document.documentElement.requestFullscreen()
+	if (!audioAuthorized) {
+		audioAuthorized = true
+		initAudio()
+	}
 }
+document.onvisibilitychange = () => {
+	if (document.hidden) {
+		if (audioGain) audioGain.gain.value = 0
+		document.querySelectorAll('footer section button').forEach(el => {
+			el.classList.remove('active')
+		})
+	} else {
+		if (audioGain) audioGain.gain.value = bgmVolume
+	}
+}
+document.body.appendChild(renderer.domElement)
