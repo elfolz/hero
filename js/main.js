@@ -411,7 +411,7 @@ function updateActions() {
 	var sb = actions.includes('step-back')
 	var b = actions.includes('backflip')
 	var j = actions.includes('jump')
-	var rl = actions.includes('rolling')
+	var rl = actions.includes('roll')
 	var bf = actions.includes('backflip')
 	if (actions.length <= 0) synchronizeCrossFade(lastAction, idleAction, 0.25)
 	if (!waitForAnimation && p && !isPunching) {
@@ -424,9 +424,9 @@ function updateActions() {
 		waitForAnimation = true
 		executeCrossFade(lastAction, kickAction, 0.25, 'once')
 	} else if (!waitForAnimation && bf && !isBackingflip) {
-		isBackingflip = true
 		executeCrossFade(lastAction, backflipAction, 0.25, 'once')
-		hero.position.z -= 5
+		setTimeout(() => {updateWalk(false, true, 5)}, 250)
+		isBackingflip = true
 	}
 	if (waitForAnimation || isPunching || isKicking || isBackingflip) return
 	if (actions.includes('turn-left')) hero.rotation.y += r ? 0.025 : 0.01
@@ -442,33 +442,33 @@ function updateActions() {
 	if (w) {
 		updateWalk(r)
 		if (r && !isRunning) {
-			isRunning = true
 			executeCrossFade(lastAction, runAction, 0.25)
+			isRunning = true
 		} else if (!r && isRunning) {
 			executeCrossFade(lastAction, walkAction, 0.25)
 			isRunning = false
 		}
 	}
 	if (!isJumping && j) {
-		isJumping = true
 		executeCrossFade(lastAction, w ? jumpRunningAction : jumpAction, 0.25, 'once')
+		isJumping = true
 	}
 	if (!isRolling && rl) {
-		isRolling = true
 		executeCrossFade(lastAction, rollAction, 0.25, 'once')
+		isRolling = true
 	}
 	if (w || rl || j) return
 	if (sb && !isSteppingBack) {
-		isSteppingBack = true
 		executeCrossFade(lastAction, walkBackAction, 0.25)
+		isSteppingBack = true
 	} else if (!sb && isSteppingBack) {
 		executeCrossFade(lastAction, returnAction(), 0.25)
 		isSteppingBack = false
 	}
 	if (sb) return updateWalk(false, true, 0.025)
 	if (!isRotating && t) {
-		isRotating = true
 		executeCrossFade(lastAction, walkAction, 0.25,)
+		isRotating = true
 	} else if (isRotating && !t) {
 		if (!w) executeCrossFade(lastAction, returnAction(), 0.25)
 		isRotating = false
@@ -629,7 +629,7 @@ function initControls() {
 		if (keysPressed[keyStepBack] && !actions.includes('step-back')) actions.push('step-back')
 		if (keysPressed[keyJump] && !actions.includes('jump')) actions.push('jump')
 		if (keysPressed[keyKick] && !actions.includes('kick')) actions.push('kick')
-		if (keysPressed[keyRoll] && !actions.includes('rolling')) actions.push('rolling')
+		if (keysPressed[keyRoll] && !actions.includes('roll')) actions.push('roll')
 	}
 	window.onkeyup = e => {
 		keysPressed[e.keyCode] = false
@@ -642,7 +642,7 @@ function initControls() {
 		if (e.keyCode == keyStepBack) actions.splice(actions.findIndex(el => el == 'step-back'), 1)
 		if (e.keyCode == keyJump) actions.splice(actions.findIndex(el => el == 'jump'), 1)
 		if (e.keyCode == keyKick) actions.splice(actions.findIndex(el => el == 'kick'), 1)
-		if (e.keyCode == keyRoll) actions.splice(actions.findIndex(el => el == 'rolling'), 1)
+		if (e.keyCode == keyRoll) actions.splice(actions.findIndex(el => el == 'roll'), 1)
 	}
 	document.querySelector('#button-config').onclick = e => {
 		e.stopPropagation()
