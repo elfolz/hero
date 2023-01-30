@@ -95,7 +95,7 @@ var dummyCamera
 var mixer
 var animations = []
 var actions = []
-var waitForAnimation, isWalking, isRunning, isRotating, isSteppingBack, isPunching, isKicking, isJumping, isBackingflip, isRolling
+var waitForAnimation, isWalking, isRunning, isRotating, isSteppingBack, isPunching, lastPunchAction, isKicking, isJumping, isBackingflip, isRolling, rotateRightAction, rotateLeftAction
 var lastAction
 var bgmVolume = 0.5
 var keyboardActive = true
@@ -106,7 +106,7 @@ var progress = new Proxy({}, {
 		let values = Object.values(target).slice()
 		let progressbar = document.querySelector('progress')
 		let total = values.reduce((a, b) => a + b, 0)
-		total = total / 11
+		total = total / 12
 		if (progressbar) progressbar.value = parseInt(total || 0)
 		if (total >= 100) setTimeout(() => initGame(), 500)
 		return true
@@ -121,14 +121,6 @@ renderer.setClearColor(0x000000, 0)
 hemisphereLight.position.set(100, 100, 100)
 dirLight.position.set(0, 100, 100)
 dirLight.castShadow = true
-dirLight.shadow.mapSize.width = 2048
-dirLight.shadow.mapSize.height = 2048
-dirLight.shadow.camera.left = -50
-dirLight.shadow.camera.right = 50
-dirLight.shadow.camera.top = 50
-dirLight.shadow.camera.bottom = -50
-dirLight.shadow.camera.far = 1000
-dirLight.shadow.bias = -0.0001
 
 scene.add(hemisphereLight)
 scene.add(dirLight)
@@ -153,19 +145,31 @@ gltfLoader.load('/models/hero.glb',
 	gltf => {
 		hero = gltf.scene
 		/* hero.vertices = getVertices(hero) */
-		hero.traverse(object => {
-			if (object.isMesh) {
-				object.castShadow = true
-				object.receiveShadow = true
-			}
-		})
+		hero.traverse(object => {if (object.isMesh) object.castShadow = true})
 		dummyCamera = camera.clone()
 		dummyCamera.position.set(0, hero.position.y+5, hero.position.z-10)
 		dummyCamera.lookAt(0, 5, 0)
 		hero.add(dummyCamera)
 		scene.add(hero)
+		dirLight.target = hero
 		mixer = new THREE.AnimationMixer(hero)
+		onFinishActions()
 		loadAnimations()
+		/* gltfLoader.load('/models/sword.glb', fbx => {
+			let sword = fbx.scene
+			sword.traverse(object => {if (object.isMesh) object.castShadow = true})
+			hero.traverse(obj => {
+				if (obj.name == 'mixamorigRightHand') {
+					sword.parent = obj
+					obj.add(sword)
+					obj.updateMatrixWorld(true)
+				}
+			})
+		}, xhr => {
+			progress['sword'] = (xhr.loaded / xhr.total) * 100
+		}, error => {
+			console.error(error)
+		}) */
 	}, xhr => {
 		progress['hero'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -294,8 +298,8 @@ function loadAnimations() {
 		progress['turningLeft'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
 		console.error(error)
-	}) */
-	/* fbxLoader.load('/models/turningRight.fbx', fbx => {
+	})
+	fbxLoader.load('/models/turningRight.fbx', fbx => {
 		let animation = fbx.animations[0]
 		animations.push(animation)
 		rotateRightAction = mixer.clipAction(animation)
@@ -373,56 +377,65 @@ function updateCamera() {
 	camera.quaternion.slerp(target.quaternion, 0.25)
 }
 
-function updateActions() {
-	let w = actions.includes('walk')
-	let r = actions.includes('run')
-	let p = actions.includes('punch')
-	let k = actions.includes('kick')
-	let t = actions.find(el => el == 'turn-left' || el == 'turn-right')
-	let sb = actions.includes('step-back')
-	let b = actions.includes('backflip')
-	let j = actions.includes('jump')
-	let rl = actions.includes('rolling')
-	let bf = actions.includes('backflip')
-	if (actions.length <= 0) synchronizeCrossFade(lastAction, idleAction, 0.25)
-	let returnAction = w ? (r ? runAction : walkAction) : idleAction
+function onFinishActions() {
+	mixer.addEventListener('finished', e => {
+		if (actions.includes('punch')) {
+			lastPunchAction = lastPunchAction == punchRightAction ? punchLeftAction : punchRightAction
+			executeCrossFade(lastAction, lastPunchAction, 0.25, 'once')
+		} else {
+			executeCrossFade(lastAction, returnAction(), 0.25)
+			isPunching = false
+		}
+		isKicking = false
+		isJumping = false
+		isRolling = false
+		isBackingflip = false
+		waitForAnimation = false
+	})
+}
 
-	if (!isPunching && p && !k) {
+function returnAction() {
+	if (actions.includes('walk') || actions.some(el => ['turn-left', 'turn-right'].includes(el))) {
+		return actions.includes('run') ? runAction : walkAction
+	} else {
+		return idleAction
+	}
+}
+
+function updateActions() {
+	var w = actions.includes('walk')
+	var r = actions.includes('run')
+	var p = actions.includes('punch')
+	var k = actions.includes('kick')
+	var t = actions.some(el => ['turn-left', 'turn-right'].includes(el))
+	var sb = actions.includes('step-back')
+	var b = actions.includes('backflip')
+	var j = actions.includes('jump')
+	var rl = actions.includes('rolling')
+	var bf = actions.includes('backflip')
+	if (actions.length <= 0) synchronizeCrossFade(lastAction, idleAction, 0.25)
+	if (!waitForAnimation && p && !isPunching) {
 		isPunching = true
 		waitForAnimation = true
-		syncPunchActions()
-	} else if (isPunching && !p) {
-		isPunching = false
-		synchronizeCrossFade(lastAction, returnAction, 0.25)
-	}
-	if (p || waitForAnimation) return
-	if (!isKicking && k) {
+		lastPunchAction = punchRightAction
+		executeCrossFade(lastAction, punchRightAction, 0.25, 'once')
+	} else if (!waitForAnimation && k) {
 		isKicking = true
 		waitForAnimation = true
-		executeCrossFade(lastAction, kickAction, 0.25)
-	} else if (isKicking && !k) {
-		synchronizeCrossFade(lastAction, returnAction, 0.25)
-		isKicking = false
-	}
-	if (k || waitForAnimation) return
-
-	/* if (!isBackingflip && bf) {
+		executeCrossFade(lastAction, kickAction, 0.25, 'once')
+	} else if (!waitForAnimation && bf && !isBackingflip) {
 		isBackingflip = true
-		executeCrossFade(lastAction, backflipAction, 0.1)
-		hero.position.z -= 1
-	} else if (isBackingflip && !bf) {
-		synchronizeCrossFade(lastAction, returnAction, 0.25)
-		isBackingflip = false
+		executeCrossFade(lastAction, backflipAction, 0.25, 'once')
+		hero.position.z -= 5
 	}
-	if (isBackingflip) return updateBackflip() */
-
+	if (waitForAnimation || isPunching || isKicking || isBackingflip) return
 	if (actions.includes('turn-left')) hero.rotation.y += r ? 0.025 : 0.01
 	if (actions.includes('turn-right')) hero.rotation.y -= r ? 0.025 : 0.01
 	if (w && !isWalking) {
 		isWalking = true
-		synchronizeCrossFade(lastAction, walkAction, 0.25)
+		executeCrossFade(lastAction, walkAction, 0.25)
 	} else if (!w && isWalking) {
-		executeCrossFade(lastAction, idleAction, 0.25)
+		if (!t) executeCrossFade(lastAction, idleAction, 0.25)
 		isWalking = false
 		isRunning = false
 	}
@@ -430,41 +443,34 @@ function updateActions() {
 		updateWalk(r)
 		if (r && !isRunning) {
 			isRunning = true
-			synchronizeCrossFade(lastAction, w ? runAction : walkAction, 0.25)
+			executeCrossFade(lastAction, runAction, 0.25)
 		} else if (!r && isRunning) {
-			synchronizeCrossFade(lastAction, returnAction, 0.25)
+			executeCrossFade(lastAction, walkAction, 0.25)
 			isRunning = false
 		}
 	}
 	if (!isJumping && j) {
 		isJumping = true
-		executeCrossFade(lastAction, w ? jumpRunningAction : jumpAction, 0.25)
-	} else if (isJumping && !j) {
-		synchronizeCrossFade(lastAction, returnAction, 0.25)
-		isJumping = false
+		executeCrossFade(lastAction, w ? jumpRunningAction : jumpAction, 0.25, 'once')
 	}
 	if (!isRolling && rl) {
 		isRolling = true
-		executeCrossFade(lastAction, rollAction, 0.25)
-	} else if (isRolling && !rl) {
-		synchronizeCrossFade(lastAction, returnAction, 0.25)
-		isRolling = false
+		executeCrossFade(lastAction, rollAction, 0.25, 'once')
 	}
-	if (w || rl) return
+	if (w || rl || j) return
 	if (sb && !isSteppingBack) {
 		isSteppingBack = true
-		synchronizeCrossFade(lastAction, walkBackAction, 0.25)
+		executeCrossFade(lastAction, walkBackAction, 0.25)
 	} else if (!sb && isSteppingBack) {
-		executeCrossFade(lastAction, returnAction, 0.25)
+		executeCrossFade(lastAction, returnAction(), 0.25)
 		isSteppingBack = false
 	}
-	if (sb) updateWalk(false, true, 0.025)
-	if (sb) return
+	if (sb) return updateWalk(false, true, 0.025)
 	if (!isRotating && t) {
 		isRotating = true
-		synchronizeCrossFade(lastAction, walkAction, 0.25)
+		executeCrossFade(lastAction, walkAction, 0.25,)
 	} else if (isRotating && !t) {
-		executeCrossFade(lastAction, returnAction, 0.25)
+		if (!w) executeCrossFade(lastAction, returnAction(), 0.25)
 		isRotating = false
 	}
 }
@@ -479,22 +485,12 @@ function updateWalk(running=false, back=false, speed=0.1) {
 	hero.position.add(dir.multiplyScalar(running ? speed*2.5 : speed))
 }
 
-function synchronizeCrossFade(startAction, endAction, duration, loop='repeat') {
-	if (startAction == idleAction || startAction == endAction) return executeCrossFade(startAction, endAction, duration, loop)
-	mixer.addEventListener('loop', onLoopFinished)
-	function onLoopFinished(event) {
-		waitForAnimation = false
-		if (event.action === startAction) {
-			mixer.removeEventListener('loop', onLoopFinished)
-			executeCrossFade(startAction, endAction, duration)
-		}
-	}
-}
-
 function executeCrossFade(startAction, endAction, duration, loop='repeat') {
+	if (startAction == endAction) return
+	if (actions.some(el => ['walk', 'run', 'turn-left', 'turn-right'].includes(el)) && endAction == idleAction) return
 	lastAction = endAction
-	if (!startAction || !endAction || startAction == endAction) return
 	endAction.enabled = true
+	if (loop == 'once') endAction.reset()
 	endAction.setEffectiveTimeScale(1)
 	endAction.setEffectiveWeight(1)
 	endAction.loop = loop == 'pingpong' ? THREE.LoopPingPong : loop == 'once' ? THREE.LoopOnce : THREE.LoopRepeat
@@ -503,18 +499,14 @@ function executeCrossFade(startAction, endAction, duration, loop='repeat') {
 	endAction.play()
 }
 
-function syncPunchActions() {
-	executeCrossFade(lastAction, punchRightAction, 0.25)
+function synchronizeCrossFade(startAction, endAction, duration, loop='repeat') {
+	if (startAction == endAction) return
 	mixer.addEventListener('loop', onLoopFinished)
 	function onLoopFinished(event) {
-		if (!isPunching) {
-			waitForAnimation = false
+		waitForAnimation = false
+		if (event.action === startAction) {
 			mixer.removeEventListener('loop', onLoopFinished)
-			executeCrossFade(event.action, lastAction, 0.25)
-		} else if (event.action === punchRightAction) {
-			executeCrossFade(event.action, punchLeftAction, 0.25)
-		} else {
-			executeCrossFade(event.action, punchRightAction, 0.25)
+			executeCrossFade(event.action, endAction, duration, loop)
 		}
 	}
 }
@@ -549,12 +541,17 @@ function updateGamepad() {
 	} else if (actions.includes('run')) {
 		actions.splice(actions.findIndex(el => el == 'run'), 1)
 	}
+	if (gamepad.buttons[B].pressed) {
+		if (!actions.includes('roll')) actions.push('roll')
+	} else if (actions.includes('roll')) {
+		actions.splice(actions.findIndex(el => el == 'roll'), 1)
+	}
 	if (gamepad.buttons[X].pressed) {
 		if (!actions.includes('jump')) actions.push('jump')
 	} else if (actions.includes('jump')) {
 		actions.splice(actions.findIndex(el => el == 'jump'), 1)
 	}
-	if (gamepad.buttons[B].pressed) {
+	if (gamepad.buttons[Y].pressed) {
 		if (!actions.includes('backflip')) actions.push('backflip')
 	} else if (actions.includes('backflip')) {
 		actions.splice(actions.findIndex(el => el == 'backflip'), 1)
