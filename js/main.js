@@ -374,22 +374,22 @@ function updateCamera() {
 }
 
 function onFinishActions() {
-	mixer.addEventListener('finished', e => {
+	mixer.addEventListener('finished', () => {
 		if (actions.includes('punch')) {
-			executeCrossFade(lastAction, lastAction == punchLeftAction ? punchRightAction : punchLeftAction, 0.25, 'once')
+			executeCrossFade(lastAction == punchLeftAction ? punchRightAction : punchLeftAction, 0.25, 'once')
 		} else if (actions.includes('kick')) {
-			executeCrossFade(lastAction, kickAction, 0.25, 'once')
+			executeCrossFade(kickAction, 0.25, 'once')
 		} else if (actions.includes('backflip')) {
-			executeCrossFade(lastAction, backflipAction, 0.25, 'once')
+			executeCrossFade(backflipAction, 0.25, 'once')
 		} else {
-			executeCrossFade(lastAction, returnAction())
+			executeCrossFade(returnAction())
 		}
 		waitForAnimation = false
 		if (!actions.includes('punch')) isPunching = false
-		if (!actions.includes('kick')) isKicking = false
-		if (!actions.includes('backflip')) isBackingflip = false
-		if (!actions.includes('jump')) isJumping = false
-		if (!actions.includes('roll')) isRolling = false
+		isKicking = false
+		isBackingflip = false
+		isRolling = false
+		isJumping = false
 	})
 }
 
@@ -414,25 +414,18 @@ function updateActions() {
 	var j = actions.includes('jump')
 	var rl = actions.includes('roll')
 	var bf = actions.includes('backflip')
-	if (actions.length <= 0) {
-		isPunching = false
-		isKicking = false
-		isJumping = false
-		isRolling = false
-		isBackingflip = false
-		synchronizeCrossFade(lastAction, idleAction)
-	}
+	if (actions.length <= 0) synchronizeCrossFade(idleAction)
 	if (!waitForAnimation && p && !isPunching) {
 		isPunching = true
 		waitForAnimation = true
-		executeCrossFade(lastAction, punchRightAction, 0.25, 'once')
+		executeCrossFade(punchRightAction, 0.25, 'once')
 	} else if (!waitForAnimation && k) {
 		isKicking = true
 		waitForAnimation = true
-		executeCrossFade(lastAction, kickAction, 0.25, 'once')
+		executeCrossFade(kickAction, 0.25, 'once')
 	} else if (!waitForAnimation && bf && !isBackingflip) {
 		isBackingflip = true
-		executeCrossFade(lastAction, backflipAction, 0.25, 'once')
+		executeCrossFade(backflipAction, 0.25, 'once')
 		setTimeout(() => {updateWalk(false, true, 5)}, 250)
 	}
 	if (waitForAnimation || isPunching || isKicking || isBackingflip) return
@@ -440,9 +433,9 @@ function updateActions() {
 	if (actions.includes('turn-right')) hero.rotation.y -= r ? 0.025 : 0.01
 	if (w && !isWalking) {
 		isWalking = true
-		executeCrossFade(lastAction, walkAction)
+		executeCrossFade(walkAction)
 	} else if (!w && isWalking) {
-		if (!t) executeCrossFade(lastAction, idleAction)
+		if (!t) executeCrossFade(idleAction)
 		isWalking = false
 		isRunning = false
 	}
@@ -450,34 +443,35 @@ function updateActions() {
 		updateWalk(r)
 		if (r && !isRunning) {
 			isRunning = true
-			executeCrossFade(lastAction, runAction)
+			executeCrossFade(runAction)
 		} else if (!r && isRunning) {
-			executeCrossFade(lastAction, walkAction)
+			executeCrossFade(walkAction)
 			isRunning = false
 		}
 	}
 	if (!waitForAnimation && rl && !isRolling) {
 		isRolling = true
-		executeCrossFade(lastAction, rollAction, 0.25, 'once')
+		executeCrossFade(rollAction, 0.25, 'once')
 	}
+	if (isRolling) return
 	if (!waitForAnimation && j && !isJumping) {
 		isJumping = true
-		executeCrossFade(lastAction, w ? jumpRunningAction : jumpAction, 0.25, 'once')
+		executeCrossFade(w ? jumpRunningAction : jumpAction, 0.25, 'once')
 	}
-	if (w || isRolling || isJumping) return
+	if (w || isJumping) return
 	if (sb && !isSteppingBack) {
 		isSteppingBack = true
-		executeCrossFade(lastAction, walkBackAction)
+		executeCrossFade(walkBackAction)
 	} else if (!sb && isSteppingBack) {
-		executeCrossFade(lastAction, returnAction())
+		executeCrossFade(returnAction())
 		isSteppingBack = false
 	}
 	if (sb) return updateWalk(false, true, 0.025)
 	if (!isRotating && t) {
 		isRotating = true
-		executeCrossFade(lastAction, walkAction)
+		executeCrossFade(walkAction)
 	} else if (isRotating && !t) {
-		if (!w) executeCrossFade(lastAction, returnAction())
+		if (!w) executeCrossFade(returnAction())
 		isRotating = false
 	}
 }
@@ -492,28 +486,32 @@ function updateWalk(running=false, back=false, speed=0.1) {
 	hero.position.add(dir.multiplyScalar(running ? speed*2.5 : speed))
 }
 
-function executeCrossFade(startAction, endAction, duration=0.25, loop='repeat') {
-	if (actions.some(el => ['walk', 'run', 'turn-left', 'turn-right'].includes(el)) && endAction == idleAction) return
-	lastAction = endAction
-	if (startAction == endAction) return endAction.reset()
-	endAction.enabled = true
-	endAction.setEffectiveTimeScale(1)
-	endAction.setEffectiveWeight(1)
-	endAction.loop = loop == 'pingpong' ? THREE.LoopPingPong : loop == 'once' ? THREE.LoopOnce : THREE.LoopRepeat
-	endAction.clampWhenFinished = (loop == 'once')
-	if (loop == 'once') endAction.reset()
-	startAction.crossFadeTo(endAction, duration, true)
-	endAction.play()
+function executeCrossFade(newAction, duration=0.25, loop='repeat') {
+	if (actions.some(el => ['walk', 'run', 'turn-left', 'turn-right', 'step-back'].includes(el)) && newAction == idleAction) return
+	if (lastAction == newAction) return newAction.reset()
+	newAction.enabled = true
+	newAction.setEffectiveTimeScale(1)
+	newAction.setEffectiveWeight(1)
+	newAction.loop = loop == 'pingpong' ? THREE.LoopPingPong : loop == 'once' ? THREE.LoopOnce : THREE.LoopRepeat
+	newAction.clampWhenFinished = (loop == 'once')
+	if (loop == 'once') newAction.reset()
+	lastAction.crossFadeTo(newAction, duration, true)
+	newAction.play()
+	lastAction = newAction
 }
 
-function synchronizeCrossFade(startAction, endAction, duration, loop='repeat') {
-	if (startAction == endAction) return
+function synchronizeCrossFade(newAction, duration, loop='repeat') {
 	mixer.addEventListener('loop', onLoopFinished)
 	function onLoopFinished(event) {
 		waitForAnimation = false
-		if (event.action === startAction) {
+		isPunching = false
+		isKicking = false
+		isBackingflip = false
+		isRolling = false
+		isJumping = false
+		if (event.action == lastAction) {
 			mixer.removeEventListener('loop', onLoopFinished)
-			executeCrossFade(event.action, endAction, duration, loop)
+			executeCrossFade(newAction, duration, loop)
 		}
 	}
 }
