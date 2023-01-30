@@ -95,7 +95,7 @@ var dummyCamera
 var mixer
 var animations = []
 var actions = []
-var waitForAnimation, isWalking, isRunning, isRotating, isSteppingBack, isPunching, lastPunchAction, isKicking, isJumping, isBackingflip, isRolling, rotateRightAction, rotateLeftAction
+var waitForAnimation, isWalking, isRunning, isRotating, isSteppingBack, isPunching, isKicking, isJumping, isBackingflip, isRolling, rotateRightAction, rotateLeftAction
 var lastAction
 var bgmVolume = 0.5
 var keyboardActive = true
@@ -316,17 +316,11 @@ function initGame() {
 	document.body.classList.add('loaded')
 	document.body.removeChild(document.querySelector('figure'))
 	document.querySelector('header').style.removeProperty('display')
-	document.querySelectorAll('footer').forEach(el => el.style.removeProperty('display'))
 	if (localStorage.getItem('bgm') == 'false') {
 		document.querySelector('#menu-button-music-on').classList.remove('off')
 		document.querySelector('#menu-button-music-off').classList.add('off')
 	}
-	if (localStorage.getItem('touch') == 'false') {
-		document.querySelector('#menu-button-touch-on').classList.remove('off')
-		document.querySelector('#menu-button-touch-off').classList.add('off')
-		document.querySelectorAll('footer')?.forEach(el => el.classList.add('hide'))
-	}
-	if (device.isPC) document.querySelectorAll('footer').forEach(el => {el.style.setProperty('display', 'none')})
+	if (!device.isPC) document.querySelectorAll('footer').forEach(el => el.style.removeProperty('display'))
 	initControls()
 	resizeScene()
 	animate()
@@ -380,23 +374,28 @@ function updateCamera() {
 function onFinishActions() {
 	mixer.addEventListener('finished', e => {
 		if (actions.includes('punch')) {
-			lastPunchAction = lastPunchAction == punchRightAction ? punchLeftAction : punchRightAction
-			executeCrossFade(lastAction, lastPunchAction, 0.25, 'once')
+			executeCrossFade(lastAction, lastAction == punchLeftAction ? punchRightAction : punchLeftAction, 0.25, 'once')
+		} else if (actions.includes('kick')) {
+			executeCrossFade(lastAction, kickAction, 0.25, 'once')
+		} else if (actions.includes('backflip')) {
+			executeCrossFade(lastAction, backflipAction, 0.25, 'once')
 		} else {
-			executeCrossFade(lastAction, returnAction(), 0.25)
-			isPunching = false
+			executeCrossFade(lastAction, returnAction())
 		}
-		isKicking = false
-		isJumping = false
-		isRolling = false
-		isBackingflip = false
 		waitForAnimation = false
+		if (!actions.includes('punch')) isPunching = false
+		if (!actions.includes('kick')) isKicking = false
+		if (!actions.includes('backflip')) isBackingflip = false
+		if (!actions.includes('jump')) isJumping = false
+		if (!actions.includes('roll')) isRolling = false
 	})
 }
 
 function returnAction() {
 	if (actions.includes('walk') || actions.some(el => ['turn-left', 'turn-right'].includes(el))) {
 		return actions.includes('run') ? runAction : walkAction
+	} else if (actions.includes('step-back')) {
+		return walkBackAction
 	} else {
 		return idleAction
 	}
@@ -419,65 +418,64 @@ function updateActions() {
 		isJumping = false
 		isRolling = false
 		isBackingflip = false
-		synchronizeCrossFade(lastAction, idleAction, 0.25)
+		synchronizeCrossFade(lastAction, idleAction)
 	}
 	if (!waitForAnimation && p && !isPunching) {
 		isPunching = true
 		waitForAnimation = true
-		lastPunchAction = punchRightAction
 		executeCrossFade(lastAction, punchRightAction, 0.25, 'once')
 	} else if (!waitForAnimation && k) {
 		isKicking = true
 		waitForAnimation = true
 		executeCrossFade(lastAction, kickAction, 0.25, 'once')
 	} else if (!waitForAnimation && bf && !isBackingflip) {
+		isBackingflip = true
 		executeCrossFade(lastAction, backflipAction, 0.25, 'once')
 		setTimeout(() => {updateWalk(false, true, 5)}, 250)
-		isBackingflip = true
 	}
 	if (waitForAnimation || isPunching || isKicking || isBackingflip) return
 	if (actions.includes('turn-left')) hero.rotation.y += r ? 0.025 : 0.01
 	if (actions.includes('turn-right')) hero.rotation.y -= r ? 0.025 : 0.01
 	if (w && !isWalking) {
 		isWalking = true
-		executeCrossFade(lastAction, walkAction, 0.25)
+		executeCrossFade(lastAction, walkAction)
 	} else if (!w && isWalking) {
-		if (!t) executeCrossFade(lastAction, idleAction, 0.25)
+		if (!t) executeCrossFade(lastAction, idleAction)
 		isWalking = false
 		isRunning = false
 	}
 	if (w) {
 		updateWalk(r)
 		if (r && !isRunning) {
-			executeCrossFade(lastAction, runAction, 0.25)
 			isRunning = true
+			executeCrossFade(lastAction, runAction)
 		} else if (!r && isRunning) {
-			executeCrossFade(lastAction, walkAction, 0.25)
+			executeCrossFade(lastAction, walkAction)
 			isRunning = false
 		}
 	}
-	if (!isJumping && j) {
-		executeCrossFade(lastAction, w ? jumpRunningAction : jumpAction, 0.25, 'once')
-		isJumping = true
-	}
-	if (!isRolling && rl) {
-		executeCrossFade(lastAction, rollAction, 0.25, 'once')
+	if (!waitForAnimation && rl && !isRolling) {
 		isRolling = true
+		executeCrossFade(lastAction, rollAction, 0.25, 'once')
 	}
-	if (w || rl || j) return
+	if (!waitForAnimation && j && !isJumping) {
+		isJumping = true
+		executeCrossFade(lastAction, w ? jumpRunningAction : jumpAction, 0.25, 'once')
+	}
+	if (w || isRolling || isJumping) return
 	if (sb && !isSteppingBack) {
-		executeCrossFade(lastAction, walkBackAction, 0.25)
 		isSteppingBack = true
+		executeCrossFade(lastAction, walkBackAction)
 	} else if (!sb && isSteppingBack) {
-		executeCrossFade(lastAction, returnAction(), 0.25)
+		executeCrossFade(lastAction, returnAction())
 		isSteppingBack = false
 	}
 	if (sb) return updateWalk(false, true, 0.025)
 	if (!isRotating && t) {
-		executeCrossFade(lastAction, walkAction, 0.25,)
 		isRotating = true
+		executeCrossFade(lastAction, walkAction)
 	} else if (isRotating && !t) {
-		if (!w) executeCrossFade(lastAction, returnAction(), 0.25)
+		if (!w) executeCrossFade(lastAction, returnAction())
 		isRotating = false
 	}
 }
@@ -492,16 +490,16 @@ function updateWalk(running=false, back=false, speed=0.1) {
 	hero.position.add(dir.multiplyScalar(running ? speed*2.5 : speed))
 }
 
-function executeCrossFade(startAction, endAction, duration, loop='repeat') {
-	if (startAction == endAction) return
-	if (actions.some(el => ['walk', 'run', 'turn-left', 'turn-right'].includes(el)) && endAction == idleAction) return
+function executeCrossFade(startAction, endAction, duration=0.25, loop='repeat') {
+	//if (actions.some(el => ['walk', 'run', 'turn-left', 'turn-right'].includes(el)) && endAction == idleAction) return
 	lastAction = endAction
+	if (startAction == endAction) return endAction.reset()
 	endAction.enabled = true
-	if (loop == 'once') endAction.reset()
 	endAction.setEffectiveTimeScale(1)
 	endAction.setEffectiveWeight(1)
 	endAction.loop = loop == 'pingpong' ? THREE.LoopPingPong : loop == 'once' ? THREE.LoopOnce : THREE.LoopRepeat
 	endAction.clampWhenFinished = (loop == 'once')
+	if (loop == 'once') endAction.reset()
 	startAction.crossFadeTo(endAction, duration, true)
 	endAction.play()
 }
@@ -669,20 +667,6 @@ function initControls() {
 		document.querySelector('#menu-button-music-off').classList.remove('off')
 		playBGM()
 	}
-	document.querySelector('#menu-button-touch-off').onclick = e => {
-		e.stopPropagation()
-		localStorage.setItem('touch', 'false')
-		document.querySelector('#menu-button-touch-off').classList.add('off')
-		document.querySelector('#menu-button-touch-on').classList.remove('off')
-		document.querySelectorAll('footer')?.forEach(el => el.classList.add('hide'))
-	}
-	document.querySelector('#menu-button-touch-on').onclick = e => {
-		e.stopPropagation()
-		localStorage.setItem('touch', 'true')
-		document.querySelector('#menu-button-touch-on').classList.add('off')
-		document.querySelector('#menu-button-touch-off').classList.remove('off')
-		document.querySelectorAll('footer')?.forEach(el => el.classList.remove('hide'))
-	}
 	const buttonForward = document.querySelector('#button-forward')
 	buttonForward.ontouchmove = e => {
 		e.stopPropagation()
@@ -848,7 +832,7 @@ window.oncontextmenu = e => {e.preventDefault(); return false}
 	if (document.readyState != 'complete') return
 } */
 document.onclick = () => {
-	/* document.querySelector('#menu-config').classList.remove('opened') */
+	document.querySelector('#menu-config').classList.remove('opened')
 	if ('requestFullscreen' in document.documentElement && !device.isPC) document.documentElement.requestFullscreen()
 	if (!audioAuthorized) {
 		audioAuthorized = true
