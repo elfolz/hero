@@ -155,6 +155,7 @@ gltfLoader.load('/models/hero.glb',
 		mixer = new THREE.AnimationMixer(hero)
 		onFinishActions()
 		loadAnimations()
+
 		/* gltfLoader.load('/models/sword.glb', fbx => {
 			let sword = fbx.scene
 			sword.traverse(object => {if (object.isMesh) object.castShadow = true})
@@ -170,6 +171,7 @@ gltfLoader.load('/models/hero.glb',
 		}, error => {
 			console.error(error)
 		}) */
+
 	}, xhr => {
 		progress['hero'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -491,7 +493,7 @@ function updateWalk(running=false, back=false, speed=0.1) {
 }
 
 function executeCrossFade(startAction, endAction, duration=0.25, loop='repeat') {
-	//if (actions.some(el => ['walk', 'run', 'turn-left', 'turn-right'].includes(el)) && endAction == idleAction) return
+	if (actions.some(el => ['walk', 'run', 'turn-left', 'turn-right'].includes(el)) && endAction == idleAction) return
 	lastAction = endAction
 	if (startAction == endAction) return endAction.reset()
 	endAction.enabled = true
