@@ -413,7 +413,14 @@ function updateActions() {
 	var j = actions.includes('jump')
 	var rl = actions.includes('roll')
 	var bf = actions.includes('backflip')
-	if (actions.length <= 0) synchronizeCrossFade(lastAction, idleAction, 0.25)
+	if (actions.length <= 0) {
+		isPunching = false
+		isKicking = false
+		isJumping = false
+		isRolling = false
+		isBackingflip = false
+		synchronizeCrossFade(lastAction, idleAction, 0.25)
+	}
 	if (!waitForAnimation && p && !isPunching) {
 		isPunching = true
 		waitForAnimation = true
