@@ -54,7 +54,6 @@ const keysPressed = {}
 var hero
 var sword
 var foe
-var animations
 var idleAction, walkAction, walkBackAction, runAction, jumpAction, jumpRunningAction, punchRightAction, punchLeftAction, kickAction, backflipAction, rollAction, outwardSlashAction, outwardSlashFastAction, inwardSlashAction, withdrawSwordAction, sheathSwordAction, foeIdleAction, foeWalkAction
 
 var fpsLimit = device.isPC ? null : (window.devicePixelRatio > 2 || device.memory >= 4 || device.isApple) ? 1 / 60 : 1 / 30
@@ -124,7 +123,6 @@ textureLoader.load('/textures/ground.webp', texture => {
 gltfLoader.load('/models/hero/hero.glb',
 	gltf => {
 		hero = gltf.scene
-		/* hero.vertices = getVertices(hero) */
 		hero.encoding = THREE.sRGBEncoding
 		hero.traverse(el => {if (el.isMesh) el.castShadow = true})
 		dummyCamera = camera.clone()
@@ -140,6 +138,7 @@ gltfLoader.load('/models/hero/hero.glb',
 			new THREE.SphereGeometry(),
 			new THREE.MeshBasicMaterial({transparent: true, opacity: 0})
 		)
+		sphere.scale.set(0.8, 0.8, 0.8)
 		hero.add(sphere)
 		hero.collider = sphere
 	}, xhr => {
@@ -161,7 +160,6 @@ gltfLoader.load('/models/equips/sword.glb', fbx => {
 gltfLoader.load('/models/humanoid/humanoid.glb',
 	gltf => {
 		foe = gltf.scene
-		/* foe.vertices = getVertices(foe) */
 		foe.encoding = THREE.sRGBEncoding
 		foe.traverse(el => {if (el.isMesh) el.castShadow = true})
 		foe.position.set(0, 0, 20)
@@ -174,7 +172,7 @@ gltfLoader.load('/models/humanoid/humanoid.glb',
 			new THREE.SphereGeometry(),
 			new THREE.MeshBasicMaterial({transparent: true, opacity: 0})
 		)
-		sphere.scale.set(25, 25, 25)
+		sphere.scale.set(18, 18, 18)
 		foe.add(sphere)
 		foe.collider = sphere
 	}, xhr => {
@@ -573,7 +571,7 @@ function updateActions() {
 
 function updateWalk(running=false, back=false, speed=0.1, ignoreColision=false) {
 	if (document.hidden) return
-	if (!ignoreColision && collide(hero, foe)) return updateWalk(running, true, 0.1, true)
+	if (!ignoreColision && collide(hero, foe)) return updateWalk(running, !back, 0.1, true)
 	let dir = camera.getWorldDirection(hero.clone().position)
 	if (back) {
 		dir.x *= -1
@@ -721,12 +719,7 @@ function updateGamepad() {
 } */
 
 function colisionCheck(a, b) {
-	caster.set(a.position, a.getWorldDirection(a.clone().position).normalize())
-	let intersection = caster.intersectObjects([b])
-	if (!intersection.length) return false
-	if (intersection[0].distance < 1) return true
-	return false
-	/* let verts = a.collider.geometry.attributes.position
+	let verts = a.collider.geometry.attributes.position
 	for (let i = 0; i < verts.count; i++) {
 		let localVertex = vertex.fromBufferAttribute(verts, i)
 		let globalVertex = localVertex.applyMatrix4(a.matrix)
@@ -735,7 +728,7 @@ function colisionCheck(a, b) {
 		let collisionResults = caster.intersectObjects([b.collider])
 		if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) return true
 	}
-	return false */
+	return false
 }
 function collide(a, b) {
 	let collide = colisionCheck(a, b)
