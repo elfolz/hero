@@ -44,6 +44,7 @@ const hemisphereLight = new THREE.HemisphereLight(0xddeeff, 0x0f0e0d, 0.25)
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
 const gltfLoader = new GLTFLoader()
 const textureLoader = new THREE.TextureLoader()
+const audioLoader = new THREE.AudioLoader()
 const fbxLoader = new FBXLoader()
 const scene = new THREE.Scene()
 const caster = new THREE.Raycaster()
@@ -62,6 +63,7 @@ var fps = 0
 var frames = 0
 var gamepad
 var clockDelta = 0
+var audioListener
 var bgmSource
 var lastFrameTime = performance.now()
 var audioAuthorized = false
@@ -70,7 +72,6 @@ var bgmGain
 var seGain
 var bgmBuffer
 var dummyCamera
-var animations = []
 var actions = []
 var waitForAnimation, isWalking, isRunning, isRotating, isSteppingBack, isPunching, isKicking, isJumping, isBackingflip, isRolling, isSlashing, isTogglingSword, rotateRightAction, rotateLeftAction
 var bgmVolume = 0.25
@@ -142,6 +143,8 @@ gltfLoader.load('/models/hero/hero.glb',
 		sphere.scale.set(0.8, 0.8, 0.8)
 		hero.add(sphere)
 		hero.collider = sphere
+		hero.audio = []
+		if (audioContext) initHeroAudio()
 	}, xhr => {
 		progress['hero'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -167,7 +170,6 @@ gltfLoader.load('/models/humanoid/humanoid.glb',
 		foe.lookAt(0, 0, -1)
 		foe.scale.set(0.045, 0.045, 0.045)
 		foe.mixer = new THREE.AnimationMixer(foe)
-		foe.audio = []
 		foe.se = null
 		scene.add(foe)
 		loadFoeAnimations()
@@ -178,7 +180,7 @@ gltfLoader.load('/models/humanoid/humanoid.glb',
 		sphere.scale.set(18, 18, 18)
 		foe.add(sphere)
 		foe.collider = sphere
-		if (audioContext) initFoeAudio()
+		if (audioListener) initFoeAudio()
 	}, xhr => {
 		progress['foe'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -443,11 +445,14 @@ function updateCamera() {
 function onFinishActions() {
 	hero.mixer.addEventListener('finished', () => {
 		if (actions.includes('slash')) {
+			playHeroAttackSE()
 			let action = hero.lastAction == inwardSlashAction ? outwardSlashFastAction : inwardSlashAction
 			executeCrossFade(hero, action, 0.25, 'once')
 		} else if (actions.includes('punch')) {
+			playHeroAttackSE()
 			executeCrossFade(hero, hero.lastAction == punchLeftAction ? punchRightAction : punchLeftAction, 0.25, 'once')
 		} else if (actions.includes('kick')) {
+			playHeroAttackSE()
 			executeCrossFade(hero, kickAction, 0.25, 'once')
 		} else if (actions.includes('backflip')) {
 			executeCrossFade(hero, backflipAction, 0.25, 'once')
@@ -503,6 +508,7 @@ function updateActions() {
 	if (!waitForAnimation && s && !isSlashing) {
 		isSlashing = true
 		waitForAnimation = true
+		playHeroAttackSE()
 		executeCrossFade(hero, outwardSlashAction, 0.25, 'once')
 	} else if (!waitForAnimation && p && !isPunching) {
 		isPunching = true
@@ -511,6 +517,7 @@ function updateActions() {
 	} else if (!waitForAnimation && k) {
 		isKicking = true
 		waitForAnimation = true
+		playHeroAttackSE()
 		executeCrossFade(hero, kickAction, 0.25, 'once')
 	} else if (!waitForAnimation && bf && !isBackingflip) {
 		isBackingflip = true
@@ -594,16 +601,21 @@ function randomInt(min, max) {
 function updateFoe() {
 	let check = getDistance(foe, hero)
 	if (foe.isWalking) {
-		if (!foe.se && foe.audio.length > 0) {
-			let i = randomInt(0, foe.audio.length+1)
-			if (foe.audio[i]) foe.se = playSE(foe.audio[i], false, foe)
+		if (!foe.se) {
+			let audios = foe.children.filter(el => el.type == 'Audio')
+			if (!audios.length) return
+			let i = randomInt(0, audios.length-1)
+			if (audios[i] && !audios[i].isPlaying) {
+				audios[i].play()
+				foe.se = audios[i]
+			}
 		}
 		updateObjectFollow(foe, hero, check?.collided)
 	}
-	if (check?.distance < 15 && !foe.isWalking) {
+	if (check?.distance < 120 && !foe.isWalking) {
 		foe.isWalking = true
 		executeCrossFade(foe, foeWalkAction)
-	} else if (check?.distance >= 15 && foe.isWalking) {
+	} else if (check?.distance >= 200 && foe.isWalking) {
 		foe.isWalking = false
 		synchronizeCrossFade(foe, foeIdleAction)
 	}
@@ -906,15 +918,15 @@ function initControls() {
 function initAudio() {
 	audioContext = new AudioContext()
 	bgmGain = audioContext.createGain()
+	bgmGain.gain.value = bgmVolume
 	seGain = audioContext.createGain()
+	seGain.gain.value = seVolume
 	const destination = audioContext.createMediaStreamDestination()
 	bgmGain.connect(audioContext.destination)
-	bgmGain.gain.value = bgmVolume
 	seGain.connect(audioContext.destination)
-	seGain.gain.value = seVolume
 	audio.srcObject = destination.stream
 	audio.play()
-	fetch('/audio/bgm.mp3')
+	fetch('/audio/bgm/bgm.mp3')
 	.then(response => {
 		response.arrayBuffer()
 		.then(buffer => {
@@ -925,40 +937,42 @@ function initAudio() {
 			})
 		})
 	})
-	if (foe && foe.audio.length <= 0) initFoeAudio()
+	audioListener = new THREE.AudioListener()
+	audioListener.setMasterVolume(seVolume)
+	camera.add(audioListener)
+	if (hero && !hero.audio.length) initHeroAudio()
+	if (foe && !foe.children.some(el => el.type == 'Audio')) initFoeAudio()
+}
+
+function initHeroAudio() {
+	for (let i=0; i<=4; i++) {
+		fetch(`/audio/hero/${i}.mp3`)
+		.then(response => {
+			response.arrayBuffer()
+			.then(buffer => {
+				audioContext.decodeAudioData(buffer)
+				.then(audioData => {
+					hero.audio.push(audioData)
+				})
+			})
+		})
+	}
 }
 
 function initFoeAudio() {
-	fetch('/audio/monster/zombie-0.mp3')
-	.then(response => {
-		response.arrayBuffer()
-		.then(buffer => {
-			audioContext.decodeAudioData(buffer)
-			.then(audioData => {
-				foe.audio.push(audioData)
-			})
+	for (let i=0; i<=8; i++) {
+		audioLoader.load(`/audio/monster/homanoid-${i}.mp3`, buffer => {
+			let sound = new THREE.PositionalAudio(audioListener)
+			sound.setBuffer(buffer)
+			sound.setRefDistance(10)
+			sound.setMaxDistance(100)
+			sound.onEnded = () => {
+				sound.stop()
+				foe.se = undefined
+			}
+			foe.add(sound)
 		})
-	})
-	fetch('/audio/monster/zombie-1.mp3')
-	.then(response => {
-		response.arrayBuffer()
-		.then(buffer => {
-			audioContext.decodeAudioData(buffer)
-			.then(audioData => {
-				foe.audio.push(audioData)
-			})
-		})
-	})
-	fetch('/audio/monster/zombie-2.mp3')
-	.then(response => {
-		response.arrayBuffer()
-		.then(buffer => {
-			audioContext.decodeAudioData(buffer)
-			.then(audioData => {
-				foe.audio.push(audioData)
-			})
-		})
-	})
+	}
 }
 
 function playBGM() {
@@ -974,7 +988,15 @@ function playBGM() {
 	}
 }
 
-function playSE(buffer, loop=false, objSrc) {
+function playHeroAttackSE() {
+	if (!hero.audio.length) return
+	let i = randomInt(0, hero.audio.length-1)
+	if (hero.sePlaying) return
+	hero.sePlaying = true
+	playSE(hero.audio[i], false, hero)
+}
+
+function playSE(buffer, loop=false, srcObject) {
 	if (!audioContext || !buffer) return
 	let src = audioContext.createBufferSource()
 	src.buffer = buffer
@@ -983,7 +1005,7 @@ function playSE(buffer, loop=false, objSrc) {
 	src.start(0)
 	src.onended = () => {
 		src.disconnect()
-		if (objSrc) objSrc.se = undefined
+		if (srcObject) srcObject.sePlaying = undefined
 	}
 	return src
 }
@@ -1010,13 +1032,13 @@ document.onvisibilitychange = () => {
 	if (document.hidden) {
 		actions.splice(0)
 		if (bgmGain) bgmGain.gain.value = 0
-		if (seGain) seGain.gain.value = 0
+		if (audioListener) audioListener.setMasterVolume(0)//.gain.value = 0
 		document.querySelectorAll('footer section button').forEach(el => {
 			el.classList.remove('active')
 		})
 	} else {
 		if (bgmGain) bgmGain.gain.value = bgmVolume
-		if (seGain) seGain.gain.value = seVolume
+		if (audioListener) audioListener.setMasterVolume(seVolume)
 	}
 }
 document.body.appendChild(renderer.domElement)
