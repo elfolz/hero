@@ -595,10 +595,8 @@ function updateFoe() {
 	let check = getDistance(foe, hero)
 	if (foe.isWalking) {
 		if (!foe.se && foe.audio.length > 0) {
-			let i = randomInt(0, foe.audio.length+2)
-			if (foe.audio[i]) {
-				foe.se = playSE(foe.audio[i], false, foe)
-			}
+			let i = randomInt(0, foe.audio.length+1)
+			if (foe.audio[i]) foe.se = playSE(foe.audio[i], false, foe)
 		}
 		updateObjectFollow(foe, hero, check?.collided)
 	}
