@@ -66,16 +66,15 @@ var bgmSource
 var lastFrameTime = performance.now()
 var audioAuthorized = false
 var audioContext
-var audioGain
+var bgmGain
+var seGain
 var bgmBuffer
 var dummyCamera
-var heroMixer
-var foeMixer
 var animations = []
 var actions = []
 var waitForAnimation, isWalking, isRunning, isRotating, isSteppingBack, isPunching, isKicking, isJumping, isBackingflip, isRolling, isSlashing, isTogglingSword, rotateRightAction, rotateLeftAction
-var lastAction
-var bgmVolume = 0.5
+var bgmVolume = 0.25
+var seVolume = 1
 var keyboardActive = device.isPC
 var swordEquipped = true
 var gamepadSettings
@@ -105,13 +104,15 @@ dirLight.castShadow = true
 scene.add(hemisphereLight)
 scene.add(dirLight)
 
+var ground
+
 textureLoader.load('/textures/ground.webp', texture => {
 	texture.wrapS = THREE.RepeatWrapping
 	texture.wrapT = THREE.RepeatWrapping
 	texture.encoding = THREE.sRGBEncoding
 	texture.anisotropy = 4
 	texture.repeat.set(parseInt(texture.wrapS / 200), parseInt(texture.wrapT / 200))
-	const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshPhongMaterial({map: texture}))
+	ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshPhongMaterial({map: texture}))
 	ground.rotation.x = - Math.PI / 2
 	ground.receiveShadow = true
 	scene.add(ground)
@@ -129,7 +130,7 @@ gltfLoader.load('/models/hero/hero.glb',
 		dummyCamera.position.set(0, hero.position.y+5, hero.position.z-10)
 		dummyCamera.lookAt(0, 5, 0)
 		hero.add(dummyCamera)
-		heroMixer = new THREE.AnimationMixer(hero)
+		hero.mixer = new THREE.AnimationMixer(hero)
 		dirLight.target = hero
 		scene.add(hero)
 		onFinishActions()
@@ -165,7 +166,9 @@ gltfLoader.load('/models/humanoid/humanoid.glb',
 		foe.position.set(0, 0, 20)
 		foe.lookAt(0, 0, -1)
 		foe.scale.set(0.045, 0.045, 0.045)
-		foeMixer = new THREE.AnimationMixer(foe)
+		foe.mixer = new THREE.AnimationMixer(foe)
+		foe.audio = []
+		foe.se = null
 		scene.add(foe)
 		loadFoeAnimations()
 		let sphere = new THREE.Mesh(
@@ -175,6 +178,7 @@ gltfLoader.load('/models/humanoid/humanoid.glb',
 		sphere.scale.set(18, 18, 18)
 		foe.add(sphere)
 		foe.collider = sphere
+		if (audioContext) initFoeAudio()
 	}, xhr => {
 		progress['foe'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -185,9 +189,9 @@ gltfLoader.load('/models/humanoid/humanoid.glb',
 function loadHeroAnimations() {
 	fbxLoader.load('/models/hero/idle.fbx', fbx => {
 		let animation = fbx.animations[0]
-		idleAction = heroMixer.clipAction(animation)
+		idleAction = hero.mixer.clipAction(animation)
 		idleAction.name = 'idle'
-		lastAction = idleAction
+		hero.lastAction = idleAction
 		idleAction.play()
 	}, xhr => {
 		progress['idle'] = (xhr.loaded / xhr.total) * 100
@@ -196,7 +200,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/walking.fbx', fbx => {
 		let animation = fbx.animations[0]
-		walkAction = heroMixer.clipAction(animation)
+		walkAction = hero.mixer.clipAction(animation)
 		walkAction.name = 'walk'
 	}, xhr => {
 		progress['walking'] = (xhr.loaded / xhr.total) * 100
@@ -205,7 +209,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/walkingBack.fbx', fbx => {
 		let animation = fbx.animations[0]
-		walkBackAction = heroMixer.clipAction(animation)
+		walkBackAction = hero.mixer.clipAction(animation)
 		walkBackAction.name = 'step-back'
 	}, xhr => {
 		progress['walkingBack'] = (xhr.loaded / xhr.total) * 100
@@ -214,7 +218,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/running.fbx', fbx => {
 		let animation = fbx.animations[0]
-		runAction = heroMixer.clipAction(animation)
+		runAction = hero.mixer.clipAction(animation)
 		runAction.name = 'run'
 	}, xhr => {
 		progress['running'] = (xhr.loaded / xhr.total) * 100
@@ -223,7 +227,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/jumping.fbx', fbx => {
 		let animation = fbx.animations[0]
-		jumpAction = heroMixer.clipAction(animation)
+		jumpAction = hero.mixer.clipAction(animation)
 		jumpAction.name = 'jump'
 	}, xhr => {
 		progress['jumping'] = (xhr.loaded / xhr.total) * 100
@@ -232,7 +236,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/jumpingRunning.fbx', fbx => {
 		let animation = fbx.animations[0]
-		jumpRunningAction = heroMixer.clipAction(animation)
+		jumpRunningAction = hero.mixer.clipAction(animation)
 		jumpRunningAction.name = 'jump-running'
 	}, xhr => {
 		progress['jumpingRunning'] = (xhr.loaded / xhr.total) * 100
@@ -241,7 +245,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/backflip.fbx', fbx => {
 		let animation = fbx.animations[0]
-		backflipAction = heroMixer.clipAction(animation)
+		backflipAction = hero.mixer.clipAction(animation)
 		backflipAction.name = 'backflip'
 	}, xhr => {
 		progress['backflip'] = (xhr.loaded / xhr.total) * 100
@@ -250,7 +254,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/punchingRight.fbx', fbx => {
 		let animation = fbx.animations[0]
-		punchRightAction = heroMixer.clipAction(animation)
+		punchRightAction = hero.mixer.clipAction(animation)
 		punchRightAction.name = 'punch-right'
 	}, xhr => {
 		progress['punchingRight'] = (xhr.loaded / xhr.total) * 100
@@ -259,7 +263,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/punchingLeft.fbx', fbx => {
 		let animation = fbx.animations[0]
-		punchLeftAction = heroMixer.clipAction(animation)
+		punchLeftAction = hero.mixer.clipAction(animation)
 		punchLeftAction.name = 'punch-left'
 	}, xhr => {
 		progress['punchingLeft'] = (xhr.loaded / xhr.total) * 100
@@ -268,7 +272,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/kick.fbx', fbx => {
 		let animation = fbx.animations[0]
-		kickAction = heroMixer.clipAction(animation)
+		kickAction = hero.mixer.clipAction(animation)
 		kickAction.name = 'kick'
 	}, xhr => {
 		progress['kick'] = (xhr.loaded / xhr.total) * 100
@@ -277,7 +281,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/rolling.fbx', fbx => {
 		let animation = fbx.animations[0]
-		rollAction = heroMixer.clipAction(animation)
+		rollAction = hero.mixer.clipAction(animation)
 		rollAction.name = 'roll'
 	}, xhr => {
 		progress['roll'] = (xhr.loaded / xhr.total) * 100
@@ -286,7 +290,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/outwardSlash.fbx', fbx => {
 		let animation = fbx.animations[0]
-		outwardSlashAction = heroMixer.clipAction(animation)
+		outwardSlashAction = hero.mixer.clipAction(animation)
 		outwardSlashAction.name = 'outward-slash'
 	}, xhr => {
 		progress['outwardSlash'] = (xhr.loaded / xhr.total) * 100
@@ -295,7 +299,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/outwardSlashFast.fbx', fbx => {
 		let animation = fbx.animations[0]
-		outwardSlashFastAction = heroMixer.clipAction(animation)
+		outwardSlashFastAction = hero.mixer.clipAction(animation)
 		outwardSlashFastAction.name = 'outward-slash-fast'
 	}, xhr => {
 		progress['outwardSlash'] = (xhr.loaded / xhr.total) * 100
@@ -304,7 +308,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/inwardSlash.fbx', fbx => {
 		let animation = fbx.animations[0]
-		inwardSlashAction = heroMixer.clipAction(animation)
+		inwardSlashAction = hero.mixer.clipAction(animation)
 		inwardSlashAction.name = 'inward-slash'
 	}, xhr => {
 		progress['inwardSlash'] = (xhr.loaded / xhr.total) * 100
@@ -313,7 +317,7 @@ function loadHeroAnimations() {
 	})
 	/* fbxLoader.load('/models/hero/withdrawSword.fbx', fbx => {
 		let animation = fbx.animations[0]
-		withdrawSwordAction = heroMixer.clipAction(animation)
+		withdrawSwordAction = hero.mixer.clipAction(animation)
 		withdrawSwordAction.name = 'withdrawSword'
 	}, xhr => {
 		progress['withdrawSword'] = (xhr.loaded / xhr.total) * 100
@@ -322,7 +326,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/sheathSword.fbx', fbx => {
 		let animation = fbx.animations[0]
-		sheathSwordAction = heroMixer.clipAction(animation)
+		sheathSwordAction = hero.mixer.clipAction(animation)
 		sheathSwordAction.name = 'sheathSword'
 	}, xhr => {
 		progress['sheathSword'] = (xhr.loaded / xhr.total) * 100
@@ -331,7 +335,7 @@ function loadHeroAnimations() {
 	}) */
 	/* fbxLoader.load('/models/hero/turningLeft.fbx', fbx => {
 		let animation = fbx.animations[0]
-		rotateLeftAction = heroMixer.clipAction(animation)
+		rotateLeftAction = hero.mixer.clipAction(animation)
 	}, xhr => {
 		progress['turningLeft'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -339,7 +343,7 @@ function loadHeroAnimations() {
 	})
 	fbxLoader.load('/models/hero/turningRight.fbx', fbx => {
 		let animation = fbx.animations[0]
-		rotateRightAction = heroMixer.clipAction(animation)
+		rotateRightAction = hero.mixer.clipAction(animation)
 	}, xhr => {
 		progress['turningRight'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -351,7 +355,8 @@ function loadFoeAnimations() {
 	fbxLoader.load('/models/humanoid/zombieIdle.fbx',
 		fbx => {
 			let animation = fbx.animations[0]
-			foeIdleAction = foeMixer.clipAction(animation)
+			foeIdleAction = foe.mixer.clipAction(animation)
+			foe.lastAction = foeIdleAction
 			foeIdleAction.play()
 		}, xhr => {
 			progress['foe-idle'] = (xhr.loaded / xhr.total) * 100
@@ -362,7 +367,7 @@ function loadFoeAnimations() {
 	fbxLoader.load('/models/humanoid/zombieWalk.fbx',
 		fbx => {
 			let animation = fbx.animations[0]
-			foeWalkAction = foeMixer.clipAction(animation)
+			foeWalkAction = foe.mixer.clipAction(animation)
 		}, xhr => {
 			progress['foe-walk'] = (xhr.loaded / xhr.total) * 100
 		}, error => {
@@ -401,8 +406,8 @@ function animate() {
 	clockDelta += clock.getDelta()
 	if (fpsLimit && clockDelta < fpsLimit) return
 	renderer.render(scene, camera)
-	heroMixer?.update(clockDelta)
-	foeMixer?.update(clockDelta)
+	hero.mixer?.update(clockDelta)
+	foe.mixer?.update(clockDelta)
 	updateFPSCounter()
 	updateCamera()
 	updateActions()
@@ -436,18 +441,18 @@ function updateCamera() {
 }
 
 function onFinishActions() {
-	heroMixer.addEventListener('finished', () => {
+	hero.mixer.addEventListener('finished', () => {
 		if (actions.includes('slash')) {
-			let action = lastAction == inwardSlashAction ? outwardSlashFastAction : inwardSlashAction
-			executeCrossFade(action, 0.25, 'once')
+			let action = hero.lastAction == inwardSlashAction ? outwardSlashFastAction : inwardSlashAction
+			executeCrossFade(hero, action, 0.25, 'once')
 		} else if (actions.includes('punch')) {
-			executeCrossFade(lastAction == punchLeftAction ? punchRightAction : punchLeftAction, 0.25, 'once')
+			executeCrossFade(hero, hero.lastAction == punchLeftAction ? punchRightAction : punchLeftAction, 0.25, 'once')
 		} else if (actions.includes('kick')) {
-			executeCrossFade(kickAction, 0.25, 'once')
+			executeCrossFade(hero, kickAction, 0.25, 'once')
 		} else if (actions.includes('backflip')) {
-			executeCrossFade(backflipAction, 0.25, 'once')
+			executeCrossFade(hero, backflipAction, 0.25, 'once')
 		} else {
-			executeCrossFade(returnAction())
+			executeCrossFade(hero, returnAction())
 		}
 		/* if (isTogglingSword) {
 			swordEquipped = !swordEquipped
@@ -481,7 +486,6 @@ function returnAction() {
 }
 
 function updateActions() {
-	if (document.hidden) return
 	let w = actions.includes('walk')
 	let r = actions.includes('run')
 	let s = actions.includes('slash')
@@ -494,33 +498,33 @@ function updateActions() {
 	let rl = actions.includes('roll')
 	let bf = actions.includes('backflip')
 	let ts = actions.includes('toggle-sword')
-	if (actions.length <= 0) synchronizeCrossFade(idleAction)
+	if (actions.length <= 0) synchronizeCrossFade(hero, idleAction)
 
 	if (!waitForAnimation && s && !isSlashing) {
 		isSlashing = true
 		waitForAnimation = true
-		executeCrossFade(outwardSlashAction, 0.25, 'once')
+		executeCrossFade(hero, outwardSlashAction, 0.25, 'once')
 	} else if (!waitForAnimation && p && !isPunching) {
 		isPunching = true
 		waitForAnimation = true
-		executeCrossFade(punchRightAction, 0.25, 'once')
+		executeCrossFade(hero, punchRightAction, 0.25, 'once')
 	} else if (!waitForAnimation && k) {
 		isKicking = true
 		waitForAnimation = true
-		executeCrossFade(kickAction, 0.25, 'once')
+		executeCrossFade(hero, kickAction, 0.25, 'once')
 	} else if (!waitForAnimation && bf && !isBackingflip) {
 		isBackingflip = true
-		executeCrossFade(backflipAction, 0.25, 'once')
+		executeCrossFade(hero, backflipAction, 0.25, 'once')
 		setTimeout(() => {updateWalk(false, true, 5)}, 250)
 	}
 	if (waitForAnimation || isPunching || isKicking || isBackingflip) return
-	if (actions.includes('turn-left')) hero.rotation.y += r ? 0.025 : 0.01
-	if (actions.includes('turn-right')) hero.rotation.y -= r ? 0.025 : 0.01
+	if (actions.includes('turn-left')) hero.rotation.y += 0.025
+	if (actions.includes('turn-right')) hero.rotation.y -= 0.025
 	if (w && !isWalking) {
 		isWalking = true
-		executeCrossFade(walkAction)
+		executeCrossFade(hero, walkAction)
 	} else if (!w && isWalking) {
-		if (!t) executeCrossFade(idleAction)
+		if (!t) executeCrossFade(hero, idleAction)
 		isWalking = false
 		isRunning = false
 	}
@@ -528,107 +532,115 @@ function updateActions() {
 		updateWalk(r)
 		if (r && !isRunning) {
 			isRunning = true
-			executeCrossFade(runAction)
+			executeCrossFade(hero, runAction)
 		} else if (!r && isRunning) {
-			executeCrossFade(walkAction)
+			executeCrossFade(hero, walkAction)
 			isRunning = false
 		}
 	}
 	if (!waitForAnimation && rl && !isRolling) {
 		isRolling = true
-		executeCrossFade(rollAction, 0.25, 'once')
+		executeCrossFade(hero, rollAction, 0.25, 'once')
 	}
 	if (isRolling) return
 	if (!waitForAnimation && j && !isJumping) {
 		isJumping = true
-		executeCrossFade(w ? jumpRunningAction : jumpAction, 0.25, 'once')
+		executeCrossFade(hero, w ? jumpRunningAction : jumpAction, 0.25, 'once')
 	}
 	if (w || isJumping) return
 	if (sb && !isSteppingBack) {
 		isSteppingBack = true
-		executeCrossFade(walkBackAction)
+		executeCrossFade(hero, walkBackAction)
 	} else if (!sb && isSteppingBack) {
-		executeCrossFade(returnAction())
+		executeCrossFade(hero, returnAction())
 		isSteppingBack = false
 	}
 	if (sb) return updateWalk(false, true, 0.025)
 	if (!isRotating && t) {
 		isRotating = true
-		executeCrossFade(walkAction)
+		executeCrossFade(hero, walkAction)
 	} else if (isRotating && !t) {
-		if (!w) executeCrossFade(returnAction())
+		if (!w) executeCrossFade(hero, returnAction())
 		isRotating = false
 	}
 	/* if (!waitForAnimation && !isTogglingSword && ts) {
 		isTogglingSword = true
 		waitForAnimation = true
-		executeCrossFade(swordEquipped ? sheathSwordAction : withdrawSwordAction, 0.25, 'once')
+		executeCrossFade(hero, swordEquipped ? sheathSwordAction : withdrawSwordAction, 0.25, 'once')
 	} else if (isTogglingSword && !t) {
-		executeCrossFade(returnAction())
+		executeCrossFade(hero, returnAction())
 		isTogglingSword = false
 	} */
 }
 
 function updateWalk(running=false, back=false, speed=0.1, ignoreColision=false) {
-	if (document.hidden) return
-	if (!ignoreColision && collide(hero, foe)) return updateWalk(running, !back, 0.1, true)
-	let dir = camera.getWorldDirection(hero.clone().position)
-	if (back) {
-		dir.x *= -1
-		dir.y *= -1
-		dir.z *= -1
-	}
+	//if (!ignoreColision && collide(hero, foe)) return updateWalk(running, !back, 0.1, true)
+	let dir = camera.getWorldDirection(hero.position.clone())
+	if (back) dir.negate()
 	hero.position.add(dir.multiplyScalar(running ? speed*2.5 : speed))
 }
 
+function updateObjectFollow(src, target, collided, speed=0.001) {
+	let pos = target.position.clone()
+	let step = src.position.clone().sub(pos)
+	src.lookAt(pos)
+	src.position.add(step.multiplyScalar(collided ? speed : speed * -1))
+}
+
+function randomInt(min, max) {
+	return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
 function updateFoe() {
-	/* caster.set(foe.position, foe.getWorldDirection(foe.clone().position).normalize())
-	let intersection = caster.intersectObjects([hero])
-	if (!intersection.length) return
-	if (intersection.distance < 10) return executeCrossFadeFoe(foeWalkAction, foeIdleAction)
-	executeCrossFadeFoe(foeWalkAction, foeWalkAction) */
+	let check = getDistance(foe, hero)
+	if (foe.isWalking) {
+		if (!foe.se && foe.audio.length > 0) {
+			let i = randomInt(0, foe.audio.length+2)
+			if (foe.audio[i]) {
+				foe.se = playSE(foe.audio[i], false, foe)
+			}
+		}
+		updateObjectFollow(foe, hero, check?.collided)
+	}
+	if (check?.distance < 15 && !foe.isWalking) {
+		foe.isWalking = true
+		executeCrossFade(foe, foeWalkAction)
+	} else if (check?.distance >= 15 && foe.isWalking) {
+		foe.isWalking = false
+		synchronizeCrossFade(foe, foeIdleAction)
+	}
 }
 
-function executeCrossFade(newAction, duration=0.25, loop='repeat') {
-	if (!newAction) return
+function executeCrossFade(object, newAction, duration=0.25, loop='repeat') {
+	if (!object.lastAction || !newAction) return
 	if (actions.some(el => ['walk', 'run', 'turn-left', 'turn-right', 'step-back'].includes(el)) && newAction == idleAction) return
-	if (lastAction == newAction) return newAction.reset()
+	if (object.lastAction == newAction) return newAction.reset()
 	newAction.enabled = true
 	newAction.setEffectiveTimeScale(1)
 	newAction.setEffectiveWeight(1)
 	newAction.loop = loop == 'pingpong' ? THREE.LoopPingPong : loop == 'once' ? THREE.LoopOnce : THREE.LoopRepeat
 	newAction.clampWhenFinished = (loop == 'once')
 	if (loop == 'once') newAction.reset()
-	lastAction.crossFadeTo(newAction, duration, true)
+	object.lastAction.crossFadeTo(newAction, duration, true)
 	newAction.play()
-	lastAction = newAction
+	object.lastAction = newAction
 }
 
-function executeCrossFadeFoe(oldAction, newAction, duration=0.25, loop='repeat') {
-	if (!newAction) return
-	newAction.enabled = true
-	newAction.setEffectiveTimeScale(1)
-	newAction.setEffectiveWeight(1)
-	newAction.loop = loop == 'pingpong' ? THREE.LoopPingPong : loop == 'once' ? THREE.LoopOnce : THREE.LoopRepeat
-	newAction.clampWhenFinished = (loop == 'once')
-	if (loop == 'once') newAction.reset()
-	oldAction.crossFadeTo(newAction, duration, true)
-	newAction.play()
-}
-
-function synchronizeCrossFade(newAction, duration, loop='repeat') {
-	heroMixer.addEventListener('loop', onLoopFinished)
+function synchronizeCrossFade(object, newAction, duration=0.25, loop='repeat') {
+	object.mixer.addEventListener('loop', onLoopFinished)
 	function onLoopFinished(event) {
-		waitForAnimation = false
-		isSlashing = false
-		isPunching = false
-		isKicking = false
-		isBackingflip = false
-		isRolling = false
-		isJumping = false
-		if (event.action == lastAction) {
-			heroMixer.removeEventListener('loop', onLoopFinished)
-			executeCrossFade(newAction, duration, loop)
+		if (object.uuid == hero.uuid) {
+			waitForAnimation = false
+			isSlashing = false
+			isPunching = false
+			isKicking = false
+			isBackingflip = false
+			isRolling = false
+			isJumping = false
+		}
+		if (event.action == object.lastAction) {
+			object.mixer.removeEventListener('loop', onLoopFinished)
+			executeCrossFade(object, newAction, duration, loop)
 		}
 	}
 }
@@ -718,7 +730,9 @@ function updateGamepad() {
 	})
 } */
 
-function colisionCheck(a, b) {
+function getDistance(a, b) {
+	if (a.lastCollisionUpdate > (performance.now()-500)) return
+	a.lastCollisionUpdate = performance.now()
 	let verts = a.collider.geometry.attributes.position
 	for (let i = 0; i < verts.count; i++) {
 		let localVertex = vertex.fromBufferAttribute(verts, i)
@@ -726,17 +740,18 @@ function colisionCheck(a, b) {
 		let directionVector = globalVertex.sub(a.position)
 		caster.set(a.position, directionVector.normalize())
 		let collisionResults = caster.intersectObjects([b.collider])
-		if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) return true
+		let collided = collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()
+		if(collisionResults.length > 0) return {distance: collisionResults[0].distance, collided: collided}
 	}
-	return false
+	return {distance: undefined, collided: false}
 }
 function collide(a, b) {
-	let collide = colisionCheck(a, b)
-	if (collide) return true
-	collide = colisionCheck(b, a)
-	if (collide) return true
-	collide = a.position.z==b.position.z&&a.position.x==b.position.x&&a.position.y==b.position.y
-	return collide
+	let distance = getDistance(a, b)
+	if (distance.collided) return true
+	distance = getDistance(b, a)
+	if (distance.collided) return true
+	distance = a.position.z==b.position.z&&a.position.x==b.position.x&&a.position.y==b.position.y
+	return distance
 }
 
 function initControls() {
@@ -892,10 +907,13 @@ function initControls() {
 
 function initAudio() {
 	audioContext = new AudioContext()
-	audioGain = audioContext.createGain()
+	bgmGain = audioContext.createGain()
+	seGain = audioContext.createGain()
 	const destination = audioContext.createMediaStreamDestination()
-	audioGain.connect(audioContext.destination)
-	audioGain.gain.value = bgmVolume
+	bgmGain.connect(audioContext.destination)
+	bgmGain.gain.value = bgmVolume
+	seGain.connect(audioContext.destination)
+	seGain.gain.value = seVolume
 	audio.srcObject = destination.stream
 	audio.play()
 	fetch('/audio/bgm.mp3')
@@ -909,26 +927,40 @@ function initAudio() {
 			})
 		})
 	})
-	/* fetch('/audio/turn.mp3')
+	if (foe && foe.audio.length <= 0) initFoeAudio()
+}
+
+function initFoeAudio() {
+	fetch('/audio/monster/zombie-0.mp3')
 	.then(response => {
 		response.arrayBuffer()
 		.then(buffer => {
 			audioContext.decodeAudioData(buffer)
 			.then(audioData => {
-				seTurnBuffer = audioData
+				foe.audio.push(audioData)
 			})
 		})
 	})
-	fetch('/audio/fly.mp3')
+	fetch('/audio/monster/zombie-1.mp3')
 	.then(response => {
 		response.arrayBuffer()
 		.then(buffer => {
 			audioContext.decodeAudioData(buffer)
 			.then(audioData => {
-				seFlyBuffer = audioData
+				foe.audio.push(audioData)
 			})
 		})
-	}) */
+	})
+	fetch('/audio/monster/zombie-2.mp3')
+	.then(response => {
+		response.arrayBuffer()
+		.then(buffer => {
+			audioContext.decodeAudioData(buffer)
+			.then(audioData => {
+				foe.audio.push(audioData)
+			})
+		})
+	})
 }
 
 function playBGM() {
@@ -936,7 +968,7 @@ function playBGM() {
 	bgmSource = audioContext.createBufferSource()
 	bgmSource.buffer = bgmBuffer
 	bgmSource.loop = true
-	bgmSource.connect(audioGain)
+	bgmSource.connect(bgmGain)
 	bgmSource.start(0)
 	bgmSource.onended = () => {
 		bgmSource.disconnect()
@@ -944,15 +976,17 @@ function playBGM() {
 	}
 }
 
-function playSE(buffer, loop=false) {
-	return
+function playSE(buffer, loop=false, objSrc) {
 	if (!audioContext || !buffer) return
 	let src = audioContext.createBufferSource()
 	src.buffer = buffer
 	src.loop = loop
-	src.connect(audioContext.destination)
+	src.connect(seGain)
 	src.start(0)
-	src.onended = () => src.disconnect()
+	src.onended = () => {
+		src.disconnect()
+		if (objSrc) objSrc.se = undefined
+	}
 	return src
 }
 
@@ -977,12 +1011,14 @@ document.onclick = () => {
 document.onvisibilitychange = () => {
 	if (document.hidden) {
 		actions.splice(0)
-		if (audioGain) audioGain.gain.value = 0
+		if (bgmGain) bgmGain.gain.value = 0
+		if (seGain) seGain.gain.value = 0
 		document.querySelectorAll('footer section button').forEach(el => {
 			el.classList.remove('active')
 		})
 	} else {
-		if (audioGain) audioGain.gain.value = bgmVolume
+		if (bgmGain) bgmGain.gain.value = bgmVolume
+		if (seGain) seGain.gain.value = seVolume
 	}
 }
 document.body.appendChild(renderer.domElement)
