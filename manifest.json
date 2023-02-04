@@ -1,6 +1,6 @@
 {
-	"name": "WebGL",
-	"short_name": "WebGL",
+	"name": "Hero",
+	"short_name": "Hero",
 	"theme_color": "#00cc99",
 	"icons": [
 			{ "src": "/img/icons/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },

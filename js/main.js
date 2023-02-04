@@ -40,7 +40,7 @@ const device = {
 const clock = new THREE.Clock()
 const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true})
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth /window.innerHeight, 0.1, 1000)
-const hemisphereLight = new THREE.HemisphereLight(0xddeeff, 0x0f0e0d, 0.25)
+const hemisphereLight = new THREE.HemisphereLight(0xddeeff, 0x000000, 0.25)
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
 const gltfLoader = new GLTFLoader()
 const textureLoader = new THREE.TextureLoader()
@@ -98,14 +98,14 @@ renderer.outputEncoding = THREE.sRGBEncoding
 renderer.shadowMap.enabled = true
 renderer.physicallyCorrectLights = true
 renderer.setClearColor(0x000000, 0)
+renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFSoftShadowMap
 hemisphereLight.position.set(100, 100, 100)
-dirLight.position.set(0, 100, 100)
+dirLight.position.set(0, 200, 200)
 dirLight.castShadow = true
 
 scene.add(hemisphereLight)
 scene.add(dirLight)
-
-var ground
 
 textureLoader.load('/textures/ground.webp', texture => {
 	texture.wrapS = THREE.RepeatWrapping
@@ -113,7 +113,7 @@ textureLoader.load('/textures/ground.webp', texture => {
 	texture.encoding = THREE.sRGBEncoding
 	texture.anisotropy = 4
 	texture.repeat.set(parseInt(texture.wrapS / 200), parseInt(texture.wrapT / 200))
-	ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshPhongMaterial({map: texture}))
+	let ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshPhongMaterial({map: texture}))
 	ground.rotation.x = - Math.PI / 2
 	ground.receiveShadow = true
 	scene.add(ground)
@@ -447,15 +447,15 @@ function onFinishActions() {
 		if (actions.includes('slash')) {
 			playHeroAttackSE()
 			let action = hero.lastAction == inwardSlashAction ? outwardSlashFastAction : inwardSlashAction
-			executeCrossFade(hero, action, 0.25, 'once')
+			executeCrossFade(hero, action, 0.1, 'once')
 		} else if (actions.includes('punch')) {
 			playHeroAttackSE()
 			executeCrossFade(hero, hero.lastAction == punchLeftAction ? punchRightAction : punchLeftAction, 0.25, 'once')
 		} else if (actions.includes('kick')) {
 			playHeroAttackSE()
-			executeCrossFade(hero, kickAction, 0.25, 'once')
+			executeCrossFade(hero, kickAction, 0.1, 'once')
 		} else if (actions.includes('backflip')) {
-			executeCrossFade(hero, backflipAction, 0.25, 'once')
+			executeCrossFade(hero, backflipAction, 0.1, 'once')
 		} else {
 			executeCrossFade(hero, returnAction())
 		}
@@ -509,19 +509,19 @@ function updateActions() {
 		isSlashing = true
 		waitForAnimation = true
 		playHeroAttackSE()
-		executeCrossFade(hero, outwardSlashAction, 0.25, 'once')
+		executeCrossFade(hero, outwardSlashAction, 0.1, 'once')
 	} else if (!waitForAnimation && p && !isPunching) {
 		isPunching = true
 		waitForAnimation = true
-		executeCrossFade(hero, punchRightAction, 0.25, 'once')
+		executeCrossFade(hero, punchRightAction, 0.1, 'once')
 	} else if (!waitForAnimation && k) {
 		isKicking = true
 		waitForAnimation = true
 		playHeroAttackSE()
-		executeCrossFade(hero, kickAction, 0.25, 'once')
+		executeCrossFade(hero, kickAction, 0.1, 'once')
 	} else if (!waitForAnimation && bf && !isBackingflip) {
 		isBackingflip = true
-		executeCrossFade(hero, backflipAction, 0.25, 'once')
+		executeCrossFade(hero, backflipAction, 0.1, 'once')
 		setTimeout(() => {updateWalk(false, true, 5)}, 250)
 	}
 	if (waitForAnimation || isPunching || isKicking || isBackingflip) return

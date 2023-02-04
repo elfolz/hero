@@ -3,7 +3,7 @@ self.addEventListener('install', event => {
 })
 
 self.addEventListener('fetch', event => {
-	event.respondWith(caches.open('webgl').then(cache => {
+	event.respondWith(caches.open('hero').then(cache => {
 		return cache.match(event.request)
 		.then(cachedResponse => {
 			let cachedFile = cachedResponse?.clone().blob()
