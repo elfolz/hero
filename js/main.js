@@ -450,7 +450,7 @@ function onFinishActions() {
 			executeCrossFade(hero, action, 0.1, 'once')
 		} else if (actions.includes('punch')) {
 			playHeroAttackSE()
-			executeCrossFade(hero, hero.lastAction == punchLeftAction ? punchRightAction : punchLeftAction, 0.25, 'once')
+			executeCrossFade(hero, hero.lastAction == punchLeftAction ? punchRightAction : punchLeftAction, 0.1, 'once')
 		} else if (actions.includes('kick')) {
 			playHeroAttackSE()
 			executeCrossFade(hero, kickAction, 0.1, 'once')
