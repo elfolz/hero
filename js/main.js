@@ -1,6 +1,6 @@
-import * as THREE from '/js/three.module.js'
-import { GLTFLoader } from '/js/gltfLoader.module.js'
-import { FBXLoader } from '/js/fbxLoader.module.js'
+import * as THREE from '/js/modules/three.module.js'
+import { GLTFLoader } from '/js/modules/gltfLoader.module.js'
+import { FBXLoader } from '/js/modules/fbxLoader.module.js'
 import inputSettings from '/js/input.settings.js'
 
 const isLocalhost = ['localhost', '127.0.0.1'].includes(location.hostname)
@@ -29,11 +29,14 @@ const device = {
 	get memory() {
 		return navigator.deviceMemory ?? 0
 	},
+	get cpuCores() {
+		return navigator.hardwareConcurrency ?? 0
+	},
 	get isPC() {
-		return ['windows', 'mac'].includes(this.name)
+		return ['windows', 'mac'].includes(device.name)
 	},
 	get isApple() {
-		return ['iphone', 'ipad', 'mac'].includes(this.name)
+		return ['iphone', 'ipad', 'mac'].includes(device.name)
 	}
 }
 
@@ -57,7 +60,7 @@ var sword
 var foe
 var idleAction, walkAction, walkBackAction, runAction, jumpAction, jumpRunningAction, punchRightAction, punchLeftAction, kickAction, backflipAction, rollAction, outwardSlashAction, outwardSlashFastAction, inwardSlashAction, withdrawSwordAction, sheathSwordAction, foeIdleAction, foeWalkAction
 
-var fpsLimit = device.isPC ? null : (window.devicePixelRatio > 2 || device.memory >= 4 || device.isApple) ? 1 / 60 : 1 / 30
+var fpsLimit = device.isPC ? null : (device.cpuCores >= 4 || device.isApple) ? 1 / 60 : 1 / 30
 var gameStarted = false
 var fps = 0
 var frames = 0
@@ -79,6 +82,7 @@ var seVolume = 1
 var keyboardActive = device.isPC
 var swordEquipped = true
 var gamepadSettings
+var ground
 
 var progress = new Proxy({}, {
 	set: function(target, key, value) {
@@ -113,7 +117,7 @@ textureLoader.load('/textures/ground.webp', texture => {
 	texture.encoding = THREE.sRGBEncoding
 	texture.anisotropy = 4
 	texture.repeat.set(parseInt(texture.wrapS / 200), parseInt(texture.wrapT / 200))
-	let ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshPhongMaterial({map: texture}))
+	ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshPhongMaterial({map: texture}))
 	ground.rotation.x = - Math.PI / 2
 	ground.receiveShadow = true
 	scene.add(ground)
@@ -140,6 +144,7 @@ gltfLoader.load('/models/hero/hero.glb',
 			new THREE.SphereGeometry(),
 			new THREE.MeshBasicMaterial({transparent: true, opacity: 0})
 		)
+		sphere.name = 'collider'
 		sphere.scale.set(0.8, 0.8, 0.8)
 		hero.add(sphere)
 		hero.collider = sphere
@@ -177,6 +182,7 @@ gltfLoader.load('/models/humanoid/humanoid.glb',
 			new THREE.SphereGeometry(),
 			new THREE.MeshBasicMaterial({transparent: true, opacity: 0})
 		)
+		sphere.name = 'collider'
 		sphere.scale.set(18, 18, 18)
 		foe.add(sphere)
 		foe.collider = sphere
@@ -398,7 +404,10 @@ function initGame() {
 function resizeScene() {
 	camera.aspect = window.innerWidth /window.innerHeight
 	camera.updateProjectionMatrix()
-	if (device.isPC && device.memory >= 8) renderer.setPixelRatio(window.devicePixelRatio)
+	let pixelRatio = 1
+	if (window.devicePixelRatio > 1 && device.cpuCores >= 4 && device.memory >= 6) pixelRatio = window.devicePixelRatio
+	else if (device.cpuCores < 4 || device.memory < 6) pixelRatio = 0.5
+	renderer.setPixelRatio(pixelRatio)
 	renderer.setSize(window.innerWidth,window.innerHeight)
 }
 
@@ -447,7 +456,7 @@ function onFinishActions() {
 		if (actions.includes('slash')) {
 			playHeroAttackSE()
 			let action = hero.lastAction == inwardSlashAction ? outwardSlashFastAction : inwardSlashAction
-			executeCrossFade(hero, action, 0.1, 'once')
+			executeCrossFade(hero, action, 0.175, 'once')
 		} else if (actions.includes('punch')) {
 			playHeroAttackSE()
 			executeCrossFade(hero, hero.lastAction == punchLeftAction ? punchRightAction : punchLeftAction, 0.1, 'once')
