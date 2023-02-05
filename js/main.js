@@ -621,7 +621,7 @@ function updateFoe() {
 		}
 		updateObjectFollow(foe, hero, check?.collided)
 	}
-	if (check?.distance < 120 && !foe.isWalking) {
+	if (check?.distance < 200 && !foe.isWalking) {
 		foe.isWalking = true
 		executeCrossFade(foe, foeWalkAction)
 	} else if (check?.distance >= 200 && foe.isWalking) {
