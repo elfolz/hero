@@ -58,9 +58,9 @@ const keysPressed = {}
 var hero
 var sword
 var foe
-var idleAction, walkAction, walkBackAction, runAction, jumpAction, jumpRunningAction, punchRightAction, punchLeftAction, kickAction, backflipAction, rollAction, outwardSlashAction, outwardSlashFastAction, inwardSlashAction, withdrawSwordAction, sheathSwordAction, foeIdleAction, foeWalkAction
+var idleAction, walkAction, walkBackAction, runAction, jumpAction, jumpRunningAction, punchRightAction, punchLeftAction, kickAction, backflipAction, rollAction, outwardSlashAction, outwardSlashFastAction, inwardSlashAction, withdrawSwordAction, sheathSwordAction, foeIdleAction, foeWalkAction, foeAttackAction, stomachHitAction
 
-var fpsLimit = device.isPC ? null : (device.cpuCores >= 4 || device.isApple) ? 1 / 60 : 1 / 30
+var fpsLimit = 1/60 //device.isPC ? null : (device.cpuCores >= 4 || device.isApple) ? 1 / 60 : 1 / 30
 var gameStarted = false
 var fps = 0
 var frames = 0
@@ -68,21 +68,27 @@ var gamepad
 var clockDelta = 0
 var audioListener
 var bgmSource
+var meSource
 var lastFrameTime = performance.now()
 var audioAuthorized = false
 var audioContext
 var bgmGain
 var seGain
 var bgmBuffer
+var gameoverBuffer
 var dummyCamera
 var actions = []
-var waitForAnimation, isWalking, isRunning, isRotating, isSteppingBack, isPunching, isKicking, isJumping, isBackingflip, isRolling, isSlashing, isTogglingSword, rotateRightAction, rotateLeftAction
+var waitForAnimation, isWalking, isRunning, isRotating, isSteppingBack, isPunching, isKicking, isJumping, isBackingflip, isRolling, isSlashing, isHit, isTogglingSword, rotateRightAction, rotateLeftAction
 var bgmVolume = 0.25
 var seVolume = 1
 var keyboardActive = device.isPC
 var swordEquipped = true
 var gamepadSettings
 var ground
+var hpbarWidth
+var heroMaxHp = 100
+var heroHp = 100
+var gameover = false
 
 var progress = new Proxy({}, {
 	set: function(target, key, value) {
@@ -90,7 +96,7 @@ var progress = new Proxy({}, {
 		let values = Object.values(target).slice()
 		let progressbar = document.querySelector('progress')
 		let total = values.reduce((a, b) => a + b, 0)
-		total = total / 18
+		total = total / 20
 		if (progressbar) progressbar.value = parseInt(total || 0)
 		if (total >= 100) setTimeout(() => initGame(), 500)
 		return true
@@ -130,7 +136,10 @@ gltfLoader.load('/models/hero/hero.glb',
 	gltf => {
 		hero = gltf.scene
 		hero.encoding = THREE.sRGBEncoding
-		hero.traverse(el => {if (el.isMesh) el.castShadow = true})
+		hero.traverse(el => {
+			if (el.isMesh) el.castShadow = true
+			//if (el.isBone) console.log(el)
+		})
 		dummyCamera = camera.clone()
 		dummyCamera.position.set(0, hero.position.y+5, hero.position.z-10)
 		dummyCamera.lookAt(0, 5, 0)
@@ -148,7 +157,17 @@ gltfLoader.load('/models/hero/hero.glb',
 		sphere.scale.set(0.8, 0.8, 0.8)
 		hero.add(sphere)
 		hero.collider = sphere
-		hero.audio = []
+		let cylinder = new THREE.Mesh(
+			new THREE.CylinderGeometry(),
+			new THREE.MeshBasicMaterial({transparent: true, opacity: 0})
+		)
+		cylinder.name = 'chest'
+		cylinder.rotation.x = (Math.PI / 2) - 0.25
+		cylinder.position.z -= 4.8
+		cylinder.scale.set(0.6, 2.5, 0.6)
+		hero.chest = cylinder
+		hero.getObjectByName('mixamorigSpine1').attach(cylinder)
+		hero.audio = {}
 		if (audioContext) initHeroAudio()
 	}, xhr => {
 		progress['hero'] = (xhr.loaded / xhr.total) * 100
@@ -170,7 +189,10 @@ gltfLoader.load('/models/humanoid/humanoid.glb',
 	gltf => {
 		foe = gltf.scene
 		foe.encoding = THREE.sRGBEncoding
-		foe.traverse(el => {if (el.isMesh) el.castShadow = true})
+		foe.traverse(el => {
+			if (el.isMesh) el.castShadow = true
+			//if (el.isBone) console.log(el)
+		})
 		foe.position.set(0, 0, 20)
 		foe.lookAt(0, 0, -1)
 		foe.scale.set(0.045, 0.045, 0.045)
@@ -186,6 +208,29 @@ gltfLoader.load('/models/humanoid/humanoid.glb',
 		sphere.scale.set(18, 18, 18)
 		foe.add(sphere)
 		foe.collider = sphere
+		let cylinder = new THREE.Mesh(
+			new THREE.CylinderGeometry(),
+			new THREE.MeshBasicMaterial({transparent: true, opacity: 0})
+		)
+		cylinder.name = 'chest'
+		cylinder.rotation.x = (Math.PI / 2)
+		cylinder.position.z += 24.8
+		cylinder.scale.set(0.6, 2.5, 0.6)
+		foe.chest = cylinder
+		foe.getObjectByName('mixamorigSpine1').attach(cylinder)
+
+		let hand = new THREE.Mesh(
+			new THREE.SphereGeometry(),
+			new THREE.MeshBasicMaterial({transparent: true, opacity: 0})
+		)
+		hand.name = 'hand'
+		hand.rotation.x = (Math.PI / 2)
+		hand.position.x += 0.85
+		hand.position.y += 0.5
+		hand.position.z += 23.3
+		hand.scale.set(0.35, 0.35, 0.35)
+		foe.hand = hand
+		foe.getObjectByName('mixamorigHead').attach(hand)
 		if (audioListener) initFoeAudio()
 	}, xhr => {
 		progress['foe'] = (xhr.loaded / xhr.total) * 100
@@ -323,6 +368,15 @@ function loadHeroAnimations() {
 	}, error => {
 		console.error(error)
 	})
+	fbxLoader.load('/models/hero/stomachHit.fbx', fbx => {
+		let animation = fbx.animations[0]
+		stomachHitAction = hero.mixer.clipAction(animation)
+		stomachHitAction.name = 'stomach-hit'
+	}, xhr => {
+		progress['stomachHit'] = (xhr.loaded / xhr.total) * 100
+	}, error => {
+		console.error(error)
+	})
 	/* fbxLoader.load('/models/hero/withdrawSword.fbx', fbx => {
 		let animation = fbx.animations[0]
 		withdrawSwordAction = hero.mixer.clipAction(animation)
@@ -382,23 +436,16 @@ function loadFoeAnimations() {
 			console.error(error)
 		}
 	)
-}
-
-function initGame() {
-	if (gameStarted) return
-	gameStarted = true
-	document.body.classList.add('loaded')
-	document.body.removeChild(document.querySelector('figure'))
-	document.querySelector('header').style.removeProperty('display')
-	if (localStorage.getItem('bgm') == 'false') {
-		document.querySelector('#menu-button-music-on').classList.remove('off')
-		document.querySelector('#menu-button-music-off').classList.add('off')
-	}
-	if (!device.isPC) document.querySelectorAll('footer').forEach(el => el.style.removeProperty('display'))
-	hero.getObjectByName('mixamorigRightHand').attach(sword)
-	initControls()
-	resizeScene()
-	animate()
+	fbxLoader.load('/models/humanoid/zombieAttack.fbx',
+		fbx => {
+			let animation = fbx.animations[0]
+			foeAttackAction = foe.mixer.clipAction(animation)
+		}, xhr => {
+			progress['foe-hit'] = (xhr.loaded / xhr.total) * 100
+		}, error => {
+			console.error(error)
+		}
+	)
 }
 
 function resizeScene() {
@@ -413,7 +460,7 @@ function resizeScene() {
 
 function animate() {
 	requestAnimationFrame(animate)
-	if (document.hidden) return
+	if (document.hidden || gameover) return
 	clockDelta += clock.getDelta()
 	if (fpsLimit && clockDelta < fpsLimit) return
 	renderer.render(scene, camera)
@@ -486,6 +533,11 @@ function onFinishActions() {
 		isRolling = false
 		isJumping = false
 		isTogglingSword = false
+	})
+	foe.mixer.addEventListener('finished', e => {
+		foe.waitForAnimation = false
+		foe.isAttacking = false
+		executeCrossFade(foe, foeWalkAction)
 	})
 }
 
@@ -609,6 +661,20 @@ function randomInt(min, max) {
 
 function updateFoe() {
 	let check = getDistance(foe, hero)
+	if (check?.distance <= 2.5 && !foe.isAttacking) {
+		foe.isAttacking = true
+		foe.waitForAnimation = true
+		executeCrossFade(foe, foeAttackAction, 0.1, 'once')
+		let delay = fpsLimit ? fpsLimit * 100 * 500 : 500
+		setTimeout(() => {
+			waitForAnimation = true
+			heroHp -= 10
+			refreshHPBar()
+			playHeroDamageSE()
+			executeCrossFade(hero, stomachHitAction, 0.1, 'once')
+		}, delay)
+	}
+	if (foe.waitForAnimation) return
 	if (foe.isWalking) {
 		if (!foe.se) {
 			let audios = foe.children.filter(el => el.type == 'Audio')
@@ -762,15 +828,34 @@ function getDistance(a, b) {
 		let collided = collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()
 		if(collisionResults.length > 0) return {distance: collisionResults[0].distance, collided: collided}
 	}
-	return {distance: undefined, collided: false}
+	return getDistance(b, a)//{distance: undefined, collided: false}
 }
 function collide(a, b) {
 	let distance = getDistance(a, b)
-	if (distance.collided) return true
-	distance = getDistance(b, a)
-	if (distance.collided) return true
+	if (distance?.collided) return true
+	/* distance = getDistance(b, a)
+	if (distance?.collided) return true */
 	distance = a.position.z==b.position.z&&a.position.x==b.position.x&&a.position.y==b.position.y
 	return distance
+}
+
+function initGame() {
+	if (gameStarted) return
+	gameStarted = true
+	document.body.classList.add('loaded')
+	document.body.removeChild(document.querySelector('figure'))
+	document.querySelector('header').style.removeProperty('display')
+	if (localStorage.getItem('bgm') == 'false') {
+		document.querySelector('#menu-button-music-on').classList.remove('off')
+		document.querySelector('#menu-button-music-off').classList.add('off')
+	}
+	if (!device.isPC) document.querySelectorAll('footer').forEach(el => el.style.removeProperty('display'))
+	hero.getObjectByName('mixamorigRightHand').attach(sword)
+	hpbarWidth = document.querySelector('#hpbar').clientWidth - 4
+	refreshHPBar()
+	initControls()
+	resizeScene()
+	animate()
 }
 
 function initControls() {
@@ -946,22 +1031,44 @@ function initAudio() {
 			})
 		})
 	})
+	fetch('/audio/me/gameover.mp3')
+	.then(response => {
+		response.arrayBuffer()
+		.then(buffer => {
+			audioContext.decodeAudioData(buffer)
+			.then(audioData => {
+				gameoverBuffer = audioData
+			})
+		})
+	})
 	audioListener = new THREE.AudioListener()
 	audioListener.setMasterVolume(seVolume)
 	camera.add(audioListener)
-	if (hero && !hero.audio.length) initHeroAudio()
+	if (hero && !Object.keys(hero.audio).length) initHeroAudio()
 	if (foe && !foe.children.some(el => el.type == 'Audio')) initFoeAudio()
 }
 
 function initHeroAudio() {
+	hero.audio.attack = []
+	hero.audio.damage = []
 	for (let i=0; i<=4; i++) {
-		fetch(`/audio/hero/${i}.mp3`)
+		fetch(`/audio/hero/attack/${i}.mp3`)
 		.then(response => {
 			response.arrayBuffer()
 			.then(buffer => {
 				audioContext.decodeAudioData(buffer)
 				.then(audioData => {
-					hero.audio.push(audioData)
+					hero.audio.attack.push(audioData)
+				})
+			})
+		})
+		fetch(`/audio/hero/damage/${i}.mp3`)
+		.then(response => {
+			response.arrayBuffer()
+			.then(buffer => {
+				audioContext.decodeAudioData(buffer)
+				.then(audioData => {
+					hero.audio.damage.push(audioData)
 				})
 			})
 		})
@@ -985,24 +1092,48 @@ function initFoeAudio() {
 }
 
 function playBGM() {
-	if (!audioContext || !bgmBuffer || localStorage.getItem('bgm') == 'false') return
+	if (gameover || !audioContext || !bgmBuffer) return
 	bgmSource = audioContext.createBufferSource()
 	bgmSource.buffer = bgmBuffer
 	bgmSource.loop = true
 	bgmSource.connect(bgmGain)
-	bgmSource.start(0)
+	if (localStorage.getItem('bgm') !== 'false') bgmSource.start(0)
 	bgmSource.onended = () => {
 		bgmSource.disconnect()
 		bgmSource = undefined
 	}
 }
 
+function playME(buffer) {
+	if (!buffer) return
+	bgmSource?.stop()
+	meSource = audioContext.createBufferSource()
+	meSource.buffer = buffer
+	meSource.connect(bgmGain)
+	bgmGain.gain.value = 0.8
+	meSource.start(0)
+	meSource.onended = () => {
+		bgmGain.gain.value = document.hidden ? 0 : bgmVolume
+		meSource.disconnect()
+		meSource = undefined
+		playBGM()
+	}
+}
+
 function playHeroAttackSE() {
-	if (!hero.audio.length) return
-	let i = randomInt(0, hero.audio.length-1)
+	if (!hero.audio.attack) return
+	let i = randomInt(0, hero.audio.attack.length-1)
 	if (hero.sePlaying) return
 	hero.sePlaying = true
-	playSE(hero.audio[i], false, hero)
+	playSE(hero.audio.attack[i], false, hero)
+}
+
+function playHeroDamageSE() {
+	if (!hero.audio.damage) return
+	let i = randomInt(0, hero.audio.damage.length-1)
+	if (hero.sePlaying) return
+	hero.sePlaying = true
+	playSE(hero.audio.damage[i], false, hero)
 }
 
 function playSE(buffer, loop=false, srcObject) {
@@ -1017,6 +1148,21 @@ function playSE(buffer, loop=false, srcObject) {
 		if (srcObject) srcObject.sePlaying = undefined
 	}
 	return src
+}
+
+function refreshHPBar() {
+	let barWidth = heroHp * hpbarWidth / heroMaxHp
+	document.querySelector('#hpbar').style.setProperty('--hp-width', `${barWidth}px`)
+	if (heroHp <= 0 && !gameover) {
+		playME(gameoverBuffer)
+		let delay = fpsLimit ? 500 * fpsLimit * 100 : 500
+		setTimeout(() => {
+			document.querySelector('#gameover').classList.add('show')
+			document.querySelector('header').style.setProperty('display', 'none')
+			document.querySelectorAll('footer').forEach(el => el.style.setProperty('display', 'none'))
+			gameover = true
+		}, delay)
+	}
 }
 
 window.onresize = () => resizeScene()
