@@ -1175,8 +1175,8 @@ document.onclick = () => {
 	document.querySelector('#menu-config').classList.remove('opened')
 	if ('requestFullscreen' in document.documentElement && !device.isPC) {
 		document.documentElement.requestFullscreen()
-		.then(() => {return screen?.orientation.lock('landscape')})
-		.catch(e => {})
+		/* .then(() => {return screen?.orientation.lock('landscape')})
+		.catch(e => {}) */
 	}
 	if (!audioAuthorized) {
 		audioAuthorized = true
