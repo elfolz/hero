@@ -968,40 +968,30 @@ function initControls() {
 		actions.splice(actions.findIndex(el => el == 'turn-right'), 1)
 	}
 	/* document.querySelector('#button-roll').ontouchstart = e => {
-		e.stopPropagation()
-		e.preventDefault()
 		if (!actions.includes('roll')) actions.push('roll')
 	}
 	document.querySelector('#button-roll').ontouchend = () => {
 		actions.splice(actions.findIndex(el => el == 'roll'), 1)
 	} */
 	document.querySelector('#button-run').ontouchstart = e => {
-		e.stopPropagation()
-		e.preventDefault()
 		if (!actions.includes('run')) actions.push('run')
 	}
 	document.querySelector('#button-run').ontouchend = () => {
 		actions.splice(actions.findIndex(el => el == 'run'), 1)
 	}
 	document.querySelector('#button-attack').ontouchstart = e => {
-		e.stopPropagation()
-		e.preventDefault()
 		if (!actions.includes('slash')) actions.push('slash')
 	}
 	document.querySelector('#button-attack').ontouchend = () => {
 		actions.splice(actions.findIndex(el => el == 'punch'), 1)
 	}
 	document.querySelector('#button-kick').ontouchstart = e => {
-		e.stopPropagation()
-		e.preventDefault()
 		if (!actions.includes('kick')) actions.push('kick')
 	}
 	document.querySelector('#button-kick').ontouchend = () => {
 		actions.splice(actions.findIndex(el => el == 'kick'), 1)
 	}
 	document.querySelector('#button-jump').ontouchstart = e => {
-		e.stopPropagation()
-		e.preventDefault()
 		if (!actions.includes('jump')) actions.push('jump')
 	}
 	document.querySelector('#button-jump').ontouchend = () => {

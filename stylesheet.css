@@ -107,29 +107,6 @@ header section span label {
 header section span.off {
 	display: none;
 }
-header main {
-	position: relative;
-	width: 300px;
-	height: 22px;
-	border-radius: 4px;
-	margin-right: 12px;
-	background: linear-gradient(#353839, #555, #353839);
-	overflow: hidden;
-	box-shadow: rgba(0,0,0,0.5);
-	z-index: 0;
-}
-header main:after {
-	position: absolute;
-	content: "";
-	top: 2px;
-	left: 2px;
-	width: var(--hp-width);
-	height: calc(100% - 4px);
-	border-radius: 4px;
-	background: linear-gradient(#480607, #92000a, #480607);
-	z-index: 1;
-	transition: width 250ms ease-in-out;
-}
 footer {
 	position: fixed;
 	bottom: 24px;
@@ -216,9 +193,31 @@ footer:last-of-type section button:nth-of-type(4) {
 }
 #fps {
 	position: absolute;
-	top: calc(24px + env(safe-area-inset-top, 0));
+	top: calc(12px + env(safe-area-inset-top, 0));
 	right: 12px;
 	z-index: 5;
+}
+#hpbar {
+	position: relative;
+	height: 22px;
+	border-radius: 4px;
+	margin-right: 12px;
+	background: linear-gradient(#353839, #555, #353839);
+	overflow: hidden;
+	box-shadow: rgba(0,0,0,0.5);
+	z-index: 0;
+}
+#hpbar:after {
+	position: absolute;
+	content: "";
+	top: 2px;
+	left: 2px;
+	width: var(--hp-width);
+	height: calc(100% - 4px);
+	border-radius: 4px;
+	background: linear-gradient(#480607, #92000a, #480607);
+	z-index: 1;
+	transition: width 250ms ease-in-out;
 }
 #gameover {
 	position: fixed;
@@ -261,5 +260,15 @@ footer:last-of-type section button:nth-of-type(4) {
 @media (orientation: landscape) {
 	body {
 		background-position: center;
+	}
+}
+@media screen and (max-width: 500px) {
+	#hpbar {
+		width: calc(100vw - 80px - 24px - 48px);
+	}
+}
+@media screen and (min-width: 501px) {
+	#hpbar {
+		width: 300px;
 	}
 }
