@@ -85,7 +85,6 @@ var keyboardActive = device.isPC
 var swordEquipped = true
 var gamepadSettings
 var ground
-var hpbarWidth
 var heroMaxHp = 100
 var heroHp = 100
 var gameover = false
@@ -451,6 +450,7 @@ function loadFoeAnimations() {
 function resizeScene() {
 	camera.aspect = window.innerWidth /window.innerHeight
 	camera.updateProjectionMatrix()
+	refreshHPBar()
 	let pixelRatio = 1
 	if (window.devicePixelRatio > 1 && device.cpuCores >= 4 && device.memory >= 6) pixelRatio = window.devicePixelRatio
 	else if (device.cpuCores < 4 || device.memory < 6) pixelRatio = 0.5
@@ -482,9 +482,10 @@ function updateFPSCounter() {
 		let ctx = document.querySelector('#fps').getContext('2d')
 		ctx.font = 'bold 20px sans-serif'
 		ctx.textAlign = 'end'
+		ctx.textBaseline = 'middle'
 		ctx.fillStyle = 'rgba(255,255,255,0.25)'
 		ctx.clearRect(0, 0, 80, 20)
-		ctx.fillText(`${fps} FPS`, 80, 20)
+		ctx.fillText(`${fps} FPS`, 80, 10)
 	}
 	lastFrameTime = performance.now()
 	frames = 0
@@ -851,7 +852,6 @@ function initGame() {
 	}
 	if (!device.isPC) document.querySelectorAll('footer').forEach(el => el.style.removeProperty('display'))
 	hero.getObjectByName('mixamorigRightHand').attach(sword)
-	hpbarWidth = document.querySelector('#hpbar').clientWidth - 4
 	refreshHPBar()
 	initControls()
 	resizeScene()
@@ -908,6 +908,12 @@ function initControls() {
 		document.querySelector('#menu-button-music-on').classList.add('off')
 		document.querySelector('#menu-button-music-off').classList.remove('off')
 		playBGM()
+	}
+	document.querySelector('#menu-button-gamepad').onclick = e => {
+		document.querySelector('#dialog-controller').classList.add('opened')
+	}
+	document.querySelector('#close-dialog-controller').onclick = e => {
+		document.querySelector('#dialog-controller').classList.remove('opened')
 	}
 	const buttonForward = document.querySelector('#button-forward')
 	buttonForward.ontouchmove = e => {
@@ -1141,6 +1147,7 @@ function playSE(buffer, loop=false, srcObject) {
 }
 
 function refreshHPBar() {
+	let hpbarWidth = document.querySelector('#hpbar').clientWidth - 4
 	let barWidth = heroHp * hpbarWidth / heroMaxHp
 	document.querySelector('#hpbar').style.setProperty('--hp-width', `${barWidth}px`)
 	if (heroHp <= 0 && !gameover) {

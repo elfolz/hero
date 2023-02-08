@@ -28,7 +28,7 @@ function fetchNewData(event, cache, cachedFile) {
 		if (cachedFile && event.clientId) {
 			networkResponse.clone().blob()
 			.then(response => {
-				if (response.size == cachedFile.size) return
+				if (response.size === cachedFile.size) return
 				self.clients.get(event.clientId)
 				.then(client => {
 					client?.postMessage('update')
