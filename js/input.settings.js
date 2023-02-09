@@ -14,7 +14,7 @@ export default {
 			LB: 4,
 			LT: 6,
 			MENU: 9,
-			WIND: 8,
+			OPT: 8,
 			XAxes: 0,
 			YAxes: 1
 		},
@@ -32,12 +32,13 @@ export default {
 			LB: 4,
 			LT: 6,
 			MENU: 9,
-			WIND: 8,
+			OPT: 8,
 			XAxes: 0,
 			YAxes: 1
 		}
 	},
 	keyboard: {
+		keyPause: 27,
 		keyPunch: 80,
 		keySlash: 13,
 		keyKick: 75,

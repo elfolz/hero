@@ -272,8 +272,33 @@ footer:last-of-type section button:nth-of-type(4) {
 	font-family: Amika;
 	font-size: 4.5rem;
   font-weight: bold;
+	text-shadow: 0 0 10px rgba(0, 0, 0, 0.75);
 	color: #92000a;
 	white-space: nowrap;
+}
+#glass {
+	position: fixed;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-family: Amika;
+	font-size: 4.5rem;
+	color: #fff;
+	text-shadow: 0 0 10px rgba(0, 0, 0, 0.75);
+	background-color: var(--color-bg);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	z-index: -2;
+	opacity: 0;
+	transition: all 250ms ease-in-out;
+}
+#glass.opened {
+	z-index: 200;
+	opacity: 1;
 }
 @keyframes fadein {
 	from {
@@ -301,32 +326,36 @@ footer:last-of-type section button:nth-of-type(4) {
 		width: 90vw;
 	}
 	#dialog-controller label:nth-of-type(1) {
-		top: 49%;
-		left: 18%;
+		top: 51%;
+		left: 19%;
 	}
 	#dialog-controller label:nth-of-type(2) {
-		top: 52%;
-		right: 19%;
+		top: 45%;
+		right: 16%;
 	}
 	#dialog-controller label:nth-of-type(3) {
 		top: 37%;
-		right: 3%;
+		right: 12%;
 	}
 	#dialog-controller label:nth-of-type(4) {
 		top: 37%;
-		right: 38%;
+		right: 25%;
 	}
 	#dialog-controller label:nth-of-type(5) {
-		top: 21%;
-		right: 19%;
+		top: 30%;
+		right: 15%;
 	}
 	#dialog-controller label:nth-of-type(6) {
-		top: 14%;
-		right: 13%;
+		top: 16%;
+		right: 16%;
 	}
 	#dialog-controller label:nth-of-type(7) {
-		top: 14%;
-		left: 13%;
+		top: 16%;
+		left: 18%;
+	}
+	#dialog-controller label:nth-of-type(8) {
+		top: 37%;
+		right: 38%;
 	}
 }
 @media screen and (min-width: 501px) {
@@ -337,31 +366,35 @@ footer:last-of-type section button:nth-of-type(4) {
 		width: 500px;
 	}
 	#dialog-controller label:nth-of-type(1) {
-		top: 49%;
-		left: 18%;
+		top: 50%;
+		left: 22%;
 	}
 	#dialog-controller label:nth-of-type(2) {
-		top: 52%;
-		right: 21%;
+		top: 44%;
+		right: 18%;
 	}
 	#dialog-controller label:nth-of-type(3) {
 		top: 35%;
-		right: 6%;
+		right: 13%;
 	}
 	#dialog-controller label:nth-of-type(4) {
 		top: 35%;
-		right: 38%;
+		right: 26%;
 	}
 	#dialog-controller label:nth-of-type(5) {
-		top: 18%;
-		right: 21%;
+		top: 27%;
+		right: 17%;
 	}
 	#dialog-controller label:nth-of-type(6) {
-		top: 12%;
-		right: 15%;
+		top: 14%;
+		right: 19%;
 	}
 	#dialog-controller label:nth-of-type(7) {
-		top: 12%;
-		left: 15%;
+		top: 14%;
+		left: 21%;
+	}
+	#dialog-controller label:nth-of-type(8) {
+		top: 35%;
+		right: 39%;
 	}
 }

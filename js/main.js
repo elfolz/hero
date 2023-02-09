@@ -88,6 +88,8 @@ var ground
 var heroMaxHp = 100
 var heroHp = 100
 var gameover = false
+var pause = false
+var pauseLastUpdate
 
 var progress = new Proxy({}, {
 	set: function(target, key, value) {
@@ -460,7 +462,9 @@ function resizeScene() {
 
 function animate() {
 	requestAnimationFrame(animate)
-	if (document.hidden || gameover) return
+	if (document.hidden) return
+	updateGamepad()
+	if (pause|| gameover) return
 	clockDelta += clock.getDelta()
 	if (fpsLimit && clockDelta < fpsLimit) return
 	renderer.render(scene, camera)
@@ -469,7 +473,6 @@ function animate() {
 	updateFPSCounter()
 	updateCamera()
 	updateActions()
-	updateGamepad()
 	updateFoe()
 	clockDelta = fpsLimit ? clockDelta % fpsLimit : clockDelta % (1 / Math.max(fps, 30))
 }
@@ -666,14 +669,13 @@ function updateFoe() {
 		foe.isAttacking = true
 		foe.waitForAnimation = true
 		executeCrossFade(foe, foeAttackAction, 0.1, 'once')
-		let delay = fpsLimit ? fpsLimit * 100 * 500 : 500
 		setTimeout(() => {
 			waitForAnimation = true
 			heroHp -= 10
 			refreshHPBar()
 			playHeroDamageSE()
 			executeCrossFade(hero, stomachHitAction, 0.1, 'once')
-		}, delay)
+		}, fpsLimit ? fpsLimit * 100 * 500 : 500)
 	}
 	if (foe.waitForAnimation) return
 	if (foe.isWalking) {
@@ -797,6 +799,12 @@ function updateGamepad() {
 	} else if (actions.includes('kick')) {
 		actions.splice(actions.findIndex(el => el == 'kick'), 1)
 	}
+	if (gamepad.buttons[gamepadSettings.MENU].pressed) {
+		if (performance.now() < pauseLastUpdate) return
+		pause = !pause
+		refreshPause()
+		pauseLastUpdate = performance.now() + 250
+	}
 }
 
 /* function vibrateGamepad() {
@@ -875,6 +883,10 @@ function initControls() {
 		if (keysPressed[inputSettings.keyboard.keyJump] && !actions.includes('jump')) actions.push('jump')
 		if (keysPressed[inputSettings.keyboard.keyKick] && !actions.includes('kick')) actions.push('kick')
 		if (keysPressed[inputSettings.keyboard.keyRoll] && !actions.includes('roll')) actions.push('roll')
+		if (keysPressed[inputSettings.keyboard.keyPause]) {
+			pause = !pause
+			refreshPause()
+		}
 	}
 	window.onkeyup = e => {
 		keysPressed[e.keyCode] = false
@@ -1152,14 +1164,18 @@ function refreshHPBar() {
 	document.querySelector('#hpbar').style.setProperty('--hp-width', `${barWidth}px`)
 	if (heroHp <= 0 && !gameover) {
 		playME(gameoverBuffer)
-		let delay = fpsLimit ? 500 * fpsLimit * 100 : 500
 		setTimeout(() => {
 			document.querySelector('#gameover').classList.add('show')
 			document.querySelector('header').style.setProperty('display', 'none')
 			document.querySelectorAll('footer').forEach(el => el.style.setProperty('display', 'none'))
 			gameover = true
-		}, delay)
+		}, fpsLimit ? 500 * fpsLimit * 100 : 500)
 	}
+}
+
+function refreshPause() {
+	if (pause) document.querySelector('#glass').classList.add('opened')
+	else document.querySelector('#glass').classList.remove('opened')
 }
 
 window.onresize = () => resizeScene()
