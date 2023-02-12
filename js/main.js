@@ -628,6 +628,7 @@ function updateObjectFollow(src, target, collided, speed=0.001) {
 }
 
 function updateFoe() {
+	if (location.search.includes('stop-foe')) return
 	let check = getDistance(foe, hero)
 	if (check?.distance <= 2.5 && !foe.isAttacking) {
 		foe.isAttacking = true
@@ -800,6 +801,7 @@ function getDistance(a, b) {
 	}
 	return getDistance(b, a)//{distance: undefined, collided: false}
 }
+
 function collide(a, b) {
 	let distance = getDistance(a, b)
 	if (distance?.collided) return true

@@ -19,7 +19,7 @@ export default {
 		return navigator.hardwareConcurrency ?? 0
 	},
 	get isPC() {
-		return /(linux|arch|ubuntu|mint|manjaro|debian|windows|mac)/i.test(navigator.userAgent)
+		return !/(iphone|ipad|android)/i.test(navigator.userAgent)
 	},
 	get isApple() {
 		return /(iphone|ipad|mac)/i.test(navigator.userAgent)
