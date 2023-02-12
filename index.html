@@ -9,6 +9,9 @@
 		<link rel="apple-touch-icon" href="/img/icons/android-chrome-192x192.png">
 		<link rel="preload" as="style" href="/stylesheet.css" onload="this.rel='stylesheet'">
 		<link rel="preload" as="font" href="/font.woff" type="font/woff" crossorigin>
+		<link rel="preload" as="script" href="/js/sound.js" crossorigin>
+		<link rel="preload" as="script" href="/js/gui.js" crossorigin>
+		<link rel="preload" as="script" href="/js/main.js" crossorigin>
 		<meta property="og:url" content="https://hero.elfolz.app.br" />
 		<meta property="og:title" content="Hero">
 		<meta property="og:image" content="https://hero.elfolz.app.br/img/icons/android-chrome-512x512.png">
@@ -125,7 +128,7 @@
 				</button>
 			</section>
 		</footer>
-		<main id="gameover">
+		<main id="game-over">
 			<span>Game Over</span>
 		</main>
 		<main id="dialog-controller">
@@ -143,7 +146,8 @@
 			</button>
 		</main>
 		<main id="glass">PAUSA</main>
-		<script src="/js/gui.js" type="module"></script>
+		<script src="/js/sound.js" type="module" defer></script>
+		<script src="/js/gui.js" type="module" defer></script>
 		<script src="/js/main.js" type="module"></script>
 	</body>
 </html>

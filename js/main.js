@@ -1,7 +1,8 @@
 import * as THREE from '/js/modules/three.module.js'
 import { GLTFLoader } from '/js/modules/gltfLoader.module.js'
 import { FBXLoader } from '/js/modules/fbxLoader.module.js'
-import inputSettings from '/js/input.settings.js'
+import inputSettings from '/js/settings/input.js'
+import randomInt from '/js/helpers/randomInt.js'
 import device from '/js/device.js'
 
 if (location.protocol.startsWith('https')) {
@@ -12,24 +13,21 @@ if (location.protocol.startsWith('https')) {
 	}
 }
 
+window.lastFrameTime = performance.now()
+window.camera = new THREE.PerspectiveCamera(75, window.innerWidth /window.innerHeight, 0.1, 1000)
+window.renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true})
+
 const clock = new THREE.Clock()
-const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true})
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth /window.innerHeight, 0.1, 1000)
 const hemisphereLight = new THREE.HemisphereLight(0xddeeff, 0x000000, 0.25)
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
 const gltfLoader = new GLTFLoader()
 const textureLoader = new THREE.TextureLoader()
-const audioLoader = new THREE.AudioLoader()
 const fbxLoader = new FBXLoader()
 const scene = new THREE.Scene()
 const caster = new THREE.Raycaster()
 const vertex = new THREE.Vector3()
-const audio = new Audio()
+const groundSize = 200
 const keysPressed = {}
-
-var hero
-var sword
-var foe
 
 var fpsLimit = device.isPC ? null : ((device.cpuCores >= 4 && device.memory >= 4) || device.isApple) ? 1 / 60 : 1 / 30
 var gameStarted = false
@@ -37,24 +35,14 @@ var fps = 0
 var frames = 0
 var gamepad
 var clockDelta = 0
-var audioListener
-var meSource
-var lastFrameTime = performance.now()
-var audioContext
-var bgmGain
-var seGain
-var bgmBuffer
-var gameoverBuffer
+
 var dummyCamera
 var actions = []
-var bgmVolume = 0.25
-var seVolume = 1
+
 var keyboardActive = device.isPC
 var gamepadSettings
-var ground
 var heroMaxHp = 100
 var heroHp = 100
-var gameover = false
 var pause = false
 var pauseLastUpdate
 
@@ -77,7 +65,7 @@ var progress = new Proxy({}, {
 		let values = Object.values(target).slice()
 		let progressbar = document.querySelector('progress')
 		let total = values.reduce((a, b) => a + b, 0)
-		total = total / 18
+		total = total / 19
 		if (progressbar) progressbar.value = parseInt(total || 0)
 		if (total >= 100) setTimeout(() => initGame(), 500)
 		return true
@@ -89,8 +77,8 @@ textureLoader.load('/textures/ground.webp', texture => {
 	texture.wrapT = THREE.RepeatWrapping
 	texture.encoding = THREE.sRGBEncoding
 	texture.anisotropy = 4
-	texture.repeat.set(parseInt(texture.wrapS / 200), parseInt(texture.wrapT / 200))
-	ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshPhongMaterial({map: texture}))
+	texture.repeat.set(parseInt(texture.wrapS / groundSize), parseInt(texture.wrapT / groundSize))
+	window.ground = new THREE.Mesh(new THREE.PlaneGeometry(groundSize, groundSize), new THREE.MeshPhongMaterial({map: texture}))
 	ground.rotation.x = - Math.PI / 2
 	ground.receiveShadow = true
 	scene.add(ground)
@@ -101,7 +89,7 @@ textureLoader.load('/textures/ground.webp', texture => {
 })
 gltfLoader.load('/models/hero/hero.glb',
 	gltf => {
-		hero = gltf.scene
+		window.hero = gltf.scene
 		hero.encoding = THREE.sRGBEncoding
 		hero.traverse(el => {if (el.isMesh) el.castShadow = true})
 		dummyCamera = camera.clone()
@@ -132,7 +120,7 @@ gltfLoader.load('/models/hero/hero.glb',
 		hero.audio = {}
 		hero.actions = []
 		loadHeroAnimations()
-		if (audioContext) initHeroAudio()
+		if (sound.audioContext) sound.initHeroAudio()
 	}, xhr => {
 		progress['hero'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -140,7 +128,7 @@ gltfLoader.load('/models/hero/hero.glb',
 	}
 )
 gltfLoader.load('/models/equips/sword.glb', fbx => {
-	sword = fbx.scene
+	window.sword = fbx.scene
 	sword.encoding = THREE.sRGBEncoding
 	sword.collidableMashes = []
 	sword.traverse(el => {if (el.isMesh) el.castShadow = true})
@@ -151,12 +139,9 @@ gltfLoader.load('/models/equips/sword.glb', fbx => {
 })
 gltfLoader.load('/models/humanoid/humanoid.glb',
 	gltf => {
-		foe = gltf.scene
+		window.foe = gltf.scene
 		foe.encoding = THREE.sRGBEncoding
-		foe.traverse(el => {
-			if (el.isMesh) el.castShadow = true
-			//if (el.isBone) console.log(el)
-		})
+		foe.traverse(el => {if (el.isMesh) el.castShadow = true})
 		foe.position.set(0, 0, 20)
 		foe.lookAt(0, 0, -1)
 		foe.scale.set(0.045, 0.045, 0.045)
@@ -196,7 +181,7 @@ gltfLoader.load('/models/humanoid/humanoid.glb',
 		foe.getObjectByName('mixamorigHead').attach(hand)
 		foe.actions = []
 		loadFoeAnimations()
-		if (audioListener) initFoeAudio()
+		if (sound.audioListener) sound.initFoeAudio()
 	}, xhr => {
 		progress['foe'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
@@ -230,7 +215,7 @@ function loadHeroAnimations() {
 		hero.actions['step-back'] = hero.mixer.clipAction(animation)
 		hero.actions['step-back'].name = 'step-back'
 	}, xhr => {
-		progress['walkingBack'] = (xhr.loaded / xhr.total) * 100
+		progress['step-back'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
 		console.error(error)
 	})
@@ -257,7 +242,7 @@ function loadHeroAnimations() {
 		hero.actions['jump-running'] = hero.mixer.clipAction(animation)
 		hero.actions['jump-running'].name = 'jump-running'
 	}, xhr => {
-		progress['jumpingRunning'] = (xhr.loaded / xhr.total) * 100
+		progress['g'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
 		console.error(error)
 	})
@@ -293,7 +278,7 @@ function loadHeroAnimations() {
 		hero.actions['outward-slash'] = hero.mixer.clipAction(animation)
 		hero.actions['outward-slash'].name = 'outward-slash'
 	}, xhr => {
-		progress['outwardSlash'] = (xhr.loaded / xhr.total) * 100
+		progress['outward-slash'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
 		console.error(error)
 	})
@@ -302,7 +287,7 @@ function loadHeroAnimations() {
 		hero.actions['outward-slash-fast'] = hero.mixer.clipAction(animation)
 		hero.actions['outward-slash-fast'].name = 'outward-slash-fast'
 	}, xhr => {
-		progress['outwardSlash'] = (xhr.loaded / xhr.total) * 100
+		progress['outward-slash-fast'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
 		console.error(error)
 	})
@@ -311,7 +296,7 @@ function loadHeroAnimations() {
 		hero.actions['inward-slash'] = hero.mixer.clipAction(animation)
 		hero.actions['inward-slash'].name = 'inward-slash'
 	}, xhr => {
-		progress['inwardSlash'] = (xhr.loaded / xhr.total) * 100
+		progress['inward-slash'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
 		console.error(error)
 	})
@@ -320,7 +305,16 @@ function loadHeroAnimations() {
 		hero.actions['stomach-hit'] = hero.mixer.clipAction(animation)
 		hero.actions['stomach-hit'].name = 'stomach-hit'
 	}, xhr => {
-		progress['stomachHit'] = (xhr.loaded / xhr.total) * 100
+		progress['stomach-hit'] = (xhr.loaded / xhr.total) * 100
+	}, error => {
+		console.error(error)
+	})
+	fbxLoader.load('/models/hero/die.fbx', fbx => {
+		let animation = fbx.animations[0]
+		hero.actions['die'] = hero.mixer.clipAction(animation)
+		hero.actions['die'].name = 'die'
+	}, xhr => {
+		progress['die'] = (xhr.loaded / xhr.total) * 100
 	}, error => {
 		console.error(error)
 	})
@@ -428,7 +422,7 @@ function animate() {
 	requestAnimationFrame(animate)
 	if (document.hidden) return
 	updateGamepad()
-	if (pause|| gameover) return
+	if (pause|| window.gameover) return
 	clockDelta += clock.getDelta()
 	if (fpsLimit && clockDelta < fpsLimit) return
 	renderer.render(scene, camera)
@@ -436,8 +430,10 @@ function animate() {
 	foe.mixer?.update(clockDelta)
 	updateFPSCounter()
 	updateCamera()
-	updateActions()
-	updateFoe()
+	if (!hero.died) {
+		updateActions()
+		updateFoe()
+	}
 	clockDelta = fpsLimit ? clockDelta % fpsLimit : clockDelta % (1 / Math.max(fps, 30))
 }
 
@@ -468,15 +464,17 @@ function updateCamera() {
 
 function onFinishActions() {
 	hero.mixer.addEventListener('finished', () => {
-		if (actions.includes('slash')) {
-			playHeroAttackSE()
+		if (hero.died) {
+			return playerDied()
+		} else if (actions.includes('slash')) {
+			sound.playHeroAttackSE()
 			let action = hero.lastAction.name == 'inward-slash' ? hero.actions['outward-slash'] : hero.actions['inward-slash']
 			executeCrossFade(hero, action, 0.175, 'once')
 		/* } else if (actions.includes('punch')) {
-			playHeroAttackSE()
+			sound.playHeroAttackSE()
 			executeCrossFade(hero, hero.lastAction.name == punchLeftAction ? punchRightAction : punchLeftAction, 0.1, 'once') */
 		} else if (actions.includes('kick')) {
-			playHeroAttackSE()
+			sound.playHeroAttackSE()
 			executeCrossFade(hero, hero.actions['kick'], 0.1, 'once')
 		} else if (actions.includes('backflip')) {
 			executeCrossFade(hero, hero.actions['backflip'], 0.1, 'once')
@@ -537,7 +535,7 @@ function updateActions() {
 	if (!hero.waitForAnimation && s && !hero.isSlashing) {
 		hero.isSlashing = true
 		hero.waitForAnimation = true
-		playHeroAttackSE()
+		sound.playHeroAttackSE()
 		executeCrossFade(hero, hero.actions['outward-slash'], 0.1, 'once')
 	/* } else if (!waitForAnimation && p && !isPunching) {
 		isPunching = true
@@ -546,7 +544,7 @@ function updateActions() {
 	} else if (!hero.waitForAnimation && k) {
 		hero.isKicking = true
 		hero.waitForAnimation = true
-		playHeroAttackSE()
+		sound.playHeroAttackSE()
 		executeCrossFade(hero, hero.actions['kick'], 0.1, 'once')
 	} else if (!hero.waitForAnimation && bf && !hero.isBackingflip) {
 		hero.isBackingflip = true
@@ -613,18 +611,20 @@ function updateWalk(running=false, back=false, speed=0.1, ignoreColision=false) 
 	//if (!ignoreColision && collide(hero, foe)) return updateWalk(running, !back, 0.1, true)
 	let dir = camera.getWorldDirection(hero.position.clone())
 	if (back) dir.negate()
-	hero.position.add(dir.multiplyScalar(running ? speed*2.5 : speed))
+	let step = dir.multiplyScalar(running ? speed*2.5 : speed)
+	let pos = hero.position.clone()
+	pos.add(step)
+	if (pos.x >= (groundSize/2-1) || pos.x <= ((groundSize/2-1)*-1)) return
+	if (pos.z >= (groundSize/2-1) || pos.z <= ((groundSize/2-1)*-1)) return
+	hero.position.add(step)
 }
 
 function updateObjectFollow(src, target, collided, speed=0.001) {
 	let pos = target.position.clone()
-	let step = src.position.clone().sub(pos)
+	let dir = src.position.clone().sub(pos)
+	let step = dir.multiplyScalar(collided ? speed : speed * -1)
 	src.lookAt(pos)
-	src.position.add(step.multiplyScalar(collided ? speed : speed * -1))
-}
-
-function randomInt(min, max) {
-	return Math.floor(Math.random() * (max - min + 1) + min)
+	src.position.add(step)
 }
 
 function updateFoe() {
@@ -636,10 +636,10 @@ function updateFoe() {
 		setTimeout(() => {
 			hero.waitForAnimation = true
 			hero.beenHit = true
-			heroHp -= 10
+			heroHp -= 100
 			refreshHPBar()
 			vibrateGamepad()
-			playHeroDamageSE()
+			sound.playHeroDamageSE()
 			executeCrossFade(hero, hero.actions['stomach-hit'], 0.1, 'once')
 		}, fpsLimit ? fpsLimit * 100 * 500 : 500)
 	}
@@ -667,6 +667,7 @@ function updateFoe() {
 
 function executeCrossFade(object, newAction, duration=0.25, loop='repeat') {
 	if (!object.lastAction || !newAction) return
+	if (object.died && newAction.name != 'die') return
 	if (object == hero && actions.some(el => ['walk', 'run', 'turn-left', 'turn-right', 'step-back'].includes(el)) && newAction.name == 'idle') return
 	if (object.lastAction == newAction) return newAction.reset()
 	newAction.enabled = true
@@ -700,6 +701,7 @@ function synchronizeCrossFade(object, newAction, duration=0.25, loop='repeat') {
 }
 
 function updateGamepad() {
+	if (hero.died) return
 	gamepad = navigator.getGamepads().find(el => el?.connected)
 	if (!gamepad) return
 	if (!gamepadSettings) {
@@ -949,159 +951,21 @@ function initControls() {
 	}
 }
 
-window.initAudio = function() {
-	audioContext = new AudioContext()
-	bgmGain = audioContext.createGain()
-	bgmGain.gain.value = bgmVolume
-	seGain = audioContext.createGain()
-	seGain.gain.value = seVolume
-	const destination = audioContext.createMediaStreamDestination()
-	bgmGain.connect(audioContext.destination)
-	seGain.connect(audioContext.destination)
-	audio.srcObject = destination.stream
-	audio.play()
-	fetch('/audio/bgm/bgm.mp3')
-	.then(response => {
-		response.arrayBuffer()
-		.then(buffer => {
-			audioContext.decodeAudioData(buffer)
-			.then(audioData => {
-				bgmBuffer = audioData
-				playBGM()
-			})
-		})
-	})
-	fetch('/audio/me/gameover.mp3')
-	.then(response => {
-		response.arrayBuffer()
-		.then(buffer => {
-			audioContext.decodeAudioData(buffer)
-			.then(audioData => {
-				gameoverBuffer = audioData
-			})
-		})
-	})
-	audioListener = new THREE.AudioListener()
-	audioListener.setMasterVolume(seVolume)
-	camera.add(audioListener)
-	if (hero && !Object.keys(hero.audio).length) initHeroAudio()
-	if (foe && !foe.children.some(el => el.type == 'Audio')) initFoeAudio()
+function playerDied() {
+	document.querySelector('#game-over').classList.add('show')
+	document.querySelector('header').style.setProperty('display', 'none')
+	document.querySelectorAll('footer').forEach(el => el.style.setProperty('display', 'none'))
+	window.gameover = true
 }
 
-function initHeroAudio() {
-	hero.audio.attack = []
-	hero.audio.damage = []
-	for (let i=0; i<=4; i++) {
-		fetch(`/audio/hero/attack/${i}.mp3`)
-		.then(response => {
-			response.arrayBuffer()
-			.then(buffer => {
-				audioContext.decodeAudioData(buffer)
-				.then(audioData => {
-					hero.audio.attack.push(audioData)
-				})
-			})
-		})
-		fetch(`/audio/hero/damage/${i}.mp3`)
-		.then(response => {
-			response.arrayBuffer()
-			.then(buffer => {
-				audioContext.decodeAudioData(buffer)
-				.then(audioData => {
-					hero.audio.damage.push(audioData)
-				})
-			})
-		})
-	}
-}
-
-function initFoeAudio() {
-	for (let i=0; i<=8; i++) {
-		audioLoader.load(`/audio/monster/homanoid-${i}.mp3`, buffer => {
-			let sound = new THREE.PositionalAudio(audioListener)
-			sound.setBuffer(buffer)
-			sound.setRefDistance(10)
-			sound.setMaxDistance(100)
-			sound.onEnded = () => {
-				sound.stop()
-				foe.se = undefined
-			}
-			foe.add(sound)
-		})
-	}
-}
-
-window.playBGM = function() {
-	if (gameover || !audioContext || !bgmBuffer) return
-	window.bgmSource = audioContext.createBufferSource()
-	window.bgmSource.buffer = bgmBuffer
-	window.bgmSource.loop = true
-	window.bgmSource.connect(bgmGain)
-	if (localStorage.getItem('bgm') !== 'false') window.bgmSource.start(0)
-	window.bgmSource.onended = () => {
-		window.bgmSource.disconnect()
-		window.bgmSource = undefined
-	}
-}
-
-window.playME = function(buffer) {
-	if (!buffer) return
-	window.bgmSource?.stop()
-	meSource = audioContext.createBufferSource()
-	meSource.buffer = buffer
-	meSource.connect(bgmGain)
-	bgmGain.gain.value = 0.8
-	meSource.start(0)
-	meSource.onended = () => {
-		bgmGain.gain.value = document.hidden ? 0 : bgmVolume
-		meSource.disconnect()
-		meSource = undefined
-		playBGM()
-	}
-}
-
-window.playHeroAttackSE= function() {
-	if (!hero.audio.attack || hero.beenHit) return
-	let i = randomInt(0, hero.audio.attack.length-1)
-	if (hero.sePlaying) return
-	hero.sePlaying = true
-	playSE(hero.audio.attack[i], false, hero)
-}
-
-window.playHeroDamageSE =function() {
-	if (!hero.audio.damage) return
-	let i = randomInt(0, hero.audio.damage.length-1)
-	if (hero.sePlaying) return
-	hero.sePlaying = true
-	playSE(hero.audio.damage[i], false, hero)
-}
-
-window.playSE = function(buffer, loop=false, srcObject) {
-	if (!audioContext || !buffer) return
-	let src = audioContext.createBufferSource()
-	src.buffer = buffer
-	src.loop = loop
-	src.connect(seGain)
-	src.start(0)
-	src.onended = () => {
-		src.disconnect()
-		if (srcObject) srcObject.sePlaying = undefined
-	}
-	return src
-}
-
-window.refreshHPBar  =function() {
+window.refreshHPBar = function() {
 	let hpbarWidth = document.querySelector('#hpbar').clientWidth - 4
 	let barWidth = heroHp * hpbarWidth / heroMaxHp
 	document.querySelector('#hpbar').style.setProperty('--hp-width', `${barWidth}px`)
-	if (heroHp <= 0 && !gameover) {
-		playME(gameoverBuffer)
-		setTimeout(() => {
-			document.querySelector('#gameover').classList.add('show')
-			document.querySelector('header').style.setProperty('display', 'none')
-			document.querySelectorAll('footer').forEach(el => el.style.setProperty('display', 'none'))
-			gameover = true
-		}, fpsLimit ? 500 * fpsLimit * 100 : 500)
+	if (heroHp <= 0 && !hero.morreu) {
+		executeCrossFade(hero, hero.actions['die'], 1, 'once')
+		sound.playME(sound.gameoverBuffer)
+		hero.died = true
 	}
 }
 
@@ -1113,11 +977,11 @@ window.refreshPause = function() {
 window.toggleVisibility = function() {
 	if (document.hidden) {
 		actions.splice(0)
-		if (bgmGain) bgmGain.gain.value = 0
-		if (audioListener) audioListener.setMasterVolume(0)
+		if (sound.bgmGain) sound.bgmGain.gain.value = 0
+		if (sound.audioListener) sound.audioListener.setMasterVolume(0)
 	} else {
-		if (bgmGain) bgmGain.gain.value = bgmVolume
-		if (audioListener) audioListener.setMasterVolume(seVolume)
+		if (sound.bgmGain) sound.bgmGain.gain.value = sound.bgmVolume
+		if (sound.audioListener) sound.audioListener.setMasterVolume(sound.seVolume)
 	}
 }
 

@@ -250,7 +250,7 @@ footer:last-of-type section button:nth-of-type(4) {
 	z-index: 200;
 	opacity: 1;
 }
-#gameover {
+#game-over {
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -260,11 +260,11 @@ footer:last-of-type section button:nth-of-type(4) {
 	z-index: 100;
 	display: none;
 }
-#gameover.show {
+#game-over.show {
 	display: block;
 	animation: fadein 1s ease-in-out forwards;
 }
-#gameover span {
+#game-over span {
 	position: fixed;
 	top: 50%;
 	left: 50%;
