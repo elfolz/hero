@@ -24,7 +24,7 @@ class Game {
 		this.caster = new THREE.Raycaster()
 		this.vertex = new THREE.Vector3()
 		this.keysPressed = {}
-		this.fpsLimit = device.isPC ? null : ((device.cpuCores >= 4 && device.memory >= 4) || device.isApple) ? 1 / 60 : 1 / 30
+		this.fpsLimit = device.isPC ? null : (device.cpuCores >= 4 || device.isApple) ? 1 / 60 : 1 / 30
 		this.gameStarted = false
 		this.fps = 0
 		this.frames = 0
@@ -457,16 +457,18 @@ class Game {
 			e.stopPropagation()
 			e.preventDefault()
 			if (!buttonForward.posX && buttonForward.getClientRects()) buttonForward.posX = buttonForward.getClientRects()[0].x
-			if (!this.actions.includes('turn-left') && e.changedTouches[0].pageX < (buttonForward.posX)) {
-					this.actions.push('turn-left')
-					document.querySelector('#button-left').classList.add('active')
+			if (e.changedTouches[0].pageX < (buttonForward.posX)) {
+				if (this.actions.includes('turn-left')) return
+				this.actions.push('turn-left')
+				document.querySelector('#button-left').classList.add('active')
 			} else if (this.actions.includes('turn-left')) {
-				this.actions.splice(actions.findIndex(el => el == 'turn-left'), 1)
+				this.actions.splice(this.actions.findIndex(el => el == 'turn-left'), 1)
 				document.querySelector('#button-left').classList.remove('active')
 			}
-			if (!this.actions.includes('turn-right') && e.changedTouches[0].pageX > (buttonForward.posX+64)) {
-					this.actions.push('turn-right')
-					document.querySelector('#button-right').classList.add('active')
+			if (e.changedTouches[0].pageX > (buttonForward.posX+64)) {
+				if (this.actions.includes('turn-right')) return
+				this.actions.push('turn-right')
+				document.querySelector('#button-right').classList.add('active')
 			} else if (this.actions.includes('turn-right')) {
 				this.actions.splice(this.actions.findIndex(el => el == 'turn-right'), 1)
 				document.querySelector('#button-right').classList.remove('active')
@@ -857,7 +859,7 @@ class Game {
 		this.refreshHPBar()
 		let pixelRatio = 1
 		if (window.devicePixelRatio > 1 && device.cpuCores >= 4 && device.memory >= 6) pixelRatio = window.devicePixelRatio
-		else if (device.cpuCores < 4 || device.memory < 6) pixelRatio = 0.5
+		else if (device.cpuCores < 4) pixelRatio = 0.5
 		this.renderer.setPixelRatio(pixelRatio)
 		this.renderer.setSize(window.innerWidth, window.innerHeight)
 	}
