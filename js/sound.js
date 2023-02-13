@@ -1,3 +1,4 @@
+'use strict'
 import { AudioListener, PositionalAudio } from '/js/modules/three.module.js'
 import randomInt from '/js/helpers/randomInt.js'
 
@@ -43,14 +44,16 @@ class Sound {
 		})
 		this.audioListener = new AudioListener()
 		this.audioListener.setMasterVolume(this.seVolume)
-		window.camera.add(this.audioListener)
-		if (window.hero && !Object.keys(hero.audio).length) this.initHeroAudio()
-		if (window.foe && !foe.children.some(el => el.type == 'Audio')) this.initFoeAudio()
+		if (window.game) {
+			game.camera.add(this.audioListener)
+			if (game.hero && !Object.keys(game.hero.audio).length) this.initHeroAudio()
+			if (game.foe && !game.foe.children.some(el => el.type == 'Audio')) this.initFoeAudio()
+		}
 	}
 
 	initHeroAudio() {
-		hero.audio.attack = []
-		hero.audio.damage = []
+		game.hero.audio.attack = []
+		game.hero.audio.damage = []
 		for (let i=0; i<=4; i++) {
 			fetch(`/audio/hero/attack/${i}.mp3`)
 			.then(response => {
@@ -58,7 +61,7 @@ class Sound {
 				.then(buffer => {
 					this.audioContext.decodeAudioData(buffer)
 					.then(audioData => {
-						hero.audio.attack.push(audioData)
+						game.hero.audio.attack.push(audioData)
 					})
 				})
 			})
@@ -68,7 +71,7 @@ class Sound {
 				.then(buffer => {
 					this.audioContext.decodeAudioData(buffer)
 					.then(audioData => {
-						hero.audio.damage.push(audioData)
+						game.hero.audio.damage.push(audioData)
 					})
 				})
 			})
@@ -89,9 +92,9 @@ class Sound {
 						sound.setMaxDistance(100)
 						sound.onEnded = () => {
 							sound.stop()
-							foe.se = undefined
+							game.foe.se = undefined
 						}
-						foe.add(sound)
+						game.foe.add(sound)
 					})
 				})
 			})
@@ -99,7 +102,7 @@ class Sound {
 	}
 
 	playBGM(restart=true) {
-		if (window.gameover || !this.audioContext || !this.bgmBuffer) return
+		if (game.gameover || !this.audioContext || !this.bgmBuffer) return
 		this.bgmSource = this.audioContext.createBufferSource()
 		this.bgmSource.buffer = this.bgmBuffer
 		this.bgmSource.loop = true
@@ -134,19 +137,19 @@ class Sound {
 	}
 
 	playHeroAttackSE() {
-		if (!hero.audio.attack || hero.beenHit) return
-		let i = randomInt(0, hero.audio.attack.length-1)
-		if (hero.sePlaying) return
-		hero.sePlaying = true
-		this.playSE(hero.audio.attack[i], false, hero)
+		if (!game.hero.audio.attack || game.hero.beenHit) return
+		let i = randomInt(0, game.hero.audio.attack.length-1)
+		if (game.hero.sePlaying) return
+		game.hero.sePlaying = true
+		this.playSE(game.hero.audio.attack[i], false, game.hero)
 	}
 
 	playHeroDamageSE() {
-		if (!hero.audio.damage) return
-		let i = randomInt(0, hero.audio.damage.length-1)
-		if (hero.sePlaying) return
-		hero.sePlaying = true
-		this.playSE(hero.audio.damage[i], false, hero)
+		if (!game.hero.audio.damage) return
+		let i = randomInt(0, game.hero.audio.damage.length-1)
+		if (game.hero.sePlaying) return
+		game.hero.sePlaying = true
+		this.playSE(game.hero.audio.damage[i], false, game.hero)
 	}
 
 	playSE(buffer, loop=false, srcObject) {
@@ -161,6 +164,16 @@ class Sound {
 			if (srcObject) srcObject.sePlaying = undefined
 		}
 		return src
+	}
+
+	toggleVisibility() {
+		if (document.hidden) {
+			if (this.bgmGain) this.bgmGain.gain.value = 0
+			this.audioListener?.setMasterVolume(0)
+		} else {
+			if (this.bgmGain) this.bgmGain.gain.value = this.bgmVolume
+			this.audioListener?.setMasterVolume(this.seVolume)
+		}
 	}
 
 }

@@ -1,3 +1,4 @@
+'use strict'
 import device from '/js/device.js'
 
 function initGUI() {
@@ -45,7 +46,8 @@ document.onclick = () => {
 }
 
 document.onvisibilitychange = () => {
-	toggleVisibility()
+	game?.toggleVisibility()
+	sound?.toggleVisibility()
 	if (document.hidden) {
 		document.querySelectorAll('footer section button').forEach(el => {
 			el.classList.remove('active')
