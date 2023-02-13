@@ -457,10 +457,10 @@ class Game {
 			e.stopPropagation()
 			e.preventDefault()
 			if (!buttonForward.posX && buttonForward.getClientRects()) buttonForward.posX = buttonForward.getClientRects()[0].x
-			if (!actions.includes('turn-left') && e.changedTouches[0].pageX < (buttonForward.posX)) {
+			if (!this.actions.includes('turn-left') && e.changedTouches[0].pageX < (buttonForward.posX)) {
 					this.actions.push('turn-left')
 					document.querySelector('#button-left').classList.add('active')
-			} else if (actions.includes('turn-left')) {
+			} else if (this.actions.includes('turn-left')) {
 				this.actions.splice(actions.findIndex(el => el == 'turn-left'), 1)
 				document.querySelector('#button-left').classList.remove('active')
 			}
@@ -468,7 +468,7 @@ class Game {
 					this.actions.push('turn-right')
 					document.querySelector('#button-right').classList.add('active')
 			} else if (this.actions.includes('turn-right')) {
-				this.actions.splice(actions.findIndex(el => el == 'turn-right'), 1)
+				this.actions.splice(this.actions.findIndex(el => el == 'turn-right'), 1)
 				document.querySelector('#button-right').classList.remove('active')
 			}
 		}
