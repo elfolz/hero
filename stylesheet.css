@@ -40,6 +40,10 @@ body {
 body.loaded {
 	background-image: url("/textures/moon.webp") ;
 }
+canvas[data-engine~="three.js"] {
+	width: 100vw;
+	height: 100vh;
+}
 button {
 	border: none;
 	background-color: transparent;
@@ -101,7 +105,7 @@ header section span svg {
 header section > span:hover, header section > span:active {
 	background-color: var(--color-bg);
 }
-header section span svg path {
+header section span svg path, header section span svg circle {
 	fill: whitesmoke;
 }
 header section span label {
