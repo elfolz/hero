@@ -38,8 +38,8 @@ function initGUI() {
 			window.game.fpsLimit = 1/30
 			refreshFPS(30)
 		} else if (window.game.fpsLimit == 1/30) {
-			window.game.fpsLimit = undefined
-			refreshFPS()
+			window.game.fpsLimit = 0
+			refreshFPS(0)
 		}
 		e.stopPropagation()
 		e.preventDefault()
@@ -78,10 +78,10 @@ function initGUI() {
 
 window.refreshFPS = function(value, save=true) {
 	if (save) {
-		if (value) localStorage.setItem('fpsLimit', value.toString())
+		if (typeof value == 'number') localStorage.setItem('fpsLimit', value.toString())
 		else localStorage.removeItem('fpsLimit')
 	}
-	document.querySelector('#menu-button-fps label').innerHTML = `${value ?? 'Auto'} FPS`
+	document.querySelector('#menu-button-fps label').innerHTML = `${value > 0 ? value : 'Auto'} FPS`
 }
 
 window.refreshResolution = function(value, save=true) {

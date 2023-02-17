@@ -27,10 +27,14 @@ export class Game {
 	}
 
 	init() {
-		let fpsl = localStorage.getItem('fpsLimit')
-		if (fpsl) this.fpsLimit = fpsl == '60' ? 1/60 : fpsl == '30' ? 1/30 : null
-		else this.fpsLimit = device.isPC ? null : (device.cpuCores >= 4 || device.isApple) ? 1 / 60 : 1 / 30
-		window.refreshFPS(fpsl, false)
+		let fps = parseInt(localStorage.getItem('fpsLimit') || '0')
+		if (fps == 0) this.fpsLimit = null
+		else if (fps == 60) this.fpsLimit = 1 / 60
+		else if (fps == 30) this.fpsLimit = 1 / 30
+		else if (device.isPC) fps = 0
+		else if (device.cpuCores >= 4 || device.isApple) {this.fpsLimit = 1 / 60; fpsl = 60}
+		else {this.fpsLimit = 1 / 30; fpsl = 30}
+		window.refreshFPS(fps, false)
 		let resolution = localStorage.getItem('resolution')
 		if (resolution) this.resolution = parseInt(resolution)
 		window.refreshResolution(resolution, false)
