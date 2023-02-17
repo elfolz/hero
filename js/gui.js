@@ -1,5 +1,5 @@
 'use strict'
-import device from '/js/device.js'
+import device from '/js/helpers/device.js'
 
 function initGUI() {
 	if (localStorage.getItem('bgm') == 'false') {
