@@ -78,7 +78,7 @@ function initGUI() {
 
 window.refreshFPS = function(value, save=true) {
 	if (save) {
-		if (typeof value == 'number') localStorage.setItem('fpsLimit', value.toString())
+		if (value) localStorage.setItem('fpsLimit', value.toString())
 		else localStorage.removeItem('fpsLimit')
 	}
 	document.querySelector('#menu-button-fps label').innerHTML = `${value ?? 'Auto'} FPS`
@@ -89,7 +89,8 @@ window.refreshResolution = function(value, save=true) {
 		if (typeof value == 'number') localStorage.setItem('resolution', value)
 		else localStorage.removeItem('resolution')
 	}
-	document.querySelector('#menu-button-resolution label').innerHTML = value == 1 ? 'Média' : value == 2 ? 'Baixa' : 'Alta'
+	let label = `${value == 1 ? 'Média' : value == 2 ? 'Baixa' : 'Alta'} resolução`
+	document.querySelector('#menu-button-resolution label').innerHTML = label
 }
 
 window.refreshPixelDensity = function(value, save=true) {
@@ -97,7 +98,8 @@ window.refreshPixelDensity = function(value, save=true) {
 		if (typeof value == 'number') localStorage.setItem('pixelDensity', value.toString())
 		else localStorage.removeItem('pixelDensity')
 	}
-	document.querySelector('#menu-button-pixel_density label').innerHTML = value == 1 ? 'Média' : value == 2 ? 'Baixa' : 'Alta'
+	let label = `${value == 1 ? 'Média' : value == 2 ? 'Baixa' : 'Alta'} densidade de pixels`
+	document.querySelector('#menu-button-pixel_density label').innerHTML = label
 }
 
 document.onclick = () => {

@@ -72,7 +72,7 @@ header section {
 	position: absolute;
 	top: env(safe-area-inset-top, 0);
 	right: 12px;
-	width: fit-content;
+	width: 250px;
 	background-color: var(--color-bg);
 	border-radius: 6px;
 	transition: all 250ms ease-in-out;
