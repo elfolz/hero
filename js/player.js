@@ -3,10 +3,11 @@ import * as THREE from '/js/modules/three.module.js'
 import { Entity } from '/js/entity.js'
 import inputSettings from '/js/settings/input.js'
 import randomInt from '/js/helpers/randomInt.js'
+import device from '/js/helpers/device.js'
 
 export class Player extends Entity {
 
-	loadingElements = 16
+	loadingElements = 15
 
 	constructor(camera, callback, onload) {
 		super(callback, onload)
@@ -53,7 +54,6 @@ export class Player extends Entity {
 			this.loadAnimations()
 			this.loadWeapon()
 			this.callback(this.object)
-			/* if (window.sound && window.sound.audioContext) window.sound.initHeroAudio() */
 		}, xhr => {
 			this.progress['player'] = (xhr.loaded / xhr.total) * 100
 		}, error => {
@@ -157,14 +157,6 @@ export class Player extends Entity {
 		}, error => {
 			console.error(error)
 		})
-		this.fbxLoader.load('/models/hero/outwardSlashFast.fbx', fbx => {
-			this.animations['outward-slash-fast'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['outward-slash-fast'].name = 'outward-slash-fast'
-		}, xhr => {
-			this.progress['outward-slash-fast'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
 		this.fbxLoader.load('/models/hero/inwardSlash.fbx', fbx => {
 			this.animations['inward-slash'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['inward-slash'].name = 'inward-slash'
@@ -250,7 +242,6 @@ export class Player extends Entity {
 			this.keysPressed[e.keyCode] = true
 			if (this.keysPressed[inputSettings.keyboard.keyToggleSword] && !this.actions.includes('toggle-sword')) this.actions.push('toggle-sword')
 			if (this.keysPressed[inputSettings.keyboard.keySlash] && !this.actions.includes('slash')) this.actions.push('slash')
-			/* if (this.keysPressed[inputSettings.keyboard.keyPunch] && !this.actions.includes('punch')) this.actions.push('punch') */
 			if (this.keysPressed[inputSettings.keyboard.keyRun] && !this.actions.includes('run')) this.actions.push('run')
 			if (this.keysPressed[inputSettings.keyboard.keyTurnLeft] && !this.actions.includes('turn-left')) this.actions.push('turn-left')
 			if (this.keysPressed[inputSettings.keyboard.keyTurnRight] && !this.actions.includes('turn-right')) this.actions.push('turn-right')
@@ -269,7 +260,6 @@ export class Player extends Entity {
 			this.keysPressed[e.keyCode] = false
 			if (e.keyCode == inputSettings.keyboard.keyToggleSword) this.actions.splice(this.actions.findIndex(el => el == 'toggle-sword'), 1)
 			if (e.keyCode == inputSettings.keyboard.keySlash) this.actions.splice(this.actions.findIndex(el => el == 'slash'), 1)
-			/* if (e.keyCode == inputSettings.keyboard.keyPunch) this.actions.splice(this.actions.findIndex(el => el == 'punch'), 1) */
 			if (e.keyCode == inputSettings.keyboard.keyRun) this.actions.splice(this.actions.findIndex(el => el == 'run'), 1)
 			if (e.keyCode == inputSettings.keyboard.keyTurnLeft) this.actions.splice(this.actions.findIndex(el => el == 'turn-left'), 1)
 			if (e.keyCode == inputSettings.keyboard.keyTurnRight) this.actions.splice(this.actions.findIndex(el => el == 'turn-right'), 1)
@@ -355,9 +345,6 @@ export class Player extends Entity {
 		document.querySelector('#button-attack').ontouchstart = e => {
 			if (!this.actions.includes('slash')) this.actions.push('slash')
 		}
-		document.querySelector('#button-attack').ontouchend = () => {
-			this.actions.splice(this.actions.findIndex(el => el == 'punch'), 1)
-		}
 		document.querySelector('#button-kick').ontouchstart = e => {
 			if (!this.actions.includes('kick')) this.actions.push('kick')
 		}
@@ -424,11 +411,6 @@ export class Player extends Entity {
 		} else if (this.actions.includes('backflip')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'backflip'), 1)
 		}
-		/* if (this.gamepad.buttons[gamepadSettings.].pressed) {
-			if (!this.actions.includes('punch')) this.actions.push('punch')
-		} else if (this.actions.includes('punch')) {
-			this.actions.splice(this.actions.findIndex(el => el == 'punch'), 1)
-		} */
 		if (this.gamepad.buttons[gamepadSettings.RB].pressed) {
 			if (!this.actions.includes('slash')) this.actions.push('slash')
 		} else if (this.actions.includes('slash')) {
@@ -459,7 +441,6 @@ export class Player extends Entity {
 		let w = this.actions.includes('walk')
 		let r = this.actions.includes('run')
 		let s = this.actions.includes('slash')
-		let p = this.actions.includes('punch')
 		let k = this.actions.includes('kick')
 		let t = this.actions.some(el => ['turn-left', 'turn-right'].includes(el))
 		let sb = this.actions.includes('step-back')
@@ -469,15 +450,12 @@ export class Player extends Entity {
 		let bf = this.actions.includes('backflip')
 		let ts = this.actions.includes('toggle-sword')
 		if (this.actions.length <= 0) this.synchronizeCrossFade(this.animations['idle'])
-		if (!this.waitForAnimation && s && !this.isSlashing) {
+		if (!this.waitForAnimation && s) {
 			this.isSlashing = true
 			this.waitForAnimation = true
 			this.playAttackSE()
-			this.executeCrossFade(this.animations['outward-slash'], 0.1, 'once')
-		/* } else if (!this.waitForAnimation && p && !this.isPunching) {
-			this.isPunching = true
-			this.waitForAnimation = true
-			executeCrossFade(this.punchRightAction, 0.1, 'once') */
+			let action = this.lastAction.name == 'outward-slash' ? this.animations['inward-slash'] : this.animations['outward-slash']
+			this.executeCrossFade(action, 0.1, 'once')
 		} else if (!this.waitForAnimation && k) {
 			this.isKicking = true
 			this.waitForAnimation = true
@@ -486,9 +464,9 @@ export class Player extends Entity {
 		} else if (!this.waitForAnimation && bf && !this.isBackingflip) {
 			this.isBackingflip = true
 			this.executeCrossFade(this.animations['backflip'], 0.1, 'once')
-			setTimeout(() => {this.updateWalk(false, true, 5)}, 250)
+			setTimeout(() => {this.updateWalk(false, true, 5)}, window.game.fpsLimit ? window.game.fpsLimit * 100 * 250 : 250)
 		}
-		if (this.waitForAnimation || this.isPunching || this.isKicking || this.isBackingflip) return
+		if (this.waitForAnimation || this.isSlashing || this.isKicking || this.isBackingflip) return
 		if (this.actions.includes('turn-left')) this.object.rotation.y += 0.025
 		if (this.actions.includes('turn-right')) this.object.rotation.y -= 0.025
 		if (w && !this.isWalking) {
@@ -526,12 +504,12 @@ export class Player extends Entity {
 			this.executeCrossFade( this.returnAction())
 			this.isSteppingBack = false
 		}
-		if (sb) return  this.updateWalk(false, true, 0.025)
+		if (sb) return this.updateWalk(false, true, 0.025)
 		if (!this.isRotating && t) {
 			this.isRotating = true
 			this.executeCrossFade(this.animations['walk'])
 		} else if (this.isRotating && !t) {
-			if (!w)  this.executeCrossFade( this.returnAction())
+			if (!w) this.executeCrossFade( this.returnAction())
 			this.isRotating = false
 		}
 		/* if (!this.waitForAnimation && !this.isTogglingSword && ts) {
@@ -545,7 +523,7 @@ export class Player extends Entity {
 	}
 
 	updateWalk(running=false, back=false, speed=0.1, ignoreColision=false) {
-		if (this.isSlashing || this.isKicking || this.waitForAnimation) return
+		if (this.waitForAnimation) return
 		//if (!ignoreColision && this.collide(foe)) return this.updateWalk(running, !back, 0.1, true)
 		let dir = this.camera.getWorldDirection(this.object.position.clone())
 		if (back) dir.negate()
@@ -567,16 +545,6 @@ export class Player extends Entity {
 		}
 	}
 
-	vibrateGamepad(duration=0.1) {
-		if (!this.gamepad) return
-		this.gamepad.vibrationActuator.playEffect(this.gamepad.vibrationActuator.type, {
-			startDelay: 0,
-			duration: duration,
-			weakMagnitude: 0.1,
-			strongMagnitude: 0.25,
-		})
-	}
-
 	setupDamage(damage) {
 		this.hp -= damage
 		if (this.hp < 0) this.hp = 0
@@ -584,7 +552,7 @@ export class Player extends Entity {
 		this.beenHit = true
 		this.refreshHPBar()
 		this.playDamageSE()
-		this.vibrateGamepad()
+		this.vibrate()
 		this.executeCrossFade(this.animations['stomach-hit'], 0.1, 'once')
 		if (this.hp <= 0 && !this.died) {
 			this.executeCrossFade(this.animations['die'], 1, 'once')
@@ -615,7 +583,7 @@ export class Player extends Entity {
 		document.querySelector('#game-over').classList.add('show')
 		document.querySelector('header').style.setProperty('display', 'none')
 		document.querySelectorAll('footer').forEach(el => el.style.setProperty('display', 'none'))
-		game.gameover = true
+		window.game.gameover = true
 	}
 
 	refreshHPBar() {
@@ -638,13 +606,7 @@ export class Player extends Entity {
 		this.mixer.addEventListener('loop', onLoopFinished)
 		const vm = this
 		function onLoopFinished(event) {
-			this.waitForAnimation = false
-			this.isSlashing = false
-			this.isPunching = false
-			this.isKicking = false
-			this.isBackingflip = false
-			this.isRolling = false
-			this.isJumping = false
+			vm.resetActions()
 			if (event.action == vm.lastAction) {
 				vm.mixer.removeEventListener('loop', onLoopFinished)
 				vm.executeCrossFade(newAction, duration, loop)
@@ -654,49 +616,40 @@ export class Player extends Entity {
 
 	onFinishActions() {
 		this.mixer.addEventListener('finished', () => {
-			if (this.died) {
-				return  this.gameover()
-			} else if (this.actions.includes('slash')) {
-				this.playAttackSE()
-				let action = this.lastAction.name == 'inward-slash' ? this.animations['outward-slash'] : this.animations['inward-slash']
-				 this.executeCrossFade(action, 0.175, 'once')
-			/* } else if (this.actions.includes('punch')) {
-				this.playAttackSE()
-				executeCrossFade(this, this.lastAction.name == punchLeftAction ? punchRightAction : punchLeftAction, 0.1, 'once') */
-			} else if (this.actions.includes('kick')) {
-				this.playAttackSE()
-				this.executeCrossFade(this.animations['kick'], 0.1, 'once')
-			} else if (this.actions.includes('backflip')) {
-				this.executeCrossFade(this.animations['backflip'], 0.1, 'once')
-			} else {
-				this.executeCrossFade(this.returnAction())
-			}
-			/* if (this.isTogglingSword) {
-				this.swordEquipped = !this.swordEquipped
-				this.sword.parent.remove(this.sword)
-				this.sword.matrixWorld.decompose(this.sword.position, this.sword.quaternion, this.sword.scale)
-				if (this.swordEquipped) {
-					this.getObjectByName('mixamorigRightHand').attach(this.sword)
-				} else {
-					this.object.getObjectByName('mixamorigLeftLeg').attach(this.sword)
-				}
-			} */
-			if (!this.actions.includes('kick')) this.isKicking = false
-			if (!this.actions.includes('slash')) this.isSlashing = false
-			if (!this.actions.includes('punch')) this.isPunching = false
-			this.isBackingflip = false
-			this.isRolling = false
-			this.isJumping = false
-			this.isTogglingSword = false
-			this.beenHit = false
-			this.waitForAnimation = false
+			if (this.died) return this.gameover()
+			if (!this.actions.some(el => ['slash', 'kick', 'backflip'].includes(el))) this.executeCrossFade(this.returnAction())
+			this.resetActions()
 		})
+	}
+
+	resetActions() {
+		this.waitForAnimation = false
+		this.isBackingflip = false
+		this.isRolling = false
+		this.isJumping = false
+		this.beenHit = false
+		this.isTogglingSword = false
+		this.isSlashing = false
+		this.isKicking = false
 	}
 
 	initAudio() {
 		for (let i=0; i<=4; i++) {
 			this.fetchAudio(`attack-${i}`, `/audio/hero/attack/${i}.mp3`)
 			this.fetchAudio(`damage-${i}`, `/audio/hero/damage/${i}.mp3`)
+		}
+	}
+
+	vibrate(magnetude=100, duration=0.1) {
+		if (this.gamepad) {
+			this.gamepad.vibrationActuator.playEffect(this.gamepad.vibrationActuator.type, {
+				startDelay: 0,
+				duration: duration,
+				weakMagnitude: magnetude / 1000,
+				strongMagnitude: magnetude / 500,
+			})
+		} else if (device.isMobile) {
+			try {navigator.vibrate(magnetude)} catch(e){}
 		}
 	}
 

@@ -85,7 +85,7 @@ header section.opened {
 	top: calc(56px + env(safe-area-inset-top, 0));
 	transform: scaleY(1);
 }
-header section span {
+header section > span {
 	display: flex;
 	align-items: center;
 	padding: 6px;
@@ -98,7 +98,7 @@ header section span {
 header section span svg {
 	margin-right: 12px;
 }
-header section span:hover, header section span:active {
+header section > span:hover, header section > span:active {
 	background-color: var(--color-bg);
 }
 header section span svg path {
@@ -110,6 +110,10 @@ header section span label {
 }
 header section span.off {
 	display: none;
+}
+header section > span span {
+	font-weight: 900;
+	margin-right: 6px;
 }
 footer {
 	position: fixed;

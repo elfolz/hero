@@ -15,21 +15,41 @@ function initGUI() {
 		localStorage.setItem('bgm', 'false')
 		document.querySelector('#menu-button-music-off').classList.add('off')
 		document.querySelector('#menu-button-music-on').classList.remove('off')
-		sound.stopBGM()
+		window.sound.stopBGM()
 	}
 	document.querySelector('#menu-button-music-on').onclick = e => {
 		e.stopPropagation()
 		localStorage.setItem('bgm', 'true')
 		document.querySelector('#menu-button-music-on').classList.add('off')
 		document.querySelector('#menu-button-music-off').classList.remove('off')
-		sound.playBGM()
+		window.sound.playBGM()
 	}
 	document.querySelector('#menu-button-gamepad').onclick = e => {
 		document.querySelector('#dialog-controller').classList.add('opened')
 	}
-	document.querySelector('#close-dialog-controller').onclick = e => {
+	document.querySelector('#dialog-controller button').onclick = e => {
 		document.querySelector('#dialog-controller').classList.remove('opened')
 	}
+	document.querySelector('#menu-button-fps').onclick = e => {
+		if (!window.game.fpsLimit) {
+			window.game.fpsLimit = 1/60
+			refreshFPS(60)
+		} else if (window.game.fpsLimit == 1/60) {
+			window.game.fpsLimit = 1/30
+			refreshFPS(30)
+		} else if (window.game.fpsLimit == 1/30) {
+			window.game.fpsLimit = undefined
+			refreshFPS()
+		}
+		e.stopPropagation()
+		e.preventDefault()
+	}
+}
+
+window.refreshFPS = function(value) {
+	if (value) localStorage.setItem('fpsLimit', value.toString())
+	else localStorage.removeItem('fpsLimit')
+	document.querySelector('#menu-button-fps label').innerHTML = `${value ?? 'Auto'} FPS`
 }
 
 document.onclick = () => {
@@ -41,7 +61,7 @@ document.onclick = () => {
 	}
 	if (!window.audioAuthorized) {
 		window.audioAuthorized = true
-		sound.init()
+		window.sound.init()
 	}
 }
 

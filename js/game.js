@@ -15,15 +15,25 @@ export class Game {
 		this.dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
 		this.textureLoader = new THREE.TextureLoader()
 		this.scene = new THREE.Scene()
-		this.fpsLimit = device.isPC ? null : (device.cpuCores >= 4 || device.isApple) ? 1 / 60 : 1 / 30
 		this.gameStarted = false
 		this.fps = 0
 		this.frames = 0
 		this.clockDelta = 0
+		this.initFPSLimiter()
 		this.setupLoading()
 		this.initRender()
 		window.onresize = () => this.resizeScene()
 		document.body.appendChild(this.renderer.domElement)
+	}
+
+	initFPSLimiter() {
+		let fpsl = localStorage.getItem('fpsLimit')
+		if (fpsl) {
+			this.fpsLimit = fpsl == '60' ? 1/60 : fpsl == '30' ? 1/30 : null
+		} else {
+			this.fpsLimit = device.isPC ? null : (device.cpuCores >= 4 || device.isApple) ? 1 / 60 : 1 / 30
+		}
+		window.refreshFPS(fpsl)
 	}
 
 	setupLoading() {

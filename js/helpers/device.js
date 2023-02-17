@@ -18,6 +18,9 @@ export default {
 	get cpuCores() {
 		return navigator.hardwareConcurrency ?? 0
 	},
+	get isMobile() {
+		return /(iphone|ipad|android)/i.test(navigator.userAgent)
+	},
 	get isPC() {
 		return !/(iphone|ipad|android)/i.test(navigator.userAgent)
 	},

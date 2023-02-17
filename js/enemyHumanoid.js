@@ -88,7 +88,7 @@ export class EnemyHumanoid extends Entity {
 	}
 
 	updateActions() {
-		if (location.search.includes('stop-foe')) return
+		if (location.search.includes('stop-enemy')) return
 		let check = this.getDistance(this.player)
 		if (check?.distance <= 2.5 && !this.isAttacking) {
 			this.isAttacking = true

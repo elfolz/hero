@@ -22,8 +22,6 @@ export class Entity {
 		this.loadModel()
 	}
 
-	loadModel() {}
-
 	setupLoading() {
 		if (!this.onload) return
 		const vm = this
@@ -129,6 +127,8 @@ export class Entity {
 		if (this.object) this.object.add(sound)
 		else this.pendingSounds.push(sound)
 	}
+
+	loadModel() {}
 
 	initAudio() {}
 

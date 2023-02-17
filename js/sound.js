@@ -74,7 +74,7 @@ export class Sound {
 		this.meSource = this.audioContext.createBufferSource()
 		this.meSource.buffer = buffer
 		this.meSource.connect(this.bgmGain)
-		this.bgmGain.gain.value = 0.8
+		this.bgmGain.gain.value = this.seVolume
 		this.meSource.start(0)
 		this.meSource.onended = () => {
 			this.bgmGain.gain.value = document.hidden ? 0 : this.bgmVolume
