@@ -27,19 +27,33 @@ export class Game {
 	}
 
 	init() {
-		let fps = parseInt(localStorage.getItem('fpsLimit') || '0')
-		if (fps == 0) this.fpsLimit = null
-		else if (fps == 60) this.fpsLimit = 1 / 60
-		else if (fps == 30) this.fpsLimit = 1 / 30
+		let fps = localStorage.getItem('fpsLimit')
+		if (fps == '60') this.fpsLimit = 1 / 60
+		else if (fps == '30') this.fpsLimit = 1 / 30
 		else if (device.isPC) fps = 0
-		else if (device.cpuCores >= 4 || device.isApple) {this.fpsLimit = 1 / 60; fpsl = 60}
+		else if (device.cpuCores >= 4 || device.isApple) {this.fpsLimit = 1 / 60; fps = 60}
 		else {this.fpsLimit = 1 / 30; fpsl = 30}
 		window.refreshFPS(fps, false)
 		let resolution = localStorage.getItem('resolution')
-		if (resolution) this.resolution = parseInt(resolution)
+		if (resolution == '1') {
+			this.screenWidth = parseInt(window.innerWidth / 4 * 3)
+			this.screenHeight = parseInt(window.innerHeight / 4 * 3)
+		} else if (resolution == '2') {
+			this.screenWidth = parseInt(window.innerWidth / 2)
+			this.screenHeight = parseInt(window.innerHeight / 2)
+		} else {
+			resolution = 0
+			this.screenWidth = window.innerWidth
+			this.screenHeight = window.innerHeight
+		}
 		window.refreshResolution(resolution, false)
 		let pixelDensity = localStorage.getItem('pixelDensity')
-		if (pixelDensity) this.pixelDensity = parseInt(pixelDensity)
+		if (pixelDensity == '0') this.pixelDensity = window.devicePixelRatio
+		else if (pixelDensity == '1') this.pixelDensity = (window.devicePixelRatio / 4 * 3)
+		else if (pixelDensity == '2') this.pixelDensity = (window.devicePixelRatio / 2)
+		else if (device.cpuCores >= 4 && device.memory >= 6) {this.pixelDensity = window.devicePixelRatio; pixelDensity = 0}
+		else if (device.cpuCores < 4) {this.pixelDensity = (window.devicePixelRatio / 4 * 3); pixelDensity = 1}
+		else {this.pixelDensity = 1; pixelDensity = 2}
 		window.refreshPixelDensity(pixelDensity, false)
 	}
 
@@ -159,24 +173,9 @@ export class Game {
 
 	resizeScene() {
 		this.camera.updateProjectionMatrix()
-		let pixelRatio = 1
-		if (this.pixelDensity == 0) pixelRatio = window.devicePixelRatio
-		else if (this.pixelDensity == 1) pixelRatio = (window.devicePixelRatio / 4 * 3)
-		else if (this.pixelDensity == 2) pixelRatio = (window.devicePixelRatio / 2)
-		else if (window.devicePixelRatio > 1 && device.cpuCores >= 4 && device.memory >= 6) pixelRatio = window.devicePixelRatio
-		else if (device.cpuCores < 4) pixelRatio = (window.devicePixelRatio / 4 * 3)
-		this.renderer.setPixelRatio(pixelRatio)
-		let w = window.innerWidth
-		let h = window.innerHeight
-		if (this.resolution == 1) {
-			w = parseInt(window.innerWidth / 4 * 3)
-			h = parseInt(window.innerHeight / 4 * 3)
-		} else if (this.resolution == 2) {
-			w = parseInt(window.innerWidth / 2)
-			h = parseInt(window.innerHeight / 2)
-		}
-		this.camera.aspect = w / h
-		this.renderer.setSize(w, h, false)
+		this.renderer.setPixelRatio(this.pixelDensity)
+		this.camera.aspect = this.screenWidth / this.screenHeight
+		this.renderer.setSize(this.screenWidth, this.screenHeight, false)
 		this.player.resizeScene()
 		this.enemy.resizeScene()
 	}
