@@ -664,11 +664,11 @@ export class Player extends Entity {
 				executeCrossFade(this, this.lastAction.name == punchLeftAction ? punchRightAction : punchLeftAction, 0.1, 'once') */
 			} else if (this.actions.includes('kick')) {
 				this.playAttackSE()
-				 this.executeCrossFade(this.animations['kick'], 0.1, 'once')
+				this.executeCrossFade(this.animations['kick'], 0.1, 'once')
 			} else if (this.actions.includes('backflip')) {
-				 this.executeCrossFade(this.animations['backflip'], 0.1, 'once')
+				this.executeCrossFade(this.animations['backflip'], 0.1, 'once')
 			} else {
-				 this.executeCrossFade(this.returnAction())
+				this.executeCrossFade(this.returnAction())
 			}
 			/* if (this.isTogglingSword) {
 				this.swordEquipped = !this.swordEquipped
@@ -680,15 +680,15 @@ export class Player extends Entity {
 					this.object.getObjectByName('mixamorigLeftLeg').attach(this.sword)
 				}
 			} */
-			this.waitForAnimation = false
+			if (!this.actions.includes('kick')) this.isKicking = false
+			if (!this.actions.includes('slash')) this.isSlashing = false
+			if (!this.actions.includes('punch')) this.isPunching = false
 			this.isBackingflip = false
 			this.isRolling = false
 			this.isJumping = false
 			this.isTogglingSword = false
 			this.beenHit = false
-			if (!this.actions.includes('kick')) this.isKicking = false
-			if (!this.actions.includes('slash')) this.isSlashing = false
-			if (!this.actions.includes('punch')) this.isPunching = false
+			this.waitForAnimation = false
 		})
 	}
 
