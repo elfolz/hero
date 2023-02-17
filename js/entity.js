@@ -17,6 +17,7 @@ export class Entity {
 		this.progress = []
 		this.animations = []
 		this.audios = {}
+		this.pendingSounds = []
 		this.setupLoading()
 		this.loadModel()
 	}
@@ -63,8 +64,8 @@ export class Entity {
 		this.mixer.addEventListener('loop', onLoopFinished)
 		const vm = this
 		function onLoopFinished(event) {
-			if (event.action == this.lastAction) {
-				this.mixer.removeEventListener('loop', onLoopFinished)
+			if (event.action == vm.lastAction) {
+				vm.mixer.removeEventListener('loop', onLoopFinished)
 				vm.executeCrossFade(newAction, duration, loop)
 			}
 		}
@@ -79,7 +80,7 @@ export class Entity {
 	}
 
 	getDistance(target) {
-		if (!target.object) return
+		if (!target.object?.collider) return
 		if (this.lastCollisionUpdate > (performance.now()-500)) return
 		this.lastCollisionUpdate = performance.now()
 		let verts = this.object.collider.geometry.attributes.position
@@ -102,8 +103,39 @@ export class Entity {
 		return distance
 	}
 
+	async fetchAudio(key, url, positional=false, refDistance=10, maxDistance=100) {
+		if (!window.sound?.audioContext) return
+		try {
+			let response = await fetch(url)
+			let buffer = await response.arrayBuffer()
+			let data = await window.sound.audioContext.decodeAudioData(buffer)
+			this.audios[key] = data
+			if (positional) this.setPositionalAudio(data, refDistance, maxDistance)
+		} catch(error) {
+			console.log(error)
+		}
+	}
+
+	setPositionalAudio(data, refDistance=10, maxDistance=100) {
+		if (!window.sound?.audioListener) return
+		const sound = new THREE.PositionalAudio(window.sound?.audioListener)
+		sound.setBuffer(data)
+		sound.setRefDistance(refDistance)
+		sound.setMaxDistance(maxDistance)
+		sound.onEnded = () => {
+			sound.stop()
+			this.se = undefined
+		}
+		if (this.object) this.object.add(sound)
+		else this.pendingSounds.push(sound)
+	}
+
+	initAudio() {}
+
 	updateActions() {}
 
 	resizeScene() {}
+
+	toggleVisibility() {}
 
 }

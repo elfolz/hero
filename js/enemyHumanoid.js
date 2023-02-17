@@ -1,6 +1,7 @@
 'use strict'
 import * as THREE from '/js/modules/three.module.js'
 import { Entity } from '/js/entity.js'
+import randomInt from '/js/helpers/randomInt.js'
 
 export class EnemyHumanoid extends Entity {
 
@@ -48,7 +49,8 @@ export class EnemyHumanoid extends Entity {
 			this.onFinishActions()
 			this.loadAnimations()
 			this.callback(this.object)
-			if (sound.audioListener) sound.initFoeAudio()
+			this.pendingSounds.forEach(el => this.object.add(el))
+			this.pendingSounds.splice(0)
 		}, xhr => {
 			this.progress['foe'] = (xhr.loaded / xhr.total) * 100
 		}, error => {
@@ -98,7 +100,7 @@ export class EnemyHumanoid extends Entity {
 		}
 		if (this.waitForAnimation) return
 		if (this.isWalking) {
-			/* if (!this.se) {
+			if (!this.se) {
 				let audios = this.object.children.filter(el => el.type == 'Audio')
 				if (!audios.length) return
 				let i = randomInt(0, audios.length-1)
@@ -106,7 +108,7 @@ export class EnemyHumanoid extends Entity {
 					audios[i].play()
 					this.se = audios[i]
 				}
-			} */
+			}
 			 this.updateObjectFollow(this.player, check?.collided)
 		}
 		if (check?.distance < 200 && !this.isWalking) {
@@ -124,6 +126,12 @@ export class EnemyHumanoid extends Entity {
 			this.isAttacking = false
 			this.executeCrossFade(this.animations['walk'])
 		})
+	}
+
+	initAudio() {
+		for (let i=0; i<=8; i++) {
+			this.fetchAudio(`attack-${i}`, `/audio/monster/homanoid-${i}.mp3`, true)
+		}
 	}
 
 }

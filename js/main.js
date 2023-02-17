@@ -1,7 +1,10 @@
 'use strict'
-import '/js/game.js'
-import '/js/sound.js'
 import '/js/gui.js'
+import { Sound } from '/js/sound.js'
+import { Game } from '/js/game.js'
+
+window.sound = new Sound()
+window.game = new Game()
 
 if (location.protocol.startsWith('https')) {
 	navigator.serviceWorker.register('service-worker.js')

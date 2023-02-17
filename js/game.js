@@ -2,9 +2,9 @@
 import * as THREE from '/js/modules/three.module.js'
 import { EnemyHumanoid } from '/js/enemyHumanoid.js'
 import { Player } from '/js/player.js'
-import device from '/js/device.js'
+import device from '/js/helpers/device.js'
 
-class Game {
+export class Game {
 
 	constructor() {
 		this.lastFrameTime = performance.now()
@@ -63,7 +63,6 @@ class Game {
 			texture.wrapS = THREE.RepeatWrapping
 			texture.wrapT = THREE.RepeatWrapping
 			texture.encoding = THREE.sRGBEncoding
-			texture.anisotropy = 4
 			texture.repeat.set(parseInt(texture.wrapS / 200), parseInt(texture.wrapT / 200))
 			const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshPhongMaterial({map: texture}))
 			ground.rotation.x = - Math.PI / 2
@@ -119,6 +118,11 @@ class Game {
 		this.clockDelta = this.fpsLimit ? this.clockDelta % this.fpsLimit : this.clockDelta % (1 / Math.max(this.fps, 30))
 	}
 
+	initAudio() {
+		this.player.initAudio()
+		this.enemy.initAudio()
+	}
+
 	updateFPSCounter() {
 		this.frames++
 		if (performance.now() < this.lastFrameTime + 1000) return
@@ -149,8 +153,8 @@ class Game {
 	}
 
 	toggleVisibility() {
+		this.player?.toggleVisibility()
+		this.enemy?.toggleVisibility()
 	}
 
 }
-
-window.game = new Game()

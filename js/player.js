@@ -2,6 +2,7 @@
 import * as THREE from '/js/modules/three.module.js'
 import { Entity } from '/js/entity.js'
 import inputSettings from '/js/settings/input.js'
+import randomInt from '/js/helpers/randomInt.js'
 
 export class Player extends Entity {
 
@@ -471,8 +472,8 @@ export class Player extends Entity {
 		if (!this.waitForAnimation && s && !this.isSlashing) {
 			this.isSlashing = true
 			this.waitForAnimation = true
-			/* window.sound.playHeroAttackSE() */
-			 this.executeCrossFade(this.animations['outward-slash'], 0.1, 'once')
+			this.playAttackSE()
+			this.executeCrossFade(this.animations['outward-slash'], 0.1, 'once')
 		/* } else if (!this.waitForAnimation && p && !this.isPunching) {
 			this.isPunching = true
 			this.waitForAnimation = true
@@ -480,12 +481,12 @@ export class Player extends Entity {
 		} else if (!this.waitForAnimation && k) {
 			this.isKicking = true
 			this.waitForAnimation = true
-			/* window.sound.playHeroAttackSE() */
+			this.playAttackSE()
 			 this.executeCrossFade(this.animations['kick'], 0.1, 'once')
 		} else if (!this.waitForAnimation && bf && !this.isBackingflip) {
 			this.isBackingflip = true
 			 this.executeCrossFade(this.animations['backflip'], 0.1, 'once')
-			setTimeout(() => {updateWalk(false, true, 5)}, 250)
+			setTimeout(() => {this.updateWalk(false, true, 5)}, 250)
 		}
 		if (this.waitForAnimation || this.isPunching || this.isKicking || this.isBackingflip) return
 		if (this.actions.includes('turn-left')) this.object.rotation.y += 0.025
@@ -581,14 +582,32 @@ export class Player extends Entity {
 		this.waitForAnimation = true
 		this.beenHit = true
 		this.refreshHPBar()
+		this.playDamageSE()
 		this.vibrateGamepad()
-		/* window.sound.playHeroDamageSE() */
 		this.executeCrossFade(this.animations['stomach-hit'], 0.1, 'once')
 		if (this.hp <= 0 && !this.died) {
 			this.executeCrossFade(this.animations['die'], 1, 'once')
-			/* window.sound.playME(window.sound.gameoverBuffer) */
+			window.sound.playME(window.sound.gameoverBuffer)
 			this.died = true
 		}
+	}
+
+	playAttackSE() {
+		if (this.beenHit || this.sePlaying) return
+		const audios = Object.keys(this.audios).filter(el => el.startsWith('attack'))
+		if (!audios.length) return
+		let i = randomInt(0, audios.length-1)
+		this.sePlaying = true
+		window.sound.playSE(this.audios[audios[i]], false, this)
+	}
+
+	playDamageSE() {
+		if (this.sePlaying) return
+		const audios = Object.keys(this.audios).filter(el => el.startsWith('damage'))
+		if (!audios.length) return
+		let i = randomInt(0, audios.length-1)
+		this.sePlaying = true
+		window.sound.playSE(this.audios[audios[i]], false, this)
 	}
 
 	gameover() {
@@ -625,8 +644,8 @@ export class Player extends Entity {
 			this.isBackingflip = false
 			this.isRolling = false
 			this.isJumping = false
-			if (event.action == this.lastAction) {
-				this.mixer.removeEventListener('loop', onLoopFinished)
+			if (event.action == vm.lastAction) {
+				vm.mixer.removeEventListener('loop', onLoopFinished)
 				vm.executeCrossFade(newAction, duration, loop)
 			}
 		}
@@ -637,14 +656,14 @@ export class Player extends Entity {
 			if (this.died) {
 				return  this.gameover()
 			} else if (this.actions.includes('slash')) {
-				/* window.sound.playHeroAttackSE() */
+				this.playAttackSE()
 				let action = this.lastAction.name == 'inward-slash' ? this.animations['outward-slash'] : this.animations['inward-slash']
 				 this.executeCrossFade(action, 0.175, 'once')
 			/* } else if (this.actions.includes('punch')) {
-				window.sound.playHeroAttackSE()
+				this.playAttackSE()
 				executeCrossFade(this, this.lastAction.name == punchLeftAction ? punchRightAction : punchLeftAction, 0.1, 'once') */
 			} else if (this.actions.includes('kick')) {
-				/* window.sound.playHeroAttackSE() */
+				this.playAttackSE()
 				 this.executeCrossFade(this.animations['kick'], 0.1, 'once')
 			} else if (this.actions.includes('backflip')) {
 				 this.executeCrossFade(this.animations['backflip'], 0.1, 'once')
@@ -671,6 +690,13 @@ export class Player extends Entity {
 			if (!this.actions.includes('slash')) this.isSlashing = false
 			if (!this.actions.includes('punch')) this.isPunching = false
 		})
+	}
+
+	initAudio() {
+		for (let i=0; i<=4; i++) {
+			this.fetchAudio(`attack-${i}`, `/audio/hero/attack/${i}.mp3`)
+			this.fetchAudio(`damage-${i}`, `/audio/hero/damage/${i}.mp3`)
+		}
 	}
 
 	toggleVisibility() {
