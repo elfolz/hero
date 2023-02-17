@@ -482,10 +482,10 @@ export class Player extends Entity {
 			this.isKicking = true
 			this.waitForAnimation = true
 			this.playAttackSE()
-			 this.executeCrossFade(this.animations['kick'], 0.1, 'once')
+			this.executeCrossFade(this.animations['kick'], 0.1, 'once')
 		} else if (!this.waitForAnimation && bf && !this.isBackingflip) {
 			this.isBackingflip = true
-			 this.executeCrossFade(this.animations['backflip'], 0.1, 'once')
+			this.executeCrossFade(this.animations['backflip'], 0.1, 'once')
 			setTimeout(() => {this.updateWalk(false, true, 5)}, 250)
 		}
 		if (this.waitForAnimation || this.isPunching || this.isKicking || this.isBackingflip) return
@@ -493,7 +493,7 @@ export class Player extends Entity {
 		if (this.actions.includes('turn-right')) this.object.rotation.y -= 0.025
 		if (w && !this.isWalking) {
 			this.isWalking = true
-			 this.executeCrossFade(this.animations['walk'])
+			this.executeCrossFade(this.animations['walk'])
 		} else if (!w && this.isWalking) {
 			if (!t) this.executeCrossFade(this.animations['idle'])
 			this.isWalking = false
@@ -503,33 +503,33 @@ export class Player extends Entity {
 			 this.updateWalk(r)
 			if (r && !this.isRunning) {
 				this.isRunning = true
-				 this.executeCrossFade(this.animations['run'])
+				this.executeCrossFade(this.animations['run'])
 			} else if (!r && this.isRunning) {
-				 this.executeCrossFade(this.animations['walk'])
+				this.executeCrossFade(this.animations['walk'])
 				this.isRunning = false
 			}
 		}
 		if (!this.waitForAnimation && rl && !this.isRolling) {
 			this.isRolling = true
-			 this.executeCrossFade(this.animations['roll'], 0.25, 'once')
+			this.executeCrossFade(this.animations['roll'], 0.25, 'once')
 		}
 		if (this.isRolling) return
 		if (!this.waitForAnimation && j && !this.isJumping) {
 			this.isJumping = true
-			 this.executeCrossFade(w ? this.animations['jump-running'] : this.animations['jump'], 0.25, 'once')
+			this.executeCrossFade(w ? this.animations['jump-running'] : this.animations['jump'], 0.25, 'once')
 		}
 		if (w || this.isJumping) return
 		if (sb && !this.isSteppingBack) {
 			this.isSteppingBack = true
-			 this.executeCrossFade(this.animations['step-back'])
+			this.executeCrossFade(this.animations['step-back'])
 		} else if (!sb && this.isSteppingBack) {
-			 this.executeCrossFade( this.returnAction())
+			this.executeCrossFade( this.returnAction())
 			this.isSteppingBack = false
 		}
 		if (sb) return  this.updateWalk(false, true, 0.025)
 		if (!this.isRotating && t) {
 			this.isRotating = true
-			 this.executeCrossFade(this.animations['walk'])
+			this.executeCrossFade(this.animations['walk'])
 		} else if (this.isRotating && !t) {
 			if (!w)  this.executeCrossFade( this.returnAction())
 			this.isRotating = false
@@ -545,6 +545,7 @@ export class Player extends Entity {
 	}
 
 	updateWalk(running=false, back=false, speed=0.1, ignoreColision=false) {
+		if (this.isSlashing || this.isKicking || this.waitForAnimation) return
 		//if (!ignoreColision && this.collide(foe)) return this.updateWalk(running, !back, 0.1, true)
 		let dir = this.camera.getWorldDirection(this.object.position.clone())
 		if (back) dir.negate()
