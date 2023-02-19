@@ -197,4 +197,8 @@ export class Game {
 		this.enemy?.toggleVisibility()
 	}
 
+	get delay() {
+		return this.fpsLimit ? this.fpsLimit * 100 : 1
+	}
+
 }

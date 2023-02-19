@@ -94,9 +94,7 @@ export class EnemyHumanoid extends Entity {
 			this.isAttacking = true
 			this.waitForAnimation = true
 			this.executeCrossFade(this.animations['attack'], 0.1, 'once')
-			setTimeout(() => {
-				this.player.setupDamage(10)
-			}, window.game.fpsLimit ? window.game.fpsLimit * 100 * 500 : 500)
+			setTimeout(() => {this.player.setupDamage(10)}, window.game.delay * 500)
 		}
 		if (this.waitForAnimation) return
 		if (this.isWalking) {

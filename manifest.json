@@ -1,6 +1,8 @@
 {
-	"name": "Hero",
 	"start_url": ".",
+	"name": "Hero",
+	"short_name": "Hero",
+	"description": "Hero - Desenvolvimento de game 3D no navegador",
 	"display": "standalone",
 	"orientation": "landscape",
 	"background_color": "#000",

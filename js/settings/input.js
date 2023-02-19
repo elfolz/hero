@@ -50,6 +50,7 @@ export default {
 		keyStepBack: 83,
 		keyRoll: 82,
 		keyBackflip: 76,
-		keyToggleSword: 69
+		keyToggleSword: 69,
+		keyHeal: 72
 	}
 }
