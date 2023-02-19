@@ -14,6 +14,7 @@ export class Player extends Entity {
 		this.camera = camera
 		this.actions = []
 		this.keysPressed = {}
+		this.potions = 3
 		this.hp = 100
 		this.maxhp = 100
 		this.initControls()
@@ -467,11 +468,11 @@ export class Player extends Entity {
 		let j = this.actions.includes('jump')
 		let rl = this.actions.includes('roll')
 		if (this.actions.length <= 0) this.synchronizeCrossFade(this.animations['idle'])
-		if (!this.waitForAnimation && h) {
+		if (!this.waitForAnimation && h && this.potions > 0) {
 			this.isHealing = true
 			this.waitForAnimation = true
-			setTimeout(() => {this.setupHeal()}, window.game.delay * 750)
 			this.executeCrossFade(this.animations['heal'], 0.1, 'once')
+			setTimeout(() => {this.setupHeal()}, window.game.delay * 750)
 		} else if (!this.waitForAnimation && s) {
 			this.isSlashing = true
 			this.waitForAnimation = true
@@ -574,10 +575,13 @@ export class Player extends Entity {
 	}
 
 	setupHeal() {
+		if (this.potions <= 0) return
+		this.potions--
 		this.playHealSE()
 		this.hp += this.maxhp / 2
 		if (this.hp > this.maxhp) this.hp = this.maxhp
 		this.refreshHPBar()
+		
 	}
 
 	playAttackSE() {
@@ -614,6 +618,7 @@ export class Player extends Entity {
 		let hpbarWidth = document.querySelector('#hpbar').clientWidth - 4
 		let barWidth = Math.max(0, this.hp) * hpbarWidth / this.maxhp
 		document.querySelector('#hpbar').style.setProperty('--hp-width', `${barWidth}px`)
+		document.querySelector('#count-heal').innerHTML = this.potions
 	}
 
 	refreshPause() {
