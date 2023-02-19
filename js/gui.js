@@ -31,6 +31,7 @@ function initGUI() {
 		document.querySelector('#dialog-controller').classList.remove('opened')
 	}
 	document.querySelector('#menu-button-fps').onclick = e => {
+		e.stopPropagation()
 		if (!window.game.fpsLimit) {
 			window.game.fpsLimit = 1/60
 			refreshFPS(60)
@@ -41,10 +42,9 @@ function initGUI() {
 			window.game.fpsLimit = 0
 			refreshFPS(0)
 		}
-		e.stopPropagation()
-		e.preventDefault()
 	}
 	document.querySelector('#menu-button-resolution').onclick = e => {
+		e.stopPropagation()
 		if (!window.game.resolution) {
 			window.game.resolution = 1
 			refreshResolution(1)
@@ -56,10 +56,9 @@ function initGUI() {
 			refreshResolution(0)
 		}
 		window.game.resizeScene()
-		e.stopPropagation()
-		e.preventDefault()
 	}
 	document.querySelector('#menu-button-pixel_density').onclick = e => {
+		e.stopPropagation()
 		if (!window.game.pixelDensity) {
 			window.game.pixelDensity = 1
 			refreshPixelDensity(1)
@@ -71,8 +70,6 @@ function initGUI() {
 			refreshPixelDensity(0)
 		}
 		window.game.resizeScene()
-		e.stopPropagation()
-		e.preventDefault()
 	}
 }
 
@@ -104,20 +101,21 @@ window.refreshPixelDensity = function(value, save=true) {
 
 document.onclick = () => {
 	document.querySelector('#menu-config').classList.remove('opened')
+	if (window.firstClick) return
 	if ('requestFullscreen' in document.documentElement && !device.isPC && !device.isLocalhost) {
-		document.documentElement.requestFullscreen()
-		/* .then(() => {return screen?.orientation.lock('landscape')})
-		.catch(e => {}) */
+		document.documentElement.requestFullscreen({navigationUI: 'hide'})
+		.then(() => {
+			return screen.orientation.lock('landscape')
+		})
+		.catch(e => {})
 	}
-	if (!window.audioAuthorized) {
-		window.audioAuthorized = true
-		window.sound.init()
-	}
+	window.sound.init()
+	window.firstClick = true
 }
 
 document.onvisibilitychange = () => {
-	game?.toggleVisibility()
-	sound?.toggleVisibility()
+	window.game?.toggleVisibility()
+	window.sound?.toggleVisibility()
 	if (document.hidden) {
 		document.querySelectorAll('footer section button').forEach(el => {
 			el.classList.remove('active')
@@ -130,3 +128,10 @@ document.onreadystatechange = () => {
 }
 
 window.oncontextmenu = e => {e.preventDefault(); return false}
+
+if ('screen' in window) {
+	screen.orientation.onchange = () => {
+		window.game?.refreshResolution()
+		window.game?.resizeScene()
+	}
+}

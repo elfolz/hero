@@ -1,6 +1,6 @@
 'use strict'
 import * as THREE from '/js/modules/three.module.js'
-import { Entity } from '/js/entity.js'
+import { Entity } from '/js/classes/entity.js'
 import randomInt from '/js/helpers/randomInt.js'
 
 export class EnemyHumanoid extends Entity {

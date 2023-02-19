@@ -1,7 +1,7 @@
 'use strict'
 import '/js/gui.js'
-import { Sound } from '/js/sound.js'
-import { Game } from '/js/game.js'
+import { Sound } from '/js/classes/sound.js'
+import { Game } from '/js/classes/game.js'
 
 window.sound = new Sound()
 window.game = new Game()

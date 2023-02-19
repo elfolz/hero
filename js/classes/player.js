@@ -1,6 +1,6 @@
 'use strict'
 import * as THREE from '/js/modules/three.module.js'
-import { Entity } from '/js/entity.js'
+import { Entity } from '/js/classes/entity.js'
 import inputSettings from '/js/settings/input.js'
 import randomInt from '/js/helpers/randomInt.js'
 import device from '/js/helpers/device.js'
@@ -237,7 +237,6 @@ export class Player extends Entity {
 
 	initControls() {
 		window.onkeydown = e => {
-			//console.log(e)
 			this.keyboardActive = true
 			this.keysPressed[e.keyCode] = true
 			if (this.keysPressed[inputSettings.keyboard.keyToggleSword] && !this.actions.includes('toggle-sword')) this.actions.push('toggle-sword')
@@ -271,8 +270,11 @@ export class Player extends Entity {
 			if (e.keyCode == inputSettings.keyboard.keyRoll) this.actions.splice(this.actions.findIndex(el => el == 'roll'), 1)
 		}
 		const buttonForward = document.querySelector('#button-forward')
+		buttonForward.ontouchstart = e => {
+			if (!this.actions.includes('walk')) this.actions.push('walk')
+			buttonForward.classList.add('active')
+		}
 		buttonForward.ontouchmove = e => {
-			e.stopPropagation()
 			e.preventDefault()
 			if (!buttonForward.posX && buttonForward.getClientRects()) buttonForward.posX = buttonForward.getClientRects()[0].x
 			if (e.changedTouches[0].pageX < (buttonForward.posX)) {
@@ -292,13 +294,7 @@ export class Player extends Entity {
 				document.querySelector('#button-right').classList.remove('active')
 			}
 		}
-		buttonForward.ontouchstart = e => {
-			e.stopPropagation()
-			e.preventDefault()
-			if (!this.actions.includes('walk')) this.actions.push('walk')
-			buttonForward.classList.add('active')
-		}
-		buttonForward.ontouchend = () => {
+		buttonForward.ontouchend = e => {
 			this.actions.splice(this.actions.findIndex(el => el == 'walk'), 1)
 			if (this.actions.includes('turn-left')) this.actions.splice(this.actions.findIndex(el => el == 'turn-left'), 1)
 			if (this.actions.includes('turn-right')) this.actions.splice(this.actions.findIndex(el => el == 'turn-right'), 1)
@@ -307,54 +303,51 @@ export class Player extends Entity {
 			document.querySelector('#button-right').classList.remove('active')
 		}
 		document.querySelector('#button-backward').ontouchstart = e => {
-			e.stopPropagation()
-			e.preventDefault()
 			if (!this.actions.includes('step-back')) this.actions.push('step-back')
 		}
-		document.querySelector('#button-backward').ontouchend = () => {
+		document.querySelector('#button-backward').ontouchend = e => {
 			this.actions.splice(this.actions.findIndex(el => el == 'step-back'), 1)
 		}
 		document.querySelector('#button-left').ontouchstart = e => {
-			e.stopPropagation()
-			e.preventDefault()
 			if (!this.actions.includes('turn-left')) this.actions.push('turn-left')
 		}
-		document.querySelector('#button-left').ontouchend = () => {
+		document.querySelector('#button-left').ontouchend = e => {
 			this.actions.splice(this.actions.findIndex(el => el == 'turn-left'), 1)
 		}
 		document.querySelector('#button-right').ontouchstart = e => {
-			e.stopPropagation()
-			e.preventDefault()
 			if (!this.actions.includes('turn-right')) this.actions.push('turn-right')
 		}
-		document.querySelector('#button-right').ontouchend = () => {
+		document.querySelector('#button-right').ontouchend = e => {
 			this.actions.splice(this.actions.findIndex(el => el == 'turn-right'), 1)
 		}
 		/* document.querySelector('#button-roll').ontouchstart = e => {
 			if (!this.actions.includes('roll')) this.actions.push('roll')
 		}
-		document.querySelector('#button-roll').ontouchend = () => {
+		document.querySelector('#button-roll').ontouchend = e => {
 			this.actions.splice(this.actions.findIndex(el => el == 'roll'), 1)
 		} */
+		document.querySelector('#button-attack').ontouchstart = e => {
+			if (!this.actions.includes('slash')) this.actions.push('slash')
+		}
+		document.querySelector('#button-attack').ontouchend = e => {
+			this.actions.splice(this.actions.findIndex(el => el == 'slash'), 1)
+		}
 		document.querySelector('#button-run').ontouchstart = e => {
 			if (!this.actions.includes('run')) this.actions.push('run')
 		}
-		document.querySelector('#button-run').ontouchend = () => {
+		document.querySelector('#button-run').ontouchend = e => {
 			this.actions.splice(this.actions.findIndex(el => el == 'run'), 1)
-		}
-		document.querySelector('#button-attack').ontouchstart = e => {
-			if (!this.actions.includes('slash')) this.actions.push('slash')
 		}
 		document.querySelector('#button-kick').ontouchstart = e => {
 			if (!this.actions.includes('kick')) this.actions.push('kick')
 		}
-		document.querySelector('#button-kick').ontouchend = () => {
+		document.querySelector('#button-kick').ontouchend = e => {
 			this.actions.splice(this.actions.findIndex(el => el == 'kick'), 1)
 		}
 		document.querySelector('#button-jump').ontouchstart = e => {
 			if (!this.actions.includes('jump')) this.actions.push('jump')
 		}
-		document.querySelector('#button-jump').ontouchend = () => {
+		document.querySelector('#button-jump').ontouchend = e => {
 			this.actions.splice(this.actions.findIndex(el => el == 'jump'), 1)
 		}
 	}

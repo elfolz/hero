@@ -1,7 +1,7 @@
 'use strict'
 import * as THREE from '/js/modules/three.module.js'
-import { EnemyHumanoid } from '/js/enemyHumanoid.js'
-import { Player } from '/js/player.js'
+import { EnemyHumanoid } from '/js/classes/enemyHumanoid.js'
+import { Player } from '/js/classes/player.js'
 import device from '/js/helpers/device.js'
 
 export class Game {
@@ -19,14 +19,16 @@ export class Game {
 		this.fps = 0
 		this.frames = 0
 		this.clockDelta = 0
-		this.init()
+		this.refreshFPS()
+		this.refreshResolution()
+		this.refreshPixelDensity()
 		this.setupLoading()
 		this.initRender()
 		window.onresize = () => this.resizeScene()
 		document.body.appendChild(this.renderer.domElement)
 	}
 
-	init() {
+	refreshFPS() {
 		let fps = localStorage.getItem('fpsLimit')
 		if (fps == '60') this.fpsLimit = 1 / 60
 		else if (fps == '30') this.fpsLimit = 1 / 30
@@ -34,6 +36,9 @@ export class Game {
 		else if (device.cpuCores >= 4 || device.isApple) {this.fpsLimit = 1 / 60; fps = 60}
 		else {this.fpsLimit = 1 / 30; fpsl = 30}
 		window.refreshFPS(fps, false)
+	}
+
+	refreshResolution() {
 		let resolution = localStorage.getItem('resolution')
 		if (resolution == '1') {
 			this.screenWidth = parseInt(window.innerWidth / 4 * 3)
@@ -47,6 +52,9 @@ export class Game {
 			this.screenHeight = window.innerHeight
 		}
 		window.refreshResolution(resolution, false)
+	}
+
+	refreshPixelDensity() {
 		let pixelDensity = localStorage.getItem('pixelDensity')
 		if (pixelDensity == '0') this.pixelDensity = window.devicePixelRatio
 		else if (pixelDensity == '1') this.pixelDensity = (window.devicePixelRatio / 4 * 3)
