@@ -19,33 +19,40 @@ export class EnemyHumanoid extends Entity {
 			this.object.traverse(el => {if (el.isMesh) el.castShadow = true})
 			this.object.position.set(0, 0, 20)
 			this.object.lookAt(0, 0, -1)
-			this.object.scale.set(0.045, 0.045, 0.045)
 			this.mixer = new THREE.AnimationMixer(this.object)
+
 			this.object.collider = new THREE.Mesh(
-				new THREE.SphereGeometry(18),
+				new THREE.SphereGeometry(1.1),
 				new THREE.MeshBasicMaterial({transparent: true, opacity: 0})
 			)
 			this.object.collider.name = 'collider'
+			this.object.collider.material.side = THREE.DoubleSided
 			this.object.add(this.object.collider)
+
 			this.object.chest = new THREE.Mesh(
-				new THREE.CylinderGeometry(),
+				new THREE.CylinderGeometry(0.6, 0.6, 2.6),
 				new THREE.MeshBasicMaterial({transparent: true, opacity: 0})
 			)
 			this.object.chest.name = 'chest'
 			this.object.chest.rotation.x = (Math.PI / 2)
-			this.object.chest.position.z += 24.8
-			this.object.chest.scale.set(0.6, 2.5, 0.6)
+			this.object.chest.rotation.y += 0.25
+			this.object.chest.position.z -= 5.5
+			this.object.chest.material.side = THREE.DoubleSided
+			this.object.add(this.object.chest)
 			this.object.getObjectByName('mixamorigSpine1').attach(this.object.chest)
-			this.object.hand = new THREE.Mesh(
+
+			this.object.weapon = new THREE.Mesh(
 				new THREE.SphereGeometry(0.35),
-				new THREE.MeshBasicMaterial({transparent: true, opacity: 0})
+				new THREE.MeshBasicMaterial({transparent: true, opacity: 1})
 			)
-			this.object.hand.name = 'hand'
-			this.object.hand.rotation.x = (Math.PI / 2)
-			this.object.hand.position.x += 0.85
-			this.object.hand.position.y += 0.5
-			this.object.hand.position.z += 23.3
-			this.object.getObjectByName('mixamorigHead').attach(this.object.hand)
+			this.object.weapon.name = 'weapon'
+			/* this.object.weapon.position.set(-3.8, -0.3, -6.5) */
+			this.object.weapon.position.set(this.object.position.x+3.7, this.object.position.y-0.3, this.object.position.z+6.5)
+			this.object.weapon.material.side = THREE.DoubleSided
+			/* this.object.add(this.object.weapon) */
+			this.object.getObjectByName('mixamorigRightHand').attach(this.object.weapon)
+			this.object.weapon.updateMatrixWorld()
+
 			this.onFinishActions()
 			this.loadAnimations()
 			this.callback(this.object)
@@ -59,7 +66,7 @@ export class EnemyHumanoid extends Entity {
 	}
 
 	loadAnimations() {
-		this.fbxLoader.load('/models/humanoid/zombieIdle.fbx', fbx => {
+		this.fbxLoader.load('/models/humanoid/idle.fbx', fbx => {
 			this.animations['idle'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['idle'].name = 'idle'
 			this.lastAction = this.animations['idle']
@@ -69,7 +76,7 @@ export class EnemyHumanoid extends Entity {
 		}, error => {
 			console.error(error)
 		})
-		this.fbxLoader.load('/models/humanoid/zombieWalk.fbx', fbx => {
+		this.fbxLoader.load('/models/humanoid/walk.fbx', fbx => {
 			this.animations['walk'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['walk'].name = 'walk'
 		}, xhr => {
@@ -77,7 +84,7 @@ export class EnemyHumanoid extends Entity {
 		}, error => {
 			console.error(error)
 		})
-		this.fbxLoader.load('/models/humanoid/zombieAttack.fbx', fbx => {
+		this.fbxLoader.load('/models/humanoid/attack.fbx', fbx => {
 			this.animations['attack'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['attack'].name = 'attack'
 		}, xhr => {
@@ -87,14 +94,20 @@ export class EnemyHumanoid extends Entity {
 		})
 	}
 
+	update(clockDelta) {
+		super.update(clockDelta)
+		if (this.processingAttack) this.executeMelleeAttack()
+	}
+
 	updateActions() {
 		if (location.search.includes('stop-enemy')) return
+		if (this.isAttacking) return
 		let check = this.getDistance(this.player)
-		if (check?.distance <= 2.5 && !this.isAttacking) {
+		if (check?.distance <= 3.5 && !this.isAttacking) {
 			this.isAttacking = true
 			this.waitForAnimation = true
 			this.executeCrossFade(this.animations['attack'], 0.1, 'once')
-			setTimeout(() => {this.player.setupDamage(10)}, window.game.delay * 500)
+			this.executeMelleeAttack()
 		}
 		if (this.waitForAnimation) return
 		if (this.isWalking) {
@@ -107,7 +120,7 @@ export class EnemyHumanoid extends Entity {
 					this.se = audios[i]
 				}
 			}
-			 this.updateObjectFollow(this.player, check?.collided)
+			this.updateObjectFollow(this.player, check?.collided)
 		}
 		if (check?.distance < 200 && !this.isWalking) {
 			this.isWalking = true
@@ -122,6 +135,7 @@ export class EnemyHumanoid extends Entity {
 		this.mixer.addEventListener('finished', () => {
 			this.waitForAnimation = false
 			this.isAttacking = false
+			this.processingAttack = false
 			this.executeCrossFade(this.animations['walk'])
 		})
 	}
@@ -130,6 +144,13 @@ export class EnemyHumanoid extends Entity {
 		for (let i=0; i<=8; i++) {
 			this.fetchAudio(`attack-${i}`, `/audio/monster/homanoid-${i}.mp3`, true)
 		}
+	}
+
+	executeMelleeAttack() {
+		if (!this.isAttacking) return
+		let hasHit = this.getMelleeDistance(this.player)
+		if (hasHit) this.player.setupDamage(10)
+		this.processingAttack = !hasHit
 	}
 
 }

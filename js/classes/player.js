@@ -36,21 +36,27 @@ export class Player extends Entity {
 			this.dummyCamera.lookAt(0, 5, 0)
 			this.object.add(this.dummyCamera)
 			this.mixer = new THREE.AnimationMixer(this.object)
+
 			this.object.collider = new THREE.Mesh(
 				new THREE.SphereGeometry(0.8),
 				new THREE.MeshBasicMaterial({transparent: true, opacity: 0})
 			)
 			this.object.collider.name = 'collider'
+			this.object.collider.material.side = THREE.DoubleSided
 			this.object.add(this.object.collider)
+
 			this.object.chest = new THREE.Mesh(
-				new THREE.CylinderGeometry(),
+				new THREE.CylinderGeometry(0.6, 0.6, 2.5),
 				new THREE.MeshBasicMaterial({transparent: true, opacity: 0})
 			)
 			this.object.chest.name = 'chest'
 			this.object.chest.rotation.x = (Math.PI / 2) - 0.25
+			this.object.chest.rotation.y += 0.25
 			this.object.chest.position.z -= 4.8
-			this.object.chest.scale.set(0.6, 2.5, 0.6)
+			this.object.chest.material.side = THREE.DoubleSided
+			this.object.add(this.object.chest)
 			this.object.getObjectByName('mixamorigSpine1').attach(this.object.chest)
+
 			this.onFinishActions()
 			this.loadAnimations()
 			this.loadWeapon()

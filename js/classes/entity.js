@@ -78,7 +78,7 @@ export class Entity {
 	}
 
 	getDistance(target) {
-		if (!target.object?.collider) return
+		if (!this.object.collider || !target.object.collider) return
 		if (this.lastCollisionUpdate > (performance.now()-500)) return
 		this.lastCollisionUpdate = performance.now()
 		let verts = this.object.collider.geometry.attributes.position
@@ -89,16 +89,29 @@ export class Entity {
 			this.caster.set(this.object.position, directionVector.normalize())
 			let collisionResults = this.caster.intersectObjects([target.object.collider])
 			let collided = collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()
-			if(collisionResults.length > 0) return {distance: collisionResults[0].distance, collided: collided}
+			if (collisionResults.length > 0) return {distance: collisionResults[0].distance, collided: collided}
 		}
 		return {distance: undefined, collided: false}
 	}
 
-	collide(target) {
-		let distance = getDistance(target)
-		if (distance?.collided) return true
-		distance = this.object.position.z==target.object.position.z&&this.object.position.x==target.object.position.x&&this.object.position.y==target.object.position.y
-		return distance
+	getMelleeDistance(target, src='weapon', dest='chest') {
+		if (!this.object[src] || !target.object[dest]) return
+		/* if (this.lastMelleeCollisionUpdate > (performance.now()-500)) return
+		this.lastMelleeCollisionUpdate = performance.now() */
+		let verts = this.object[src].geometry.attributes.position
+		for (let i = 0; i < verts.count; i++) {
+			let localVertex = this.vertex.fromBufferAttribute(verts, i)
+			let globalVertex = localVertex.applyMatrix4(this.object[src].matrix)
+			let directionVector = globalVertex.sub(target.object[dest].position)
+			this.caster.set(this.object[src].position, directionVector.normalize())
+			let collisionResults = this.caster.intersectObjects([target.object[dest]])
+			
+			if (collisionResults.length) console.log(collisionResults)
+
+			let collided = collisionResults.length > 0 && collisionResults[0].distance <= directionVector.length()
+			if (collided) return true
+		}
+		return false
 	}
 
 	async fetchAudio(key, url, positional=false, refDistance=10, maxDistance=100) {
