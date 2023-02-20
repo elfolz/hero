@@ -51,6 +51,10 @@ button {
 	cursor: pointer;
 	padding: 0;
 }
+button span.material-icons {
+	font-size: 48px;
+	color: var(--color-button);
+}
 svg path, svg circle, svg polygon {
 	fill: var(--color-button);
 }
@@ -227,7 +231,6 @@ footer > button:nth-of-type(4) {
 	position: fixed;
 	top: 50%;
 	left: 50%;
-	width: 80vw;
 	padding: 56px 12px 12px;
 	border-radius: 8px;
 	height: fit-content;
@@ -323,42 +326,99 @@ footer > button:nth-of-type(4) {
 		background-position: center;
 	}
 }
+#dialog-controller section:first-of-type label {
+	width: 48px;
+	text-align: center;
+}
+#dialog-controller section:first-of-type label[data-key]::before {
+	content: attr(data-key);
+	position: absolute;
+	top: -1rem;
+	left: 50%;
+	text-shadow: none;
+	opacity: 0.5;
+	transform: translateX(-50%);
+}
+#dialog-controller label[data-key="ESC"] {
+	top: 85px;
+	left: 13px;
+}
+#dialog-controller label[data-key="W"] {
+	top: 145px;
+	left: 161px;
+}
+#dialog-controller label[data-key="R"] {
+	top: 145px;
+	left: 284px;
+}
+#dialog-controller section:first-of-type label[data-key="A"] {
+	top: 205px;
+	left: 118px;
+}
+#dialog-controller label[data-key="S"] {
+	top: 205px;
+	left: 178px;
+}
+#dialog-controller label[data-key="D"] {
+	top: 205px;
+	left: 241px;
+}
+#dialog-controller label[data-key="H"] {
+	top: 205px;
+	left: 426px;
+}
+#dialog-controller label[data-key="J"] {
+	top: 205px;
+	left: 488px;
+}
+#dialog-controller label[data-key="K"] {
+	top: 205px;
+	left: 550px;
+}
+#dialog-controller label[data-key="L"] {
+	top: 205px;
+	left: 612px;
+}
+#dialog-controller label[data-key="ENTER"] {
+	top: 205px;
+	left: 830px;
+}
 @media screen and (max-width: 500px) {
 	#hpbar {
 		width: calc(100vw - 80px - 36px - 48px);
 	}
-	#dialog-controller {
+	#dialog-controller section img {
 		width: 90vw;
 	}
-	#dialog-controller label:nth-of-type(1) {
+	#dialog-controller label[data-key="ANALOG"] {
 		top: 51%;
 		left: 19%;
 	}
-	#dialog-controller label:nth-of-type(2) {
+	#dialog-controller section:last-of-type label[data-key="A"] {
 		top: 45%;
-		right: 16%;
+		right: 18%;
 	}
-	#dialog-controller label:nth-of-type(3) {
+	#dialog-controller label[data-key="B"] {
 		top: 37%;
 		right: 12%;
 	}
-	#dialog-controller label:nth-of-type(4) {
+	#dialog-controller label[data-key="X"] {
 		top: 37%;
-		right: 25%;
+		right: 23%;
 	}
-	#dialog-controller label:nth-of-type(5) {
-		top: 30%;
-		right: 15%;
+	#dialog-controller label[data-key="Y"] {
+		top: 29%;
+		right: 18%;
 	}
-	#dialog-controller label:nth-of-type(6) {
+	#dialog-controller label[data-key="RB"] {
 		top: 16%;
 		right: 16%;
 	}
-	#dialog-controller label:nth-of-type(7) {
+	#dialog-controller label[data-key="LB"] {
 		top: 16%;
 		left: 18%;
 	}
-	#dialog-controller label:nth-of-type(8) {
+	#dialog-controller label[data-key="OPT"] {
 		top: 37%;
 		right: 38%;
 	}
@@ -367,38 +427,41 @@ footer > button:nth-of-type(4) {
 	#hpbar {
 		width: 300px;
 	}
-	#dialog-controller {
+	#dialog-controller section:first-of-type img {
+		width: 900px;
+	}
+	#dialog-controller section:last-of-type img {
 		width: 500px;
 	}
-	#dialog-controller label:nth-of-type(1) {
+	#dialog-controller label[data-key="ANALOG"] {
 		top: 50%;
 		left: 22%;
 	}
-	#dialog-controller label:nth-of-type(2) {
+	#dialog-controller section:last-of-type label[data-key="A"] {
 		top: 44%;
-		right: 18%;
+		right: 19%;
 	}
-	#dialog-controller label:nth-of-type(3) {
+	#dialog-controller label[data-key="B"] {
 		top: 35%;
 		right: 13%;
 	}
-	#dialog-controller label:nth-of-type(4) {
+	#dialog-controller label[data-key="X"] {
 		top: 35%;
-		right: 26%;
+		right: 24%;
 	}
-	#dialog-controller label:nth-of-type(5) {
+	#dialog-controller label[data-key="Y"] {
 		top: 27%;
-		right: 17%;
+		right: 19%;
 	}
-	#dialog-controller label:nth-of-type(6) {
+	#dialog-controller label[data-key="RB"] {
 		top: 14%;
 		right: 19%;
 	}
-	#dialog-controller label:nth-of-type(7) {
+	#dialog-controller label[data-key="LB"] {
 		top: 14%;
 		left: 21%;
 	}
-	#dialog-controller label:nth-of-type(8) {
+	#dialog-controller label[data-key="OPT"] {
 		top: 35%;
 		right: 39%;
 	}

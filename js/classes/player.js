@@ -245,8 +245,10 @@ export class Player extends Entity {
 	}
 
 	initControls() {
+		if (device.isPC && !this.gamepad) this.keyboardActive = true
 		window.onkeydown = e => {
 			this.keyboardActive = true
+			window.refreshControlsMenu()
 			this.keysPressed[e.keyCode] = true
 			if (this.keysPressed[inputSettings.keyboard.keyToggleSword] && !this.actions.includes('toggle-sword')) this.actions.push('toggle-sword')
 			if (this.keysPressed[inputSettings.keyboard.keySlash] && !this.actions.includes('slash')) this.actions.push('slash')
@@ -381,67 +383,71 @@ export class Player extends Entity {
 			let vendorId = data[1]
 			let productId = data[2]
 			this.gamepadSettings = inputSettings.gamepad[vendorId] ?? inputSettings.gamepad['default']
+			window.refreshControlsMenu()
 		}
-		if (this.gamepad.buttons.some(el => el.pressed)) this.keyboardActive = false
+		if (this.gamepad.buttons.some(el => el.pressed) && this.keyboardActive) {
+			this.keyboardActive = false
+			window.refreshControlsMenu()
+		}
 		if (this.keyboardActive) return
-		if (this.gamepad.axes[gamepadSettings.YAxes] <= -0.05 || this.gamepad.buttons[gamepadSettings.UP]?.pressed) {
-			if (!this.actions.includes('walk')) actions.push('walk')
+		if (this.gamepad.axes[this.gamepadSettings.YAxes] <= -0.05 || this.gamepad.buttons[this.gamepadSettings.UP]?.pressed) {
+			if (!this.actions.includes('walk')) this.actions.push('walk')
 		} else if (this.actions.includes('walk')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'walk'), 1)
 		}
-		if (this.gamepad.axes[gamepadSettings.YAxes] >= 0.5 || this.gamepad.buttons[gamepadSettings.DOWN]?.pressed) {
+		if (this.gamepad.axes[this.gamepadSettings.YAxes] >= 0.5 || this.gamepad.buttons[this.gamepadSettings.DOWN]?.pressed) {
 			if (!this.actions.includes('step-back')) this.actions.push('step-back')
 		} else if (this.actions.includes('step-back')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'step-back'), 1)
 		}
-		if (this.gamepad.axes[gamepadSettings.XAxes] <= -0.05 || this.gamepad.buttons[gamepadSettings.LEFT]?.pressed) {
+		if (this.gamepad.axes[this.gamepadSettings.XAxes] <= -0.05 || this.gamepad.buttons[this.gamepadSettings.LEFT]?.pressed) {
 			if (!this.actions.includes('turn-left')) this.actions.push('turn-left')
 		} else if (this.actions.includes('turn-left')) {
-			this.actions.splice(actions.findIndex(el => el == 'turn-left'), 1)
+			this.actions.splice(this.actions.findIndex(el => el == 'turn-left'), 1)
 		}
-		if (this.gamepad.axes[gamepadSettings.XAxes] >= 0.05 || this.gamepad.buttons[gamepadSettings.RIGHT]?.pressed) {
+		if (this.gamepad.axes[this.gamepadSettings.XAxes] >= 0.05 || this.gamepad.buttons[this.gamepadSettings.RIGHT]?.pressed) {
 			if (!this.actions.includes('turn-right')) this.actions.push('turn-right')
 		} else if (this.actions.includes('turn-right')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'turn-right'), 1)
 		}
-		/* if (this.gamepad.buttons[gamepadSettings.A].pressed) {
+		/* if (this.gamepad.buttons[this.gamepadSettings.A].pressed) {
 			if (!this.actions.includes('run')) this.actions.push('run')
 		} else if (this.actions.includes('run')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'run'), 1)
 		} */
-		if (this.gamepad.buttons[gamepadSettings.A].pressed) {
+		if (this.gamepad.buttons[this.gamepadSettings.A].pressed) {
 			if (performance.now() < this.healLastUpdate) return
-			if (!this.actions.includes('heal')) this.actions.push('heal')
+			if (!this.actions.includes('jump')) this.actions.push('jump')
 			this.healLastUpdate = performance.now() + 250
-		} else if (this.actions.includes('heal')) {
-			this.actions.splice(this.actions.findIndex(el => el == 'heal'), 1)
+		} else if (this.actions.includes('jump')) {
+			this.actions.splice(this.actions.findIndex(el => el == 'jump'), 1)
 		}
-		if (this.gamepad.buttons[gamepadSettings.B].pressed) {
+		if (this.gamepad.buttons[this.gamepadSettings.B].pressed) {
 			if (!this.actions.includes('roll')) this.actions.push('roll')
 		} else if (this.actions.includes('roll')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'roll'), 1)
 		}
-		if (this.gamepad.buttons[gamepadSettings.X].pressed) {
-			if (!this.actions.includes('jump')) this.actions.push('jump')
-		} else if (this.actions.includes('jump')) {
-			this.actions.splice(this.actions.findIndex(el => el == 'jump'), 1)
-		}
-		if (this.gamepad.buttons[gamepadSettings.Y].pressed) {
+		if (this.gamepad.buttons[this.gamepadSettings.X].pressed) {
 			if (!this.actions.includes('backflip')) this.actions.push('backflip')
 		} else if (this.actions.includes('backflip')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'backflip'), 1)
 		}
-		if (this.gamepad.buttons[gamepadSettings.RB].pressed) {
+		if (this.gamepad.buttons[this.gamepadSettings.Y].pressed) {
+			if (!this.actions.includes('heal')) this.actions.push('heal')
+		} else if (this.actions.includes('heal')) {
+			this.actions.splice(this.actions.findIndex(el => el == 'heal'), 1)
+		}
+		if (this.gamepad.buttons[this.gamepadSettings.RB].pressed) {
 			if (!this.actions.includes('slash')) this.actions.push('slash')
 		} else if (this.actions.includes('slash')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'slash'), 1)
 		}
-		if (this.gamepad.buttons[gamepadSettings.LB].pressed) {
+		if (this.gamepad.buttons[this.gamepadSettings.LB].pressed) {
 			if (!this.actions.includes('kick')) this.actions.push('kick')
 		} else if (this.actions.includes('kick')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'kick'), 1)
 		}
-		if (this.gamepad.buttons[gamepadSettings.MENU].pressed) {
+		if (this.gamepad.buttons[this.gamepadSettings.MENU].pressed) {
 			if (performance.now() < this.pauseLastUpdate) return
 			this.pause = !this.pause
 			this.refreshPause()

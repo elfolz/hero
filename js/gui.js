@@ -24,7 +24,7 @@ function initGUI() {
 		document.querySelector('#menu-button-music-off').classList.remove('off')
 		window.sound.playBGM()
 	}
-	document.querySelector('#menu-button-gamepad').onclick = e => {
+	document.querySelector('#menu-button-controls').onclick = e => {
 		document.querySelector('#dialog-controller').classList.add('opened')
 	}
 	document.querySelector('#dialog-controller button').onclick = e => {
@@ -71,6 +71,7 @@ function initGUI() {
 		}
 		window.game.resizeScene()
 	}
+	window.refreshControlsMenu()
 }
 
 window.refreshFPS = function(value, save=true) {
@@ -99,16 +100,33 @@ window.refreshPixelDensity = function(value, save=true) {
 	document.querySelector('#menu-button-pixel_density label').innerHTML = label
 }
 
+window.refreshControlsMenu = () => {
+	if (window.game?.player?.gamepad || window.game?.player?.keyboardActive) {
+		document.querySelector('#menu-button-controls').style.removeProperty('display')
+	} else {
+		document.querySelector('#menu-button-controls').style.setProperty('display', 'none')
+	}
+	if (window.game?.player?.gamepad) {
+		document.querySelectorAll('#gamepad')?.forEach(el => el.style.removeProperty('display'))
+		document.querySelectorAll('#keyboard')?.forEach(el => el.style.setProperty('display', 'none'))
+	} else if (window.game?.player?.keyboardActive) {
+		document.querySelectorAll('#gamepad')?.forEach(el => el.style.setProperty('display', 'none'))
+		document.querySelectorAll('#keyboard')?.forEach(el => el.style.removeProperty('display'))
+	}
+}
+
 document.onclick = () => {
 	document.querySelector('#menu-config').classList.remove('opened')
 	if (window.firstClick) return
-	if ('requestFullscreen' in document.documentElement && !device.isPC && !device.isLocalhost) {
-		document.documentElement.requestFullscreen({navigationUI: 'hide'})
-		.then(() => {
-			return screen.orientation.lock('landscape')
-		})
-		.catch(e => {})
-	}
+	/* if (!navigator.standalone) {
+		if ('requestFullscreen' in document.documentElement && !device.isPC && !device.isLocalhost) {
+			document.documentElement.requestFullscreen({navigationUI: 'hide'})
+			.then(() => {
+				return screen.orientation.lock('landscape')
+			})
+			.catch(e => {})
+		}
+	} */
 	window.sound.init()
 	window.firstClick = true
 }

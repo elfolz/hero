@@ -39,18 +39,15 @@ export default {
 	},
 	keyboard: {
 		keyPause: 27,
-		keyPunch: 80,
 		keySlash: 13,
 		keyKick: 75,
 		keyWalk: 87,
-		keyRun: 32,
 		keyJump: 74,
 		keyTurnLeft: 65,
 		keyTurnRight: 68,
 		keyStepBack: 83,
 		keyRoll: 82,
 		keyBackflip: 76,
-		keyToggleSword: 69,
 		keyHeal: 72
 	}
 }
