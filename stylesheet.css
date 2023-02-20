@@ -327,8 +327,8 @@ footer > button:nth-of-type(4) {
 	}
 }
 #dialog-controller section:first-of-type label {
-	width: 48px;
 	text-align: center;
+	transform: translateX(-50%);
 }
 #dialog-controller section:first-of-type label[data-key]::before {
 	content: attr(data-key);
@@ -341,47 +341,47 @@ footer > button:nth-of-type(4) {
 }
 #dialog-controller label[data-key="ESC"] {
 	top: 85px;
-	left: 13px;
+	left: 37px;
 }
 #dialog-controller label[data-key="W"] {
 	top: 145px;
-	left: 161px;
+	left: 185px;
 }
 #dialog-controller label[data-key="R"] {
 	top: 145px;
-	left: 284px;
+	left: 307px;
 }
 #dialog-controller section:first-of-type label[data-key="A"] {
 	top: 205px;
-	left: 118px;
+	left: 141px;
 }
 #dialog-controller label[data-key="S"] {
 	top: 205px;
-	left: 178px;
+	left: 203px;
 }
 #dialog-controller label[data-key="D"] {
 	top: 205px;
-	left: 241px;
+	left: 264px;
 }
 #dialog-controller label[data-key="H"] {
 	top: 205px;
-	left: 426px;
+	left: 450px;
 }
 #dialog-controller label[data-key="J"] {
 	top: 205px;
-	left: 488px;
+	left: 511px;
 }
 #dialog-controller label[data-key="K"] {
 	top: 205px;
-	left: 550px;
+	left: 575px;
 }
 #dialog-controller label[data-key="L"] {
 	top: 205px;
-	left: 612px;
+	left: 635px;
 }
 #dialog-controller label[data-key="ENTER"] {
 	top: 205px;
-	left: 830px;
+	left: 853px;
 }
 @media screen and (max-width: 500px) {
 	#hpbar {
