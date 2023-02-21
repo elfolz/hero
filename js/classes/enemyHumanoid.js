@@ -158,7 +158,7 @@ export class EnemyHumanoid extends Entity {
 	executeMelleeAttack() {
 		if (!this.isAttacking) return
 		let hasHit = this.hasHit(this.player)
-		if (hasHit) this.player.setupDamage(10)
+		if (hasHit && Math.random() <= 0.75) this.player.setupDamage(10)
 		this.processingAttack = !hasHit
 	}
 

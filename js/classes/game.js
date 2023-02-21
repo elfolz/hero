@@ -15,7 +15,6 @@ export class Game {
 		this.dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
 		this.textureLoader = new THREE.TextureLoader()
 		this.scene = new THREE.Scene()
-		this.gameStarted = false
 		this.fps = 0
 		this.frames = 0
 		this.clockDelta = 0
@@ -133,8 +132,6 @@ export class Game {
 	}
 
 	initGame() {
-		if (this.gameStarted) return
-		this.gameStarted = true
 		document.body.classList.add('loaded')
 		document.body.removeChild(document.querySelector('figure'))
 		document.querySelector('header').style.removeProperty('display')
@@ -142,10 +139,20 @@ export class Game {
 		this.player.refreshHPBar()
 		this.resizeScene()
 		this.update()
+
+		this.renderer.getContext().canvas.addEventListener('webglcontextlost', function(event) {
+			event.preventDefault()
+			cancelAnimationFrame(this.animationFrameId)
+		}, false)
+
+		this.renderer.getContext().canvas.addEventListener("webglcontextrestored", function(event) {
+			this.update()
+		}, false)
+
 	}
 
 	update() {
-		requestAnimationFrame(() => this.update())
+		this.animationFrameId = requestAnimationFrame(() => this.update())
 		if (document.hidden) return
 		if (this.pause|| this.gameover) return
 		this.clockDelta += this.clock.getDelta()

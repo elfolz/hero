@@ -686,6 +686,7 @@ export class Player extends Entity {
 		this.isSlashing = false
 		this.isKicking = false
 		this.isHealing = false
+		this.processingAttack = false
 	}
 
 	initAudio() {
@@ -719,7 +720,7 @@ export class Player extends Entity {
 	executeMelleeAttack() {
 		if (!this.isSlashing) return
 		let hasHit = this.hasHit(window.game.enemy)
-		if (hasHit) {
+		if (hasHit && Math.random() <= 0.75) {
 			window.game.enemy.setupDamage(10)
 			this.playSlashSE()
 		}
