@@ -10,7 +10,7 @@ self.addEventListener('fetch', event => {
 			let fetchedResponse
 			if (cachedFile) {
 				cachedFile.then(response => {
-					if (response?.size >= 50000) return cachedResponse
+					if (response?.size >= 1024000) return cachedResponse
 					fetchedResponse = fetchNewData(event, cache, response)
 				})
 			} else {
