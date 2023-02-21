@@ -13,5 +13,3 @@ if (location.protocol.startsWith('https')) {
 		if (e?.data == 'update') location.reload(true)
 	}
 }
-
-if (!document.hidden) try { navigator.wakeLock.request('screen') } catch(e) {}

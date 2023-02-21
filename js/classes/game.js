@@ -139,28 +139,27 @@ export class Game {
 		this.player.refreshHPBar()
 		this.resizeScene()
 		this.update()
-
-		this.renderer.getContext().canvas.addEventListener('webglcontextlost', function(event) {
-			event.preventDefault()
+		/* this.renderer.getContext().canvas.addEventListener('webglcontextlost', e => {
+			e.preventDefault()
 			cancelAnimationFrame(this.animationFrameId)
 		}, false)
-
-		this.renderer.getContext().canvas.addEventListener("webglcontextrestored", function(event) {
+		this.renderer.getContext().canvas.addEventListener('webglcontextrestored', e => {
 			this.update()
-		}, false)
-
+		}, false) */
 	}
 
 	update() {
 		this.animationFrameId = requestAnimationFrame(() => this.update())
 		if (document.hidden) return
-		if (this.pause|| this.gameover) return
+		if (this.gameover) return
 		this.clockDelta += this.clock.getDelta()
 		if (this.fpsLimit && this.clockDelta < this.fpsLimit) return
 		this.renderer.render(this.scene, this.camera)
-		this.updateFPSCounter()
 		this.player.update(this.clockDelta)
-		this.enemy.update(this.clockDelta)
+		if (!this.pause) {
+			this.updateFPSCounter()
+			this.enemy.update(this.clockDelta)
+		}
 		this.clockDelta = this.fpsLimit ? this.clockDelta % this.fpsLimit : this.clockDelta % (1 / Math.max(this.fps, 30))
 	}
 

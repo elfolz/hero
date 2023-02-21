@@ -39,7 +39,7 @@ body {
 	height: 100vh;
 }
 body.loaded {
-	background-image: url("/textures/moon.webp") ;
+	background-image: url("/textures/moon.webp");
 }
 canvas[data-engine~="three.js"] {
 	width: 100vw;

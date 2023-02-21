@@ -22,7 +22,6 @@ export class Player extends Entity {
 
 	update(clockDelta) {
 		super.update(clockDelta)
-		this.updateCamera()
 		this.updateGamepad()
 		if (this.processingAttack) this.executeMelleeAttack()
 	}
@@ -32,10 +31,9 @@ export class Player extends Entity {
 			this.object = gltf.scene
 			this.object.encoding = THREE.sRGBEncoding
 			this.object.traverse(el => {if (el.isMesh) el.castShadow = true})
-			this.dummyCamera = this.camera.clone()
-			this.dummyCamera.position.set(0, this.object.position.y+5, this.object.position.z-15)
-			this.dummyCamera.lookAt(0, 5, 0)
-			this.object.add(this.dummyCamera)
+			this.camera.position.set(0, this.object.position.y+5, this.object.position.z-15)
+			this.camera.lookAt(0, 5, 0)
+			this.object.add(this.camera)
 			this.mixer = new THREE.AnimationMixer(this.object)
 
 			this.object.collider = new THREE.Mesh(new THREE.SphereGeometry(0.8), new THREE.MeshBasicMaterial({transparent: true, opacity: 0}))
@@ -96,19 +94,19 @@ export class Player extends Entity {
 		}, error => {
 			console.error(error)
 		})
-		this.fbxLoader.load('/models/hero/walkingBack.fbx', fbx => {
-			this.animations['step-back'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['step-back'].name = 'step-back'
-		}, xhr => {
-			this.progress['step-back'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
 		this.fbxLoader.load('/models/hero/running.fbx', fbx => {
 			this.animations['run'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['run'].name = 'run'
 		}, xhr => {
 			this.progress['running'] = (xhr.loaded / xhr.total) * 100
+		}, error => {
+			console.error(error)
+		})
+		this.fbxLoader.load('/models/hero/walkingBack.fbx', fbx => {
+			this.animations['step-back'] = this.mixer.clipAction(fbx.animations[0])
+			this.animations['step-back'].name = 'step-back'
+		}, xhr => {
+			this.progress['step-back'] = (xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -273,7 +271,7 @@ export class Player extends Entity {
 			if (this.keysPressed[inputSettings.keyboard.keyRoll] && !this.actions.includes('roll')) this.actions.push('roll')
 			if (this.keysPressed[inputSettings.keyboard.keyHeal] && !this.actions.includes('heal')) this.actions.push('heal')
 			if (this.keysPressed[inputSettings.keyboard.keyPause]) {
-				this.pause = !this.pause
+				window.game.pause = !window.game.pause
 				this.refreshPause()
 			}
 		}
@@ -389,9 +387,12 @@ export class Player extends Entity {
 		this.gamepad = navigator.getGamepads().find(el => el?.connected)
 		if (!this.gamepad) return
 		if (!this.gamepadSettings) {
+			let vendorId = 'default'
 			let data = /vendor:\s(\w+)\sproduct:\s(\w+)/i.exec(this.gamepad.id)
-			let vendorId = data[1]
-			let productId = data[2]
+			if (data) {
+				vendorId = data[1]
+				productId = data[2]
+			}
 			this.gamepadSettings = inputSettings.gamepad[vendorId] ?? inputSettings.gamepad['default']
 			window.refreshControlsMenu()
 		}
@@ -459,21 +460,14 @@ export class Player extends Entity {
 		}
 		if (this.gamepad.buttons[this.gamepadSettings.MENU].pressed) {
 			if (performance.now() < this.pauseLastUpdate) return
-			this.pause = !this.pause
+			window.game.pause = !window.game.pause
 			this.refreshPause()
 			this.pauseLastUpdate = performance.now() + 250
 		}
 	}
 
-	updateCamera() {
-		let target = this.object.clone()
-		this.dummyCamera.getWorldPosition(target.position)
-		this.dummyCamera.getWorldQuaternion(target.quaternion)
-		this.camera.position.lerp(target.position, 0.25)
-		this.camera.quaternion.slerp(target.quaternion, 0.25)
-	}
-
 	updateActions() {
+		if (window.game.pause) return
 		let w = this.actions.includes('walk')
 		let s = this.actions.includes('slash')
 		let k = this.actions.includes('kick')
@@ -647,7 +641,7 @@ export class Player extends Entity {
 	}
 
 	refreshPause() {
-		if (this.pause) document.querySelector('#glass').classList.add('opened')
+		if (window.game.pause) document.querySelector('#glass').classList.add('opened')
 		else document.querySelector('#glass').classList.remove('opened')
 	}
 

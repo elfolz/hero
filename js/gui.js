@@ -1,5 +1,6 @@
 'use strict'
-import device from '/js/helpers/device.js'
+
+var wakeLockObj
 
 function initGUI() {
 	if (localStorage.getItem('bgm') == 'false') {
@@ -78,6 +79,10 @@ function initGUI() {
 	window.refreshControlsMenu()
 }
 
+function lockScreen() {
+	if ('wakeLock' in navigator) navigator.wakeLock.request('screen').then(el => wakeLockObj = el)
+}
+
 window.refreshFPS = function(value, save=true) {
 	if (save) {
 		if (typeof value == 'number') localStorage.setItem('fpsLimit', value.toString())
@@ -142,6 +147,9 @@ document.onvisibilitychange = () => {
 		document.querySelectorAll('footer section button').forEach(el => {
 			el.classList.remove('active')
 		})
+		if (wakeLockObj) wakeLockObj.release()
+	} else {
+		lockScreen()
 	}
 }
 
@@ -157,3 +165,5 @@ if ('screen' in window) {
 		window.game?.resizeScene()
 	}
 }
+
+lockScreen()
