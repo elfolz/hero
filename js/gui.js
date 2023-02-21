@@ -71,6 +71,10 @@ function initGUI() {
 		}
 		window.game.resizeScene()
 	}
+	document.querySelector('#menu-button-force-refresh').onclick = e => {
+		e.stopPropagation()
+		location.reload(true)
+	}
 	window.refreshControlsMenu()
 }
 

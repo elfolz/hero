@@ -75,7 +75,7 @@ export class Game {
 				let total = values.reduce((a, b) => a + b, 0)
 				total = total / 3
 				if (progressbar) progressbar.value = parseInt(total || 0)
-				if (total >= 100) setTimeout(() => vm.initGame(), 500)
+				if (total >= 100) vm.initGame()
 				return true
 			}
 		})
@@ -186,10 +186,6 @@ export class Game {
 		this.renderer.setSize(this.screenWidth, this.screenHeight, false)
 		this.player.resizeScene()
 		this.enemy.resizeScene()
-	}
-
-	changeResolution(resolution) {
-
 	}
 
 	toggleVisibility() {

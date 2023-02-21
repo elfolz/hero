@@ -14,6 +14,8 @@ export class Entity {
 		this.fbxLoader = new FBXLoader()
 		this.caster = new THREE.Raycaster()
 		this.vertex = new THREE.Vector3()
+		this.box1 = new THREE.Box3()
+		this.box2 = new THREE.Box3()
 		this.progress = []
 		this.animations = []
 		this.audios = {}
@@ -94,24 +96,15 @@ export class Entity {
 		return {distance: undefined, collided: false}
 	}
 
-	getMelleeDistance(target, src='weapon', dest='chest') {
+	hasHit(target, src='weapon', dest='pillar') {
 		if (!this.object[src] || !target.object[dest]) return
-		/* if (this.lastMelleeCollisionUpdate > (performance.now()-500)) return
-		this.lastMelleeCollisionUpdate = performance.now() */
-		let verts = this.object[src].geometry.attributes.position
-		for (let i = 0; i < verts.count; i++) {
-			let localVertex = this.vertex.fromBufferAttribute(verts, i)
-			let globalVertex = localVertex.applyMatrix4(this.object[src].matrix)
-			let directionVector = globalVertex.sub(target.object[dest].position)
-			this.caster.set(this.object[src].position, directionVector.normalize())
-			let collisionResults = this.caster.intersectObjects([target.object[dest]])
-			
-			if (collisionResults.length) console.log(collisionResults)
-
-			let collided = collisionResults.length > 0 && collisionResults[0].distance <= directionVector.length()
-			if (collided) return true
-		}
-		return false
+		this.object[src].updateMatrixWorld(true)
+		target.object[dest].updateMatrixWorld(true)
+		this.box1.copy(this.object[src].geometry.boundingBox)
+		this.box1.applyMatrix4(this.object[src].matrixWorld)
+		this.box2.copy(target.object[dest].geometry.boundingBox)
+		this.box2.applyMatrix4(target.object[dest].matrixWorld)
+		return this.box1.intersectsBox(this.box2)
 	}
 
 	async fetchAudio(key, url, positional=false, refDistance=10, maxDistance=100) {
@@ -121,15 +114,16 @@ export class Entity {
 			let buffer = await response.arrayBuffer()
 			let data = await window.sound.audioContext.decodeAudioData(buffer)
 			this.audios[key] = data
-			if (positional) this.setPositionalAudio(data, refDistance, maxDistance)
+			if (positional) this.setPositionalAudio(key, data, refDistance, maxDistance)
 		} catch(error) {
 			console.log(error)
 		}
 	}
 
-	setPositionalAudio(data, refDistance=10, maxDistance=100) {
+	setPositionalAudio(name, data, refDistance=10, maxDistance=100) {
 		if (!window.sound?.audioListener) return
 		const sound = new THREE.PositionalAudio(window.sound?.audioListener)
+		sound.name = name
 		sound.setBuffer(data)
 		sound.setRefDistance(refDistance)
 		sound.setMaxDistance(maxDistance)
@@ -150,5 +144,7 @@ export class Entity {
 	resizeScene() {}
 
 	toggleVisibility() {}
+
+	setupDamage(damage) {}
 
 }

@@ -24,6 +24,7 @@ export class Player extends Entity {
 		super.update(clockDelta)
 		this.updateCamera()
 		this.updateGamepad()
+		if (this.processingAttack) this.executeMelleeAttack()
 	}
 
 	loadModel() {
@@ -32,37 +33,32 @@ export class Player extends Entity {
 			this.object.encoding = THREE.sRGBEncoding
 			this.object.traverse(el => {if (el.isMesh) el.castShadow = true})
 			this.dummyCamera = this.camera.clone()
-			this.dummyCamera.position.set(0, this.object.position.y+5, this.object.position.z-10)
+			this.dummyCamera.position.set(0, this.object.position.y+5, this.object.position.z-15)
 			this.dummyCamera.lookAt(0, 5, 0)
 			this.object.add(this.dummyCamera)
 			this.mixer = new THREE.AnimationMixer(this.object)
 
-			this.object.collider = new THREE.Mesh(
-				new THREE.SphereGeometry(0.8),
-				new THREE.MeshBasicMaterial({transparent: true, opacity: 0})
-			)
+			this.object.collider = new THREE.Mesh(new THREE.SphereGeometry(0.8), new THREE.MeshBasicMaterial({transparent: true, opacity: 0}))
 			this.object.collider.name = 'collider'
-			this.object.collider.material.side = THREE.DoubleSided
 			this.object.add(this.object.collider)
+			this.object.collider.geometry.computeBoundingBox()
 
-			this.object.chest = new THREE.Mesh(
-				new THREE.CylinderGeometry(0.6, 0.6, 2.5),
-				new THREE.MeshBasicMaterial({transparent: true, opacity: 0})
-			)
-			this.object.chest.name = 'chest'
-			this.object.chest.rotation.x = (Math.PI / 2) - 0.25
-			this.object.chest.rotation.y += 0.25
-			this.object.chest.position.z -= 4.8
-			this.object.chest.material.side = THREE.DoubleSided
-			this.object.add(this.object.chest)
-			this.object.getObjectByName('mixamorigSpine1').attach(this.object.chest)
+			this.object.pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 2.5), new THREE.MeshBasicMaterial({transparent: true, opacity: 0}))
+			this.object.pillar.name = 'pillar'
+			this.object.pillar.rotation.x = (Math.PI / 2) - 0.25
+			this.object.pillar.rotation.y += 0.25
+			this.object.pillar.position.z -= 4.8
+			this.object.add(this.object.pillar)
+			this.object.getObjectByName('mixamorigSpine1').attach(this.object.pillar)
+			this.object.pillar.geometry.computeBoundingBox()
 
 			this.onFinishActions()
 			this.loadAnimations()
 			this.loadWeapon()
 			this.callback(this.object)
+			this.progress['player'] = 100
 		}, xhr => {
-			this.progress['player'] = (xhr.loaded / xhr.total) * 100
+			this.progress['player'] = (xhr.loaded / xhr.total) * 99
 		}, error => {
 			console.error(error)
 		})
@@ -72,10 +68,18 @@ export class Player extends Entity {
 		this.gltfLoader.load('/models/equips/sword.glb', fbx => {
 			this.sword = fbx.scene
 			this.sword.encoding = THREE.sRGBEncoding
-			this.sword.traverse(el => {if (el.isMesh) el.castShadow = true})
+			this.sword.traverse(el => {
+				if (!el.isMesh) return
+				el.castShadow = true
+				if (!this.object.weapon) this.object.weapon = el
+			})
+			this.object.weapon.geometry.computeBoundingBox()
+			this.sword.rotation.y = Math.PI / 2
+			this.sword.position.set(this.object.position.x-3.3, this.object.position.y-0.1, this.object.position.z-5.6)
 			this.object.getObjectByName('mixamorigRightHand').attach(this.sword)
+			this.progress['sword'] = 100
 		}, xhr => {
-			this.progress['sword'] = (xhr.loaded / xhr.total) * 100
+			this.progress['sword'] = (xhr.loaded / xhr.total) * 99
 		}, error => {
 			console.error(error)
 		})
@@ -486,11 +490,13 @@ export class Player extends Entity {
 			this.executeCrossFade(this.animations['heal'], 0.1, 'once')
 			setTimeout(() => {this.setupHeal()}, window.game.delay * 750)
 		} else if (!this.waitForAnimation && s) {
+			let animationDelay = 0.1
 			this.isSlashing = true
 			this.waitForAnimation = true
 			this.playAttackSE()
 			let action = this.lastAction.name == 'outward-slash' ? this.animations['inward-slash'] : this.animations['outward-slash']
-			this.executeCrossFade(action, 0.1, 'once')
+			this.executeCrossFade(action, animationDelay, 'once')
+			setTimeout(() => this.executeMelleeAttack(), window.game.delay * (animationDelay * 1000 * 4 / 3))
 		} else if (!this.waitForAnimation && k) {
 			this.isKicking = true
 			this.waitForAnimation = true
@@ -605,6 +611,13 @@ export class Player extends Entity {
 		window.sound.playSE(this.audios[audios[i]], false, this)
 	}
 
+	playSlashSE() {
+		const audios = Object.keys(this.audios).filter(el => el.startsWith('slash'))
+		if (!audios.length) return
+		let i = randomInt(0, audios.length-1)
+		window.sound.playSE(this.audios[audios[i]], false, this)
+	}
+
 	playDamageSE() {
 		if (this.sePlaying) return
 		const audios = Object.keys(this.audios).filter(el => el.startsWith('damage'))
@@ -680,6 +693,9 @@ export class Player extends Entity {
 			this.fetchAudio(`attack-${i}`, `/audio/hero/attack/${i}.mp3`)
 			this.fetchAudio(`damage-${i}`, `/audio/hero/damage/${i}.mp3`)
 		}
+		for (let i=0; i<=3; i++) {
+			this.fetchAudio(`slash-${i}`, `/audio/weapons/slash-${i}.mp3`)
+		}
 		this.fetchAudio(`heal`, `/audio/misc/drinking.mp3`)
 	}
 
@@ -698,6 +714,16 @@ export class Player extends Entity {
 
 	toggleVisibility() {
 		if (document.hidden) this.actions.splice(0)
+	}
+
+	executeMelleeAttack() {
+		if (!this.isSlashing) return
+		let hasHit = this.hasHit(window.game.enemy)
+		if (hasHit) {
+			window.game.enemy.setupDamage(10)
+			this.playSlashSE()
+		}
+		this.processingAttack = !hasHit
 	}
 
 	resizeScene() {
