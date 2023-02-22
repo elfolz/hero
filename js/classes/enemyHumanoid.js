@@ -145,7 +145,7 @@ export class EnemyHumanoid extends Entity {
 			this.isAttacking = false
 			this.processingAttack = false
 			this.beenHit = false
-			this.executeCrossFade(this.animations['walk'])
+			this.executeCrossFade(this.returnAction)
 		})
 	}
 
@@ -176,6 +176,10 @@ export class EnemyHumanoid extends Entity {
 			this.executeCrossFade(this.animations['die'], 1, 'once')
 			this.died = true
 		}
+	}
+
+	get returnAction() {
+		return this.isWalking ? this.animations['walk'] : this.animations['idle']
 	}
 
 }

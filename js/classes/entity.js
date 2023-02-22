@@ -41,7 +41,7 @@ export class Entity {
 
 	update(clockDelta) {
 		if (this.dead) return
-		this.mixer?.update(clockDelta)
+		if (!window.game.pause) this.mixer?.update(clockDelta)
 		this.updateActions()
 	}
 

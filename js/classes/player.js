@@ -22,7 +22,7 @@ export class Player extends Entity {
 
 	update(clockDelta) {
 		super.update(clockDelta)
-		this.updateGamepad()
+		if (this.gamepad) this.updateGamepad()
 		if (this.processingAttack) this.executeMelleeAttack()
 	}
 
@@ -253,9 +253,23 @@ export class Player extends Entity {
 	}
 
 	initControls() {
-		if (device.isPC && !this.gamepad) this.keyboardActive = true
+		window.addEventListener('gamepadconnected', e => {
+			this.gamepad = e.gamepad
+			let vendorId = 'default'
+			let productId
+			let data = /vendor:\s(\w+)\sproduct:\s(\w+)/i.exec(this.gamepad.id)
+			if (data) {
+				vendorId = data[1]
+				productId = data[2]
+			}
+			this.gamepadSettings = inputSettings.gamepad[vendorId] ?? inputSettings.gamepad['default']
+			window.refreshControlsMenu()
+		})
+		window.addEventListener('gamepaddisconnected', e => {
+			this.gamepad = undefined
+			window.refreshControlsMenu()
+		})
 		window.onkeydown = e => {
-			this.keyboardActive = true
 			window.refreshControlsMenu()
 			this.keysPressed[e.keyCode] = true
 			if (this.keysPressed[inputSettings.keyboard.keyToggleSword] && !this.actions.includes('toggle-sword')) this.actions.push('toggle-sword')
@@ -383,24 +397,9 @@ export class Player extends Entity {
 	}
 
 	updateGamepad() {
-		if (this.died) return
 		this.gamepad = navigator.getGamepads().find(el => el?.connected)
-		if (!this.gamepad) return
-		if (!this.gamepadSettings) {
-			let vendorId = 'default'
-			let data = /vendor:\s(\w+)\sproduct:\s(\w+)/i.exec(this.gamepad.id)
-			if (data) {
-				vendorId = data[1]
-				productId = data[2]
-			}
-			this.gamepadSettings = inputSettings.gamepad[vendorId] ?? inputSettings.gamepad['default']
-			window.refreshControlsMenu()
-		}
-		if (this.gamepad.buttons.some(el => el.pressed) && this.keyboardActive) {
-			this.keyboardActive = false
-			window.refreshControlsMenu()
-		}
-		if (this.keyboardActive) return
+		if (!this.gamepad || !this.gamepadSettings) return
+		if (this.gamepadLastUpdate == this.gamepad.timestamp) return
 		if (this.gamepad.axes[this.gamepadSettings.YAxes] <= -0.05 || this.gamepad.buttons[this.gamepadSettings.UP]?.pressed) {
 			if (!this.actions.includes('walk')) this.actions.push('walk')
 		} else if (this.actions.includes('walk')) {
@@ -459,11 +458,10 @@ export class Player extends Entity {
 			this.actions.splice(this.actions.findIndex(el => el == 'kick'), 1)
 		}
 		if (this.gamepad.buttons[this.gamepadSettings.MENU].pressed) {
-			if (performance.now() < this.pauseLastUpdate) return
 			window.game.pause = !window.game.pause
 			this.refreshPause()
-			this.pauseLastUpdate = performance.now() + 250
 		}
+		this.gamepadLastUpdate = this.gamepad.timestamp
 	}
 
 	updateActions() {
@@ -527,7 +525,7 @@ export class Player extends Entity {
 			this.isSteppingBack = true
 			this.executeCrossFade(this.animations['step-back'])
 		} else if (!sb && this.isSteppingBack) {
-			this.executeCrossFade( this.returnAction())
+			this.executeCrossFade(this.returnAction)
 			this.isSteppingBack = false
 		}
 		if (sb) return this.updateWalk(false, true, 0.025)
@@ -535,7 +533,7 @@ export class Player extends Entity {
 			this.isRotating = true
 			this.executeCrossFade(this.animations['walk'])
 		} else if (this.isRotating && !t) {
-			if (!w) this.executeCrossFade( this.returnAction())
+			if (!w) this.executeCrossFade(this.returnAction)
 			this.isRotating = false
 		}
 		/* if (!this.waitForAnimation && !this.isTogglingSword && ts) {
@@ -543,7 +541,7 @@ export class Player extends Entity {
 			this.waitForAnimation = true
 			 this.executeCrossFade(this.swordEquipped ? sheathSwordAction : withdrawSwordAction, 0.25, 'once')
 		} else if (this.isTogglingSword && !t) {
-			 this.executeCrossFade(this.returnAction())
+			 this.executeCrossFade(this.returnAction)
 			this.isTogglingSword = false
 		} */
 	}
@@ -558,16 +556,6 @@ export class Player extends Entity {
 		if (pos.x >= (200/2-1) || pos.x <= ((200/2-1)*-1)) return
 		if (pos.z >= (200/2-1) || pos.z <= ((200/2-1)*-1)) return
 		this.object.position.add(step)
-	}
-
-	returnAction() {
-		if (this.actions.some(el => ['walk', 'turn-left', 'turn-right'].includes(el))) {
-			return this.animations['run']
-		} else if (this.actions.includes('step-back')) {
-			return this.animations['step-back']
-		} else {
-			return this.animations['idle']
-		}
 	}
 
 	setupDamage(damage) {
@@ -665,7 +653,7 @@ export class Player extends Entity {
 	onFinishActions() {
 		this.mixer.addEventListener('finished', () => {
 			if (this.died) return this.gameover()
-			if (!this.actions.some(el => ['slash', 'kick', 'backflip'].includes(el))) this.executeCrossFade(this.returnAction())
+			if (!this.actions.some(el => ['slash', 'kick', 'backflip'].includes(el))) this.executeCrossFade(this.returnAction)
 			this.resetActions()
 		})
 	}
@@ -723,6 +711,16 @@ export class Player extends Entity {
 
 	resizeScene() {
 		this.refreshHPBar()
+	}
+
+	get returnAction() {
+		if (this.actions.some(el => ['walk', 'turn-left', 'turn-right'].includes(el))) {
+			return this.animations['run']
+		} else if (this.actions.includes('step-back')) {
+			return this.animations['step-back']
+		} else {
+			return this.animations['idle']
+		}
 	}
 
 }

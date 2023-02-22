@@ -1,4 +1,5 @@
 'use strict'
+import device from '/js/helpers/device.js'
 
 var wakeLockObj
 
@@ -80,6 +81,7 @@ function initGUI() {
 }
 
 function lockScreen() {
+	if (document.hidden) return
 	if ('wakeLock' in navigator) navigator.wakeLock.request('screen').then(el => wakeLockObj = el)
 }
 
@@ -110,7 +112,7 @@ window.refreshPixelDensity = function(value, save=true) {
 }
 
 window.refreshControlsMenu = () => {
-	if (window.game?.player?.gamepad || window.game?.player?.keyboardActive) {
+	if (window.game?.player?.gamepad || device.isPC) {
 		document.querySelector('#menu-button-controls').style.removeProperty('display')
 	} else {
 		document.querySelector('#menu-button-controls').style.setProperty('display', 'none')
@@ -118,7 +120,7 @@ window.refreshControlsMenu = () => {
 	if (window.game?.player?.gamepad) {
 		document.querySelectorAll('#gamepad')?.forEach(el => el.style.removeProperty('display'))
 		document.querySelectorAll('#keyboard')?.forEach(el => el.style.setProperty('display', 'none'))
-	} else if (window.game?.player?.keyboardActive) {
+	} else {
 		document.querySelectorAll('#gamepad')?.forEach(el => el.style.setProperty('display', 'none'))
 		document.querySelectorAll('#keyboard')?.forEach(el => el.style.removeProperty('display'))
 	}
