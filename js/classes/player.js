@@ -22,7 +22,7 @@ export class Player extends Entity {
 
 	update(clockDelta) {
 		super.update(clockDelta)
-		if (this.gamepad) this.updateGamepad()
+		if (this.gamepadConnected) this.updateGamepad()
 		if (this.processingAttack) this.executeMelleeAttack()
 	}
 
@@ -36,19 +36,19 @@ export class Player extends Entity {
 			this.object.add(this.camera)
 			this.mixer = new THREE.AnimationMixer(this.object)
 
-			this.object.collider = new THREE.Mesh(new THREE.SphereGeometry(0.8), new THREE.MeshBasicMaterial({transparent: true, opacity: 0}))
-			this.object.collider.name = 'collider'
-			this.object.add(this.object.collider)
-			this.object.collider.geometry.computeBoundingBox()
+			this.collider = new THREE.Mesh(new THREE.SphereGeometry(0.8), new THREE.MeshBasicMaterial({visible: false}))
+			this.collider.name = 'collider'
+			this.object.add(this.collider)
+			this.collider.geometry.computeBoundingBox()
 
-			this.object.pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 2.5), new THREE.MeshBasicMaterial({transparent: true, opacity: 0}))
-			this.object.pillar.name = 'pillar'
-			this.object.pillar.rotation.x = (Math.PI / 2) - 0.25
-			this.object.pillar.rotation.y += 0.25
-			this.object.pillar.position.z -= 4.8
-			this.object.add(this.object.pillar)
-			this.object.getObjectByName('mixamorigSpine1').attach(this.object.pillar)
-			this.object.pillar.geometry.computeBoundingBox()
+			this.pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 2.5), new THREE.MeshBasicMaterial({visible: false}))
+			this.pillar.name = 'pillar'
+			this.pillar.rotation.x = (Math.PI / 2) - 0.25
+			this.pillar.rotation.y += 0.25
+			this.pillar.position.z -= 4.8
+			this.object.add(this.pillar)
+			this.object.getObjectByName('mixamorigSpine1').attach(this.pillar)
+			this.pillar.geometry.computeBoundingBox()
 
 			this.onFinishActions()
 			this.loadAnimations()
@@ -69,9 +69,9 @@ export class Player extends Entity {
 			this.sword.traverse(el => {
 				if (!el.isMesh) return
 				el.castShadow = true
-				if (!this.object.weapon) this.object.weapon = el
+				if (!this.weapon) this.weapon = el
 			})
-			this.object.weapon.geometry.computeBoundingBox()
+			this.weapon.geometry.computeBoundingBox()
 			this.sword.rotation.y = Math.PI / 2
 			this.sword.position.set(this.object.position.x-3.3, this.object.position.y-0.1, this.object.position.z-5.6)
 			this.object.getObjectByName('mixamorigRightHand').attach(this.sword)
@@ -254,10 +254,10 @@ export class Player extends Entity {
 
 	initControls() {
 		window.addEventListener('gamepadconnected', e => {
-			this.gamepad = e.gamepad
+			this.gamepadConnected = true
 			let vendorId = 'default'
 			let productId
-			let data = /vendor:\s(\w+)\sproduct:\s(\w+)/i.exec(this.gamepad.id)
+			let data = /vendor:\s(\w+)\sproduct:\s(\w+)/i.exec(e.gamepad.id)
 			if (data) {
 				vendorId = data[1]
 				productId = data[2]
@@ -266,7 +266,7 @@ export class Player extends Entity {
 			window.refreshControlsMenu()
 		})
 		window.addEventListener('gamepaddisconnected', e => {
-			this.gamepad = undefined
+			this.gamepadConnected = false
 			window.refreshControlsMenu()
 		})
 		window.onkeydown = e => {
@@ -399,7 +399,7 @@ export class Player extends Entity {
 	updateGamepad() {
 		this.gamepad = navigator.getGamepads().find(el => el?.connected)
 		if (!this.gamepad || !this.gamepadSettings) return
-		if (this.gamepadLastUpdate == this.gamepad.timestamp) return
+		if (this.gamepadLastUpdate <= this.gamepad.timestamp) return
 		if (this.gamepad.axes[this.gamepadSettings.YAxes] <= -0.05 || this.gamepad.buttons[this.gamepadSettings.UP]?.pressed) {
 			if (!this.actions.includes('walk')) this.actions.push('walk')
 		} else if (this.actions.includes('walk')) {
@@ -420,11 +420,6 @@ export class Player extends Entity {
 		} else if (this.actions.includes('turn-right')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'turn-right'), 1)
 		}
-		/* if (this.gamepad.buttons[this.gamepadSettings.A].pressed) {
-			if (!this.actions.includes('run')) this.actions.push('run')
-		} else if (this.actions.includes('run')) {
-			this.actions.splice(this.actions.findIndex(el => el == 'run'), 1)
-		} */
 		if (this.gamepad.buttons[this.gamepadSettings.A].pressed) {
 			if (performance.now() < this.healLastUpdate) return
 			if (!this.actions.includes('jump')) this.actions.push('jump')
@@ -458,8 +453,7 @@ export class Player extends Entity {
 			this.actions.splice(this.actions.findIndex(el => el == 'kick'), 1)
 		}
 		if (this.gamepad.buttons[this.gamepadSettings.MENU].pressed) {
-			window.game.pause = !window.game.pause
-			this.refreshPause()
+			window.game.togglePause()
 		}
 		this.gamepadLastUpdate = this.gamepad.timestamp
 	}
@@ -626,11 +620,6 @@ export class Player extends Entity {
 		let barWidth = Math.max(0, this.hp) * hpbarWidth / this.maxhp
 		document.querySelector('#hpbar').style.setProperty('--hp-width', `${barWidth}px`)
 		document.querySelector('#count-heal').innerHTML = this.potions
-	}
-
-	refreshPause() {
-		if (window.game.pause) document.querySelector('#glass').classList.add('opened')
-		else document.querySelector('#glass').classList.remove('opened')
 	}
 
 	executeCrossFade(newAction, duration=0.25, loop='repeat') {

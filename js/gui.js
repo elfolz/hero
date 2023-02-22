@@ -36,26 +36,26 @@ function initGUI() {
 		e.stopPropagation()
 		if (!window.game.fpsLimit) {
 			window.game.fpsLimit = 1/60
-			refreshFPS(60)
+			window.refreshFPS(60)
 		} else if (window.game.fpsLimit == 1/60) {
 			window.game.fpsLimit = 1/30
-			refreshFPS(30)
+			window.refreshFPS(30)
 		} else if (window.game.fpsLimit == 1/30) {
 			window.game.fpsLimit = 0
-			refreshFPS(0)
+			window.refreshFPS(0)
 		}
 	}
 	document.querySelector('#menu-button-resolution').onclick = e => {
 		e.stopPropagation()
 		if (!window.game.resolution) {
 			window.game.resolution = 1
-			refreshResolution(1)
+			window.refreshResolution(1)
 		} else if (window.game.resolution == 1) {
 			window.game.resolution = 2
-			refreshResolution(2)
+			window.refreshResolution(2)
 		} else if (window.game.resolution == 2) {
 			window.game.resolution = 0
-			refreshResolution(0)
+			window.refreshResolution(0)
 		}
 		window.game.resizeScene()
 	}
@@ -63,15 +63,23 @@ function initGUI() {
 		e.stopPropagation()
 		if (!window.game.pixelDensity) {
 			window.game.pixelDensity = 1
-			refreshPixelDensity(1)
+			window.refreshPixelDensity(1)
 		} else if (window.game.pixelDensity == 1) {
 			window.game.pixelDensity = 2
-			refreshPixelDensity(2)
+			window.refreshPixelDensity(2)
 		} else if (window.game.pixelDensity == 2) {
 			window.game.pixelDensity = 0
-			refreshPixelDensity(0)
+			window.refreshPixelDensity(0)
 		}
 		window.game.resizeScene()
+	}
+	document.querySelector('#menu-button-antialiasing').onclick = e => {
+		e.stopPropagation()
+		if (window.game.antialiasing) {
+			window.refreshAntialiasing(false)
+		} else {
+			window.refreshAntialiasing(true)
+		}
 	}
 	document.querySelector('#menu-button-force-refresh').onclick = e => {
 		e.stopPropagation()
@@ -109,6 +117,23 @@ window.refreshPixelDensity = function(value, save=true) {
 	}
 	let label = `${value == 1 ? 'Média' : value == 2 ? 'Baixa' : 'Alta'} densidade de pixels`
 	document.querySelector('#menu-button-pixel_density label').innerHTML = label
+}
+
+window.refreshAntialiasing = function(value, save=true) {
+	if (save) {
+		if (typeof value == 'boolean') localStorage.setItem('antialiasing', value.toString())
+		else localStorage.removeItem('antialiasing')
+		setTimeout(() => alert('Reinicie o jogo para aplicar as alterações'), 100)
+	}
+	let label = `Antialiasing ${value ? 'ligado' : 'desligado'}`
+	document.querySelector('#menu-button-antialiasing label').innerHTML = label
+	if (value) {
+		document.querySelector('#antialiasing-on').style.removeProperty('display')
+		document.querySelector('#antialiasing-off').style.setProperty('display', 'none')
+	} else {
+		document.querySelector('#antialiasing-on').style.setProperty('display', 'none')
+		document.querySelector('#antialiasing-off').style.removeProperty('display')
+	}
 }
 
 window.refreshControlsMenu = () => {

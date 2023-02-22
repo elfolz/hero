@@ -2,6 +2,8 @@
 import * as THREE from '/js/modules/three.module.js'
 import { GLTFLoader } from '/js/modules/gltfLoader.module.js'
 import { FBXLoader } from '/js/modules/fbxLoader.module.js'
+import { DecalGeometry } from '/js/modules/decalGeometry.module.js'
+import randomInt from '/js/helpers/randomInt.js'
 
 export class Entity {
 
@@ -12,8 +14,12 @@ export class Entity {
 		this.onload = onload
 		this.gltfLoader = new GLTFLoader()
 		this.fbxLoader = new FBXLoader()
+		this.textureLoader = new THREE.TextureLoader()
 		this.caster = new THREE.Raycaster()
 		this.vertex = new THREE.Vector3()
+		this.position = new THREE.Vector3()
+		this.scale = new THREE.Vector3()
+		this.roration = new THREE.Vector3()
 		this.box1 = new THREE.Box3()
 		this.box2 = new THREE.Box3()
 		this.progress = []
@@ -22,6 +28,7 @@ export class Entity {
 		this.pendingSounds = []
 		this.setupLoading()
 		this.loadModel()
+		this.setupDecalMaterial()
 	}
 
 	setupLoading() {
@@ -36,6 +43,22 @@ export class Entity {
 				vm.onload(total)
 				return true
 			}
+		})
+	}
+
+	setupDecalMaterial() {
+		this.decalMaterial = new THREE.MeshPhongMaterial( { 
+			specular: 0xffffff,
+			shininess: 10,
+			map: this.textureLoader.load('/textures/splatter.png'),
+			normalMap: this.textureLoader.load('/textures/wrinkle-normal.jpg'),
+			transparent: true,
+			depthTest: true,
+			depthWrite: false,
+			polygonOffset: true,
+			polygonOffsetFactor: -4,
+			wireframe: false,
+			visible: true
 		})
 	}
 
@@ -80,30 +103,30 @@ export class Entity {
 	}
 
 	getDistance(target) {
-		if (!this.object.collider || !target.object.collider) return
+		if (!this.collider || !target.collider) return
 		if (this.lastCollisionUpdate > (performance.now()-500)) return
 		this.lastCollisionUpdate = performance.now()
-		let verts = this.object.collider.geometry.attributes.position
+		let verts = this.collider.geometry.attributes.position
 		for (let i = 0; i < verts.count; i++) {
 			let localVertex = this.vertex.fromBufferAttribute(verts, i)
 			let globalVertex = localVertex.applyMatrix4(this.object.matrix)
 			let directionVector = globalVertex.sub(this.object.position)
 			this.caster.set(this.object.position, directionVector.normalize())
-			let collisionResults = this.caster.intersectObjects([target.object.collider])
+			let collisionResults = this.caster.intersectObjects([target.collider])
 			let collided = collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()
 			if (collisionResults.length > 0) return {distance: collisionResults[0].distance, collided: collided}
 		}
-		return {distance: undefined, collided: false}
+		return
 	}
 
 	hasHit(target, src='weapon', dest='pillar') {
-		if (!this.object[src] || !target.object[dest]) return
-		this.object[src].updateMatrixWorld(true)
-		target.object[dest].updateMatrixWorld(true)
-		this.box1.copy(this.object[src].geometry.boundingBox)
-		this.box1.applyMatrix4(this.object[src].matrixWorld)
-		this.box2.copy(target.object[dest].geometry.boundingBox)
-		this.box2.applyMatrix4(target.object[dest].matrixWorld)
+		if (!this[src] || !target[dest]) return
+		this[src].updateMatrixWorld(true)
+		target[dest].updateMatrixWorld(true)
+		this.box1.copy(this[src].geometry.boundingBox)
+		this.box1.applyMatrix4(this[src].matrixWorld)
+		this.box2.copy(target[dest].geometry.boundingBox)
+		this.box2.applyMatrix4(target[dest].matrixWorld)
 		return this.box1.intersectsBox(this.box2)
 	}
 
@@ -133,6 +156,23 @@ export class Entity {
 		}
 		if (this.object) this.object.add(sound)
 		else this.pendingSounds.push(sound)
+	}
+
+	setupBlood() {
+		if (!this.pillar) return
+		this.position = this.pillar.position.clone()
+		/* this.position = this.pillar.position.clone() */
+		/* this.position.x += randomInt(-1, 1, false)
+		this.position.y += randomInt(-1, 1, false)
+		this.position.z -=5//+= randomInt(-5, 5, false) */
+		this.roration.z = Math.random() * 2 * Math.PI
+		let s = randomInt(3, 5, false)
+		this.scale.set(s, s, s)
+		const decalGeometry = new DecalGeometry(this.pillar, this.position, this.roration, this.scale)
+		const decal = new THREE.Mesh(decalGeometry, this.decalMaterial)
+		decal.receiveShadow = true
+		window.game.scene.add(decal)
+		/* this.pillar.add(decal) */
 	}
 
 	loadModel() {}

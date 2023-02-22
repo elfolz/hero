@@ -23,25 +23,24 @@ export class EnemyHumanoid extends Entity {
 			this.object.lookAt(0, 0, -1)
 			this.mixer = new THREE.AnimationMixer(this.object)
 
-			this.object.collider = new THREE.Mesh(new THREE.SphereGeometry(1.1), new THREE.MeshBasicMaterial({transparent: true, opacity: 0}))
-			this.object.collider.name = 'collider'
-			this.object.add(this.object.collider)
-			this.object.collider.geometry.computeBoundingBox()
+			this.collider = new THREE.Mesh(new THREE.SphereGeometry(1.1), new THREE.MeshBasicMaterial({visible: false}))
+			this.collider.name = 'collider'
+			this.object.add(this.collider)
+			this.collider.geometry.computeBoundingBox()
 
-			this.object.pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 2.6), new THREE.MeshBasicMaterial({transparent: true, opacity: 0}))
-			this.object.pillar.name = 'pillar'
-			this.object.pillar.rotation.x = (Math.PI / 2)
-			this.object.pillar.rotation.y += 0.25
-			this.object.pillar.position.z -= 5.5
-			this.object.add(this.object.pillar)
-			this.object.getObjectByName('mixamorigSpine1').attach(this.object.pillar)
-			this.object.pillar.geometry.computeBoundingBox()
+			this.pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 2.6), new THREE.MeshBasicMaterial({visible: false}))
+			this.pillar.name = 'pillar'
+			this.pillar.rotation.x = (Math.PI / 2) - 0.12
+			this.pillar.position.z -= 5.5
+			this.object.add(this.pillar)
+			this.object.getObjectByName('mixamorigSpine1').attach(this.pillar)
+			this.pillar.geometry.computeBoundingBox()
 
-			this.object.weapon = new THREE.Mesh(new THREE.SphereGeometry(0.35), new THREE.MeshBasicMaterial({transparent: true, opacity: 0}))
-			this.object.weapon.name = 'weapon'
-			this.object.weapon.position.set(this.object.position.x+3.7, this.object.position.y-0.3, this.object.position.z+6.5)
-			this.object.getObjectByName('mixamorigRightHand').attach(this.object.weapon)
-			this.object.weapon.geometry.computeBoundingBox()
+			this.weapon = new THREE.Mesh(new THREE.SphereGeometry(0.35), new THREE.MeshBasicMaterial({visible: false}))
+			this.weapon.name = 'weapon'
+			this.weapon.position.set(this.object.position.x+3.7, this.object.position.y-0.3, this.object.position.z+6.5)
+			this.object.getObjectByName('mixamorigRightHand').attach(this.weapon)
+			this.weapon.geometry.computeBoundingBox()
 
 			this.onFinishActions()
 			this.loadAnimations()
@@ -168,6 +167,7 @@ export class EnemyHumanoid extends Entity {
 		this.waitForAnimation = true
 		this.beenHit = true
 		/* this.playDamageSE() */
+		/* this.setupBlood() */
 		this.executeCrossFade(this.animations['hit'], 0.1, 'once')
 		if (this.hp <= 0 && !this.died) {
 			let audio = this.object.children.find(el => el.name == 'attack-8')

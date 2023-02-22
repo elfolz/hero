@@ -1,3 +1,4 @@
-export default function(min, max) {
-	return Math.floor(Math.random() * (max - min + 1) + min)
+export default function(min, max, round=true) {
+	let value = Math.random() * (max - min + 1) + min
+	return round ? Math.floor(value) : value
 }

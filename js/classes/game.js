@@ -9,7 +9,6 @@ export class Game {
 	constructor() {
 		this.lastFrameTime = performance.now()
 		this.camera = new THREE.PerspectiveCamera(75, window.innerWidth /window.innerHeight, 0.1, 1000)
-		this.renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true})
 		this.clock = new THREE.Clock()
 		this.hemisphereLight = new THREE.HemisphereLight(0xddeeff, 0x000000, 0.25)
 		this.dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
@@ -18,13 +17,33 @@ export class Game {
 		this.fps = 0
 		this.frames = 0
 		this.clockDelta = 0
+		this.initRender()
 		this.refreshFPS()
 		this.refreshResolution()
 		this.refreshPixelDensity()
 		this.setupLoading()
-		this.initRender()
 		window.onresize = () => this.resizeScene()
 		document.body.appendChild(this.renderer.domElement)
+	}
+
+	initRender() {
+		let antialiasing = localStorage.getItem('antialiasing')
+		if (antialiasing == undefined && device.cpuCores >= 4) antialiasing = 'true'
+		this.antialiasing = antialiasing == 'true'
+		this.renderer = new THREE.WebGLRenderer({alpha: true, antialias: this.antialiasing})
+		this.scene.background = null
+		this.renderer.outputEncoding = THREE.sRGBEncoding
+		this.renderer.shadowMap.enabled = true
+		this.renderer.physicallyCorrectLights = true
+		this.renderer.setClearColor(0x000000, 0)
+		this.renderer.shadowMap.enabled = true
+		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+		this.hemisphereLight.position.set(100, 100, 100)
+		this.dirLight.position.set(0, 200, 200)
+		this.dirLight.castShadow = true
+		this.scene.add(this.hemisphereLight)
+		this.scene.add(this.dirLight)
+		window.window.refreshAntialiasing(this.antialiasing, false)
 	}
 
 	refreshFPS() {
@@ -79,21 +98,6 @@ export class Game {
 			}
 		})
 		this.loadModels()
-	}
-
-	initRender() {
-		this.scene.background = null
-		this.renderer.outputEncoding = THREE.sRGBEncoding
-		this.renderer.shadowMap.enabled = true
-		this.renderer.physicallyCorrectLights = true
-		this.renderer.setClearColor(0x000000, 0)
-		this.renderer.shadowMap.enabled = true
-		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
-		this.hemisphereLight.position.set(100, 100, 100)
-		this.dirLight.position.set(0, 200, 200)
-		this.dirLight.castShadow = true
-		this.scene.add(this.hemisphereLight)
-		this.scene.add(this.dirLight)
 	}
 
 	loadModels() {
@@ -156,7 +160,7 @@ export class Game {
 		if (this.fpsLimit && this.clockDelta < this.fpsLimit) return
 		this.renderer.render(this.scene, this.camera)
 		this.player.update(this.clockDelta)
-		if (!this.pause) {
+		if (!this.paused) {
 			this.updateFPSCounter()
 			this.enemy.update(this.clockDelta)
 		}
@@ -197,6 +201,12 @@ export class Game {
 	toggleVisibility() {
 		this.player?.toggleVisibility()
 		this.enemy?.toggleVisibility()
+	}
+
+	togglePause() {
+		this.paused = !this.paused
+		if (this.paused) document.querySelector('#glass').classList.add('opened')
+		else document.querySelector('#glass').classList.remove('opened')
 	}
 
 	get delay() {
