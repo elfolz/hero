@@ -544,6 +544,7 @@ export class Player extends Entity {
 		if (this.waitForAnimation) return
 		let dir = this.camera.getWorldDirection(this.object.position.clone())
 		if (back) dir.negate()
+		if (window.game.fps < 45) speed = speed + (5 / window.game.fps)
 		let step = dir.multiplyScalar(running ? speed*2.5 : speed)
 		let pos = this.object.position.clone()
 		pos.add(step)

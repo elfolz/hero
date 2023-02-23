@@ -6,15 +6,18 @@ import device from '/js/helpers/device.js'
 
 export class Game {
 
+	loadingElements = 3
+
 	constructor() {
 		this.lastFrameTime = performance.now()
-		this.camera = new THREE.PerspectiveCamera(75, window.innerWidth /window.innerHeight, 0.1, 1000)
+		this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
 		this.clock = new THREE.Clock()
 		this.hemisphereLight = new THREE.HemisphereLight(0xddeeff, 0x000000, 0.25)
 		this.dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
 		this.textureLoader = new THREE.TextureLoader()
 		this.scene = new THREE.Scene()
 		this.fps = 0
+		this.fpsLimit = 0
 		this.frames = 0
 		this.clockDelta = 0
 		this.initRender()
@@ -38,8 +41,8 @@ export class Game {
 		this.renderer.setClearColor(0x000000, 0)
 		this.renderer.shadowMap.enabled = true
 		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
-		this.hemisphereLight.position.set(100, 100, 100)
-		this.dirLight.position.set(0, 200, 200)
+		this.hemisphereLight.position.set(0, 100, 100)
+		this.dirLight.position.set(0, 100, 100)
 		this.dirLight.castShadow = true
 		this.scene.add(this.hemisphereLight)
 		this.scene.add(this.dirLight)
@@ -91,7 +94,7 @@ export class Game {
 				let values = Object.values(target).slice()
 				let progressbar = document.querySelector('progress')
 				let total = values.reduce((a, b) => a + b, 0)
-				total = total / 3
+				total = total / vm.loadingElements
 				if (progressbar) progressbar.value = parseInt(total || 0)
 				if (total >= 100) vm.initGame()
 				return true
@@ -101,12 +104,41 @@ export class Game {
 	}
 
 	loadModels() {
+		/* this.textureLoader.load('/textures/tileable1.webp', texture => {
+			this.textureLoader.load('/textures/tileable1_nm.webp', textureNm => {
+				texture.encoding = THREE.sRGBEncoding
+				texture.wrapS = THREE.RepeatWrapping
+				texture.wrapT = THREE.RepeatWrapping
+				texture.repeat.set(parseInt(texture.wrapS / 200), parseInt(texture.wrapT / 200))
+				textureNm.encoding = THREE.sRGBEncoding
+				textureNm.wrapS = THREE.RepeatWrapping
+				textureNm.wrapT = THREE.RepeatWrapping
+				textureNm.repeat.set(parseInt(texture.wrapS / 200), parseInt(texture.wrapT / 200))
+				const material = new THREE.MeshPhongMaterial({
+					map: texture,
+					normalMap: textureNm
+				})
+				const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), material)
+				ground.rotation.x = - Math.PI / 2
+				ground.receiveShadow = true
+				this.scene.add(ground)
+				if (!this.progress['ground']) this.progress['ground'] = 100
+			}, xhr => {
+				this.progress['ground'] = (xhr.loaded / xhr.total) * 100 / 2
+			}, error => {
+				console.error(error)
+			})
+		}, xhr => {
+			this.progress['ground'] = (xhr.loaded / xhr.total) * 100 / 2
+		}, error => {
+			console.error(error)
+		}) */
 		this.textureLoader.load('/textures/ground.webp', texture => {
 			texture.wrapS = THREE.RepeatWrapping
 			texture.wrapT = THREE.RepeatWrapping
 			texture.encoding = THREE.sRGBEncoding
 			texture.repeat.set(parseInt(texture.wrapS / 200), parseInt(texture.wrapT / 200))
-			const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshPhongMaterial({map: texture}))
+			const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshLambertMaterial({map: texture}))
 			ground.rotation.x = - Math.PI / 2
 			ground.receiveShadow = true
 			this.scene.add(ground)

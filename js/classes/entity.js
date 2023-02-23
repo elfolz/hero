@@ -48,17 +48,17 @@ export class Entity {
 
 	setupDecalMaterial() {
 		this.decalMaterial = new THREE.MeshPhongMaterial( { 
-			specular: 0xffffff,
-			shininess: 10,
-			map: this.textureLoader.load('/textures/splatter.png'),
-			normalMap: this.textureLoader.load('/textures/wrinkle-normal.jpg'),
+			specular: 0x444444,
+			shininess: 30,
+			color: 0xff0000,
+			map: this.textureLoader.load('/textures/decal-diffuse.png'),
+			normalMap: this.textureLoader.load('/textures/decal-normal.jpg'),
 			transparent: true,
 			depthTest: true,
 			depthWrite: false,
 			polygonOffset: true,
 			polygonOffsetFactor: -4,
-			wireframe: false,
-			visible: true
+			wireframe: false
 		})
 	}
 
