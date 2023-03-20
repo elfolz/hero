@@ -2,6 +2,7 @@
 import * as THREE from '/js/modules/three.module.js'
 import { EnemyHumanoid } from '/js/classes/enemyHumanoid.js'
 import { Player } from '/js/classes/player.js'
+import { Support } from '/js/classes/support.js'
 import device from '/js/helpers/device.js'
 
 export class Game {
@@ -104,8 +105,8 @@ export class Game {
 	}
 
 	loadModels() {
-		/* this.textureLoader.load('/textures/tileable1.webp', texture => {
-			this.textureLoader.load('/textures/tileable1_nm.webp', textureNm => {
+		/* this.textureLoader.load('/textures/tiles/tileable1.webp', texture => {
+			this.textureLoader.load('/textures/tiles/tileable1_nm.webp', textureNm => {
 				texture.encoding = THREE.sRGBEncoding
 				texture.wrapS = THREE.RepeatWrapping
 				texture.wrapT = THREE.RepeatWrapping
@@ -157,6 +158,14 @@ export class Game {
 				this.progress['player'] = e
 			}
 		)
+		/* this.support = new Support(this.player,
+			e => {
+				this.scene.add(e)
+			},
+			e => {
+				this.progress['support'] = e
+			}
+		) */
 		this.enemy = new EnemyHumanoid(this.player,
 			e => {
 				this.scene.add(e)
@@ -195,6 +204,7 @@ export class Game {
 		if (!this.paused) {
 			this.updateFPSCounter()
 			this.enemy.update(this.clockDelta)
+			/* this.support.update(this.clockDelta) */
 		}
 		this.clockDelta = this.fpsLimit ? this.clockDelta % this.fpsLimit : this.clockDelta % (1 / Math.max(this.fps, 30))
 	}

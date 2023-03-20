@@ -285,8 +285,7 @@ export class Player extends Entity {
 			if (this.keysPressed[inputSettings.keyboard.keyRoll] && !this.actions.includes('roll')) this.actions.push('roll')
 			if (this.keysPressed[inputSettings.keyboard.keyHeal] && !this.actions.includes('heal')) this.actions.push('heal')
 			if (this.keysPressed[inputSettings.keyboard.keyPause]) {
-				window.game.pause = !window.game.pause
-				this.refreshPause()
+				window.game.togglePause()
 			}
 		}
 		window.onkeyup = e => {
@@ -624,7 +623,7 @@ export class Player extends Entity {
 	}
 
 	executeCrossFade(newAction, duration=0.25, loop='repeat') {
-		if (this.actions.some(el => ['walk', 'run', 'turn-left', 'turn-right', 'step-back'].includes(el)) && newAction.name == 'idle') return
+		if (this.actions.some(el => ['walk', 'run', 'turn-left', 'turn-right', 'step-back'].includes(el)) && newAction?.name == 'idle') return
 		super.executeCrossFade(newAction, duration, loop)
 	}
 
