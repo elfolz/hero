@@ -287,6 +287,9 @@ export class Player extends Entity {
 			if (this.keysPressed[inputSettings.keyboard.keyPause]) {
 				window.game.togglePause()
 			}
+
+			if (e.keyCode == 113) window.rtc.sendData('lorem')
+
 		}
 		window.onkeyup = e => {
 			this.keysPressed[e.keyCode] = false
