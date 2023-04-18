@@ -168,6 +168,7 @@ export class Game {
 	}
 
 	initGame() {
+		if (this.initiated) return
 		document.body.classList.add('loaded')
 		document.body.removeChild(document.querySelector('figure'))
 		document.querySelector('header').style.removeProperty('display')
@@ -182,6 +183,7 @@ export class Game {
 		this.renderer.getContext().canvas.addEventListener('webglcontextrestored', e => {
 			this.update()
 		}, false) */
+		this.initiated = true
 	}
 
 	update() {
