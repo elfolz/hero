@@ -8,6 +8,16 @@ function initGUI() {
 		document.querySelector('#menu-button-music-on').classList.remove('off')
 		document.querySelector('#menu-button-music-off').classList.add('off')
 	}
+	document.querySelector('#button-share').onclick = e => {
+		e.stopPropagation()
+		if (!window.location.search.includes('roomId=')) {
+			const roomId = crypto.randomUUID()
+			const url = new URL(location)
+			url.searchParams.set('roomId', roomId)
+			history.pushState({}, '', url)
+		}
+		navigator.share({url: location.href})
+	}
 	document.querySelector('#button-config').onclick = e => {
 		e.stopPropagation()
 		document.querySelector('#menu-config').classList.toggle('opened')

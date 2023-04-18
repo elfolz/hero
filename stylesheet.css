@@ -134,6 +134,13 @@ header section > span span {
 	font-weight: 900;
 	margin-right: 6px;
 }
+header button:first-of-type{
+	height: 28px;
+	margin-right: 12px;
+}
+header button:first-of-type span {
+	font-size: 28px;
+}
 footer {
 	position: fixed;
 	display: flex;
