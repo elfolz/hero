@@ -65,7 +65,7 @@ export class Entity {
 	update(clockDelta) {
 		if (this.dead) return
 		if (!window.game.pause) this.mixer?.update(clockDelta)
-		this.updateActions()
+		if (this.object) this.updateActions()
 	}
 
 	executeCrossFade(newAction, duration=0.25, loop='repeat') {
