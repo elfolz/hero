@@ -95,7 +95,7 @@ export class Game {
 				let progressbar = document.querySelector('progress')
 				let total = values.reduce((a, b) => a + b, 0)
 				total = total / vm.loadingElements
-				if (progressbar) progressbar.value = parseInt(total || 0)
+				if (progressbar) progressbar.value = parseInt(Math.min(total, 0) || 0)
 				if (total >= 100) vm.initGame()
 				return true
 			}
