@@ -629,7 +629,7 @@ export class Player extends Entity {
 	}
 
 	synchronizeCrossFade(newAction, duration=0.25, loop='repeat') {
-		this.mixer.addEventListener('loop', onLoopFinished)
+		this.mixer?.addEventListener('loop', onLoopFinished)
 		const vm = this
 		function onLoopFinished(event) {
 			vm.resetActions()
