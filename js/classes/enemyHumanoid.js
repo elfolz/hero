@@ -49,7 +49,7 @@ export class EnemyHumanoid extends Entity {
 			this.pendingSounds.splice(0)
 			this.progress['foe'] = 100
 		}, xhr => {
-			this.progress['foe'] = (xhr.loaded / xhr.total) * 99
+			this.progress['foe'] = parseInt(xhr.loaded / xhr.total) * 99
 		}, error => {
 			console.error(error)
 		})
@@ -62,7 +62,7 @@ export class EnemyHumanoid extends Entity {
 			this.lastAction = this.animations['idle']
 			this.animations['idle'].play()
 		}, xhr => {
-			this.progress['idle'] = (xhr.loaded / xhr.total) * 100
+			this.progress['idle'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -70,7 +70,7 @@ export class EnemyHumanoid extends Entity {
 			this.animations['walk'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['walk'].name = 'walk'
 		}, xhr => {
-			this.progress['walk'] = (xhr.loaded / xhr.total) * 100
+			this.progress['walk'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -78,7 +78,7 @@ export class EnemyHumanoid extends Entity {
 			this.animations['attack'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['attack'].name = 'attack'
 		}, xhr => {
-			this.progress['attack'] = (xhr.loaded / xhr.total) * 100
+			this.progress['attack'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -86,7 +86,7 @@ export class EnemyHumanoid extends Entity {
 			this.animations['hit'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['hit'].name = 'hit'
 		}, xhr => {
-			this.progress['hit'] = (xhr.loaded / xhr.total) * 100
+			this.progress['hit'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -94,7 +94,7 @@ export class EnemyHumanoid extends Entity {
 			this.animations['die'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['die'].name = 'die'
 		}, xhr => {
-			this.progress['die'] = (xhr.loaded / xhr.total) * 100
+			this.progress['die'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})

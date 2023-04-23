@@ -56,7 +56,7 @@ export class Player extends Entity {
 			this.callback(this.object)
 			this.progress['player'] = 100
 		}, xhr => {
-			this.progress['player'] = (xhr.loaded / xhr.total) * 99
+			this.progress['player'] = parseInt(xhr.loaded / xhr.total) * 99
 		}, error => {
 			console.error(error)
 		})
@@ -77,7 +77,7 @@ export class Player extends Entity {
 			this.object.getObjectByName('mixamorigRightHand').attach(this.sword)
 			this.progress['sword'] = 100
 		}, xhr => {
-			this.progress['sword'] = (xhr.loaded / xhr.total) * 99
+			this.progress['sword'] = parseInt(xhr.loaded / xhr.total) * 99
 		}, error => {
 			console.error(error)
 		})
@@ -90,7 +90,7 @@ export class Player extends Entity {
 			this.lastAction = this.animations['idle']
 			this.animations['idle'].play()
 		}, xhr => {
-			this.progress['idle'] = (xhr.loaded / xhr.total) * 100
+			this.progress['idle'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -98,7 +98,7 @@ export class Player extends Entity {
 			this.animations['run'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['run'].name = 'run'
 		}, xhr => {
-			this.progress['running'] = (xhr.loaded / xhr.total) * 100
+			this.progress['running'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -106,7 +106,7 @@ export class Player extends Entity {
 			this.animations['step-back'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['step-back'].name = 'step-back'
 		}, xhr => {
-			this.progress['step-back'] = (xhr.loaded / xhr.total) * 100
+			this.progress['step-back'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -114,7 +114,7 @@ export class Player extends Entity {
 			this.animations['jump'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['jump'].name = 'jump'
 		}, xhr => {
-			this.progress['jump'] = (xhr.loaded / xhr.total) * 100
+			this.progress['jump'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -122,7 +122,7 @@ export class Player extends Entity {
 			this.animations['jump-running'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['jump-running'].name = 'jump-running'
 		}, xhr => {
-			this.progress['jump-running'] = (xhr.loaded / xhr.total) * 100
+			this.progress['jump-running'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -130,7 +130,7 @@ export class Player extends Entity {
 			this.animations['backflip'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['backflip'].name = 'backflip'
 		}, xhr => {
-			this.progress['backflip'] = (xhr.loaded / xhr.total) * 100
+			this.progress['backflip'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -138,7 +138,7 @@ export class Player extends Entity {
 			this.animations['kick'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['kick'].name = 'kick'
 		}, xhr => {
-			this.progress['kick'] = (xhr.loaded / xhr.total) * 100
+			this.progress['kick'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -146,7 +146,7 @@ export class Player extends Entity {
 			this.animations['roll'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['roll'].name = 'roll'
 		}, xhr => {
-			this.progress['roll'] = (xhr.loaded / xhr.total) * 100
+			this.progress['roll'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -154,7 +154,7 @@ export class Player extends Entity {
 			this.animations['outward-slash'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['outward-slash'].name = 'outward-slash'
 		}, xhr => {
-			this.progress['outward-slash'] = (xhr.loaded / xhr.total) * 100
+			this.progress['outward-slash'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -162,7 +162,7 @@ export class Player extends Entity {
 			this.animations['inward-slash'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['inward-slash'].name = 'inward-slash'
 		}, xhr => {
-			this.progress['inward-slash'] = (xhr.loaded / xhr.total) * 100
+			this.progress['inward-slash'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -170,7 +170,7 @@ export class Player extends Entity {
 			this.animations['stomach-hit'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['stomach-hit'].name = 'stomach-hit'
 		}, xhr => {
-			this.progress['stomach-hit'] = (xhr.loaded / xhr.total) * 100
+			this.progress['stomach-hit'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -178,7 +178,7 @@ export class Player extends Entity {
 			this.animations['die'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['die'].name = 'die'
 		}, xhr => {
-			this.progress['die'] = (xhr.loaded / xhr.total) * 100
+			this.progress['die'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -186,7 +186,7 @@ export class Player extends Entity {
 			this.animations['heal'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['heal'].name = 'heal'
 		}, xhr => {
-			this.progress['heal'] = (xhr.loaded / xhr.total) * 100
+			this.progress['heal'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -194,7 +194,7 @@ export class Player extends Entity {
 			this.animations['walk'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['walk'].name = 'walk'
 		}, xhr => {
-			this.progress['walk'] = (xhr.loaded / xhr.total) * 100
+			this.progress['walk'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -203,7 +203,7 @@ export class Player extends Entity {
 			hero.punchRightAction = hero.mixer.clipAction(animation)
 			hero.punchRightAction.name = 'punch-right'
 		}, xhr => {
-			this.progress['punchingRight'] = (xhr.loaded / xhr.total) * 100
+			this.progress['punchingRight'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -212,7 +212,7 @@ export class Player extends Entity {
 			hero.punchLeftAction = hero.mixer.clipAction(animation)
 			hero.punchLeftAction.name = 'punch-left'
 		}, xhr => {
-			this.progress['punchingLeft'] = (xhr.loaded / xhr.total) * 100
+			this.progress['punchingLeft'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			reject(error)
 		})
@@ -221,7 +221,7 @@ export class Player extends Entity {
 			withdrawSwordAction = hero.mixer.clipAction(animation)
 			withdrawSwordAction.name = 'withdrawSword'
 		}, xhr => {
-			this.progress['withdrawSword'] = (xhr.loaded / xhr.total) * 100
+			this.progress['withdrawSword'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -230,7 +230,7 @@ export class Player extends Entity {
 			sheathSwordAction = hero.mixer.clipAction(animation)
 			sheathSwordAction.name = 'sheathSword'
 		}, xhr => {
-			this.progress['sheathSword'] = (xhr.loaded / xhr.total) * 100
+			this.progress['sheathSword'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		}) */
@@ -238,7 +238,7 @@ export class Player extends Entity {
 			let animation = fbx.animations[0]
 			rotateLeftAction = hero.mixer.clipAction(animation)
 		}, xhr => {
-			this.progress['turningLeft'] = (xhr.loaded / xhr.total) * 100
+			this.progress['turningLeft'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -246,7 +246,7 @@ export class Player extends Entity {
 			let animation = fbx.animations[0]
 			rotateRightAction = hero.mixer.clipAction(animation)
 		}, xhr => {
-			this.progress['turningRight'] = (xhr.loaded / xhr.total) * 100
+			this.progress['turningRight'] = parseInt(xhr.loaded / xhr.total) * 100
 		}, error => {
 			console.error(error)
 		}) */

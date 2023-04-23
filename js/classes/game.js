@@ -95,7 +95,7 @@ export class Game {
 				let progressbar = document.querySelector('progress')
 				let total = values.reduce((a, b) => a + b, 0)
 				total = total / vm.loadingElements
-				if (progressbar) progressbar.value = parseInt(Math.min(total, 0) || 0)
+				if (progressbar) progressbar.value = parseInt(total || 0)
 				if (total >= 100) vm.initGame()
 				return true
 			}
@@ -124,12 +124,12 @@ export class Game {
 				this.scene.add(ground)
 				if (!this.progress['ground']) this.progress['ground'] = 100
 			}, xhr => {
-				this.progress['ground'] = (xhr.loaded / xhr.total) * 100 / 2
+				this.progress['ground'] = parseInt(xhr.loaded / xhr.total) * 100 / 2
 			}, error => {
 				console.error(error)
 			})
 		}, xhr => {
-			this.progress['ground'] = (xhr.loaded / xhr.total) * 100 / 2
+			this.progress['ground'] = parseInt(xhr.loaded / xhr.total) * 100 / 2
 		}, error => {
 			console.error(error)
 		}) */
@@ -144,7 +144,7 @@ export class Game {
 			this.scene.add(ground)
 			if (!this.progress['ground']) this.progress['ground'] = 100
 		}, xhr => {
-			this.progress['ground'] = (xhr.loaded / xhr.total) * 100
+			this.progress['ground'] = parseInt((xhr.loaded / xhr.total)) * 100
 		}, error => {
 			console.error(error)
 		})
