@@ -35,9 +35,8 @@ export class Game {
 		this.antialiasing = antialiasing == 'true'
 		this.renderer = new THREE.WebGLRenderer({alpha: true, antialias: this.antialiasing})
 		this.scene.background = null
-		this.renderer.outputEncoding = THREE.sRGBEncoding
+		this.renderer.outputColorSpace = THREE.SRGBColorSpace
 		this.renderer.shadowMap.enabled = true
-		this.renderer.physicallyCorrectLights = true
 		this.renderer.setClearColor(0x000000, 0)
 		this.renderer.shadowMap.enabled = true
 		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
@@ -53,7 +52,7 @@ export class Game {
 		let fps = localStorage.getItem('fpsLimit')
 		if (fps == '60') this.fpsLimit = 1 / 60
 		else if (fps == '30') this.fpsLimit = 1 / 30
-		else if (device.isPC) fps = 0
+		//else if (device.isPC) fps = 0
 		else if (device.cpuCores >= 4 || device.isApple) {this.fpsLimit = 1 / 60; fps = 60}
 		else {this.fpsLimit = 1 / 30; fpsl = 30}
 		window.refreshFPS(fps, false)
@@ -104,16 +103,16 @@ export class Game {
 	}
 
 	loadModels() {
-		/* this.textureLoader.load('/textures/tileable1.webp', texture => {
+		this.textureLoader.load('/textures/tileable1.webp', texture => {
 			this.textureLoader.load('/textures/tileable1_nm.webp', textureNm => {
-				texture.encoding = THREE.sRGBEncoding
-				texture.wrapS = THREE.RepeatWrapping
-				texture.wrapT = THREE.RepeatWrapping
-				texture.repeat.set(parseInt(texture.wrapS / 200), parseInt(texture.wrapT / 200))
-				textureNm.encoding = THREE.sRGBEncoding
-				textureNm.wrapS = THREE.RepeatWrapping
-				textureNm.wrapT = THREE.RepeatWrapping
-				textureNm.repeat.set(parseInt(texture.wrapS / 200), parseInt(texture.wrapT / 200))
+				texture.colorSpace = THREE.SRGBColorSpace
+				texture.wrapS = THREE.MirroredRepeatWrapping
+				texture.wrapT = THREE.MirroredRepeatWrapping
+				texture.repeat.set(5, 5)
+				textureNm.colorSpace = THREE.SRGBColorSpace
+				textureNm.wrapS = THREE.MirroredRepeatWrapping
+				textureNm.wrapT = THREE.MirroredRepeatWrapping
+				textureNm.repeat.set(5, 5)
 				const material = new THREE.MeshPhongMaterial({
 					map: texture,
 					normalMap: textureNm
@@ -124,30 +123,30 @@ export class Game {
 				this.scene.add(ground)
 				if (!this.progress['ground']) this.progress['ground'] = 100
 			}, xhr => {
-				this.progress['ground'] = parseInt(xhr.loaded / xhr.total) * 100 / 2
+				this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 100 / 2
 			}, error => {
 				console.error(error)
 			})
 		}, xhr => {
-			this.progress['ground'] = parseInt(xhr.loaded / xhr.total) * 100 / 2
+			this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 100 / 2
 		}, error => {
 			console.error(error)
-		}) */
-		this.textureLoader.load('/textures/ground.webp', texture => {
+		})
+		/* this.textureLoader.load('/textures/ground.webp', texture => {
 			texture.wrapS = THREE.RepeatWrapping
 			texture.wrapT = THREE.RepeatWrapping
-			texture.encoding = THREE.sRGBEncoding
-			texture.repeat.set(parseInt(texture.wrapS / 200), parseInt(texture.wrapT / 200))
+			texture.colorSpace = THREE.SRGBColorSpace
+			texture.repeat.set(10, 10)
 			const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshLambertMaterial({map: texture}))
 			ground.rotation.x = - Math.PI / 2
 			ground.receiveShadow = true
 			this.scene.add(ground)
 			if (!this.progress['ground']) this.progress['ground'] = 100
 		}, xhr => {
-			this.progress['ground'] = parseInt((xhr.loaded / xhr.total)) * 100
+			this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
-		})
+		}) */
 		this.player = new Player(this.camera,
 			e => {
 				this.scene.add(e)
@@ -176,13 +175,6 @@ export class Game {
 		this.player.refreshHPBar()
 		this.resizeScene()
 		this.update()
-		/* this.renderer.getContext().canvas.addEventListener('webglcontextlost', e => {
-			e.preventDefault()
-			cancelAnimationFrame(this.animationFrameId)
-		}, false)
-		this.renderer.getContext().canvas.addEventListener('webglcontextrestored', e => {
-			this.update()
-		}, false) */
 		this.initiated = true
 	}
 

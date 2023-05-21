@@ -18,6 +18,9 @@ self.addEventListener('fetch', event => {
 			}
 			return cachedResponse || fetchedResponse
 		})
+		.catch(() => {
+			return fetch(event.request)
+		})
 	}))
 })
 
