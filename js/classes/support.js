@@ -57,7 +57,7 @@ export class Support extends Entity {
 			})
 			this.weapon.geometry.computeBoundingBox()
 			this.sword.rotation.x = Math.PI / 2
-			this.sword.rotation.z = Math.PI / 3
+			this.sword.rotation.z = Math.PI / 2
 			this.sword.position.set(this.object.position.x-1.3, this.object.position.y+2.1, this.object.position.z-3.6)
 			this.sword.scale.set(4, 4, 4)
 			this.object.getObjectByName('mixamorigRightHand').attach(this.sword)
