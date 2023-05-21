@@ -7,7 +7,7 @@ import device from '/js/helpers/device.js'
 
 export class Game {
 
-	loadingElements = 3
+	loadingElements = 4
 
 	constructor() {
 		this.lastFrameTime = performance.now()
@@ -124,12 +124,12 @@ export class Game {
 				this.scene.add(ground)
 				if (!this.progress['ground']) this.progress['ground'] = 100
 			}, xhr => {
-				this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 100 / 2
+				this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 99 / 2
 			}, error => {
 				console.error(error)
 			})
 		}, xhr => {
-			this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 100 / 2
+			this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 99 / 2
 		}, error => {
 			console.error(error)
 		})
@@ -144,7 +144,7 @@ export class Game {
 			this.scene.add(ground)
 			if (!this.progress['ground']) this.progress['ground'] = 100
 		}, xhr => {
-			this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 100
+			this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 99
 		}, error => {
 			console.error(error)
 		}) */

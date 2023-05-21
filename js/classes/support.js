@@ -4,7 +4,8 @@ import { Entity } from '/js/classes/entity.js'
 
 export class Support extends Entity {
 
-	loadingElements = 12
+	loadingElements = 13
+	animationModels = ['idle', 'backflip', 'dieing', 'drinking', 'inwardSlash', 'jumping', 'jumpingRunning', 'outwardSlash', 'rolling', 'running', 'stomachHit']
 
 	constructor(player, callback, onload) {
 		super(callback, onload)
@@ -46,7 +47,7 @@ export class Support extends Entity {
 	}
 
 	loadWeapon() {
-		this.gltfLoader.load('/models/equips/damascusSword.glb', fbx => {
+		this.gltfLoader.load('./models/equips/damascusSword.glb', fbx => {
 			this.sword = fbx.scene
 			this.sword.colorSpace = THREE.sRGBEColorSpace
 			this.sword.traverse(el => {
@@ -55,102 +56,41 @@ export class Support extends Entity {
 				if (!this.weapon) this.weapon = el
 			})
 			this.weapon.geometry.computeBoundingBox()
-			this.sword.rotation.x = 1.4
-			this.sword.rotation.z = Math.PI / 2
-			this.sword.position.set(this.object.position.x-1.1, this.object.position.y+2.1, this.object.position.z-3.6)
+			this.sword.rotation.x = Math.PI / 2
+			this.sword.rotation.z = Math.PI / 3
+			this.sword.position.set(this.object.position.x-1.3, this.object.position.y+2.1, this.object.position.z-3.6)
 			this.sword.scale.set(4, 4, 4)
 			this.object.getObjectByName('mixamorigRightHand').attach(this.sword)
-			this.progress['sword'] = 100
+			this.progress['sword'] = 99.9
+			this.animate()
 		}, xhr => {
-			this.progress['sword'] = xhr.loaded / (xhr.total || 1) * 100
+			this.progress['sword'] = xhr.loaded / (xhr.total || 1) * 99
 		}, error => {
 			console.error(error)
 		})
 	}
 
 	loadAnimations() {
-		this.fbxLoader.load('/models/support/idle.fbx', fbx => {
-			this.animations['idle'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['idle'].name = 'idle'
-			this.lastAction = this.animations['idle']
-			this.animations['idle'].play()
-		}, xhr => {
-			this.progress['idle'] = xhr.loaded / (xhr.total || 1) * 100
-		}, error => {
-			console.error(error)
+		this.animationModels.forEach(el => {
+			this.fbxLoader.load(`./models/support/${el}.fbx`, fbx => {
+				this.animations[el] = this.mixer.clipAction(fbx.animations[0])
+				this.animations[el].name = el
+				this.progress[el] = 100
+				if (el == 'idle') this.animate()
+			}, xhr => {
+				this.progress[el] = parseInt(xhr.loaded / (xhr.total || 1)) * 99
+			}, error => {
+				console.error(error)
+			})
 		})
-		this.fbxLoader.load('/models/support/backflip.fbx', fbx => {
-			this.animations['backflip'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['backflip'].name = 'backflip'
-		}, xhr => {
-			this.progress['backflip'] = xhr.loaded / (xhr.total || 1) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/support/die.fbx', fbx => {
-			this.animations['die'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['die'].name = 'die'
-		}, xhr => {
-			this.progress['dieing'] = xhr.loaded / (xhr.total || 1) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/support/drinking.fbx', fbx => {
-			this.animations['drinking'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['drinking'].name = 'drinking'
-		}, xhr => {
-			this.progress['drinking'] = xhr.loaded / (xhr.total || 1) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/support/inwardSlash.fbx', fbx => {
-			this.animations['inwardSlash'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['inwardSlash'].name = 'inwardSlash'
-		}, xhr => {
-			this.progress['inwardSlash'] = xhr.loaded / (xhr.total || 1) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/support/jumping.fbx', fbx => {
-			this.animations['jumping'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['jumping'].name = 'jumping'
-		}, xhr => {
-			this.progress['jumping'] = xhr.loaded / (xhr.total || 1) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/support/jumpingRunning.fbx', fbx => {
-			this.animations['jumpingRunning'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['jumpingRunning'].name = 'jumpingRunning'
-		}, xhr => {
-			this.progress['jumpingRunning'] = xhr.loaded / (xhr.total || 1) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/support/outwardSlash.fbx', fbx => {
-			this.animations['outwardSlash'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['outwardSlash'].name = 'outwardSlash'
-		}, xhr => {
-			this.progress['outwardSlash'] = xhr.loaded / (xhr.total || 1) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/support/rolling.fbx', fbx => {
-			this.animations['rolling'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['rolling'].name = 'rolling'
-		}, xhr => {
-			this.progress['rolling'] = xhr.loaded / (xhr.total || 1) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/support/running.fbx', fbx => {
-			this.animations['run'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['run'].name = 'run'
-		}, xhr => {
-			this.progress['running'] = xhr.loaded / (xhr.total || 1) * 100
-		}, error => {
-			console.error(error)
-		})
+	}
+
+	animate() {
+		if ((this.progress['idle'] || 0) < 100) return
+		if ((this.progress['sword'] || 0) < 99.9) return
+		this.lastAction = this.animations['idle']
+		this.animations['idle'].play()
+		this.progress['sword'] = 100
 	}
 
 }

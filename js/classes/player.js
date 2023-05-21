@@ -57,7 +57,7 @@ export class Player extends Entity {
 			this.callback(this.object)
 			this.progress['player'] = 100
 		}, xhr => {
-			this.progress['player'] = xhr.loaded / (xhr.total || 1) * 100
+			this.progress['player'] = xhr.loaded / (xhr.total || 1) * 99
 		}, error => {
 			console.error(error)
 		})
@@ -73,12 +73,13 @@ export class Player extends Entity {
 				if (!this.weapon) this.weapon = el
 			})
 			this.weapon.geometry.computeBoundingBox()
-			this.sword.rotation.x = Math.PI / 2
-			this.sword.position.set(this.object.position.x-1, this.object.position.y+3.2, this.object.position.z-0.2)
+			this.sword.rotation.y = Math.PI / 6
+			this.sword.position.set(this.object.position.x-2.6, this.object.position.y+0.6, this.object.position.z-4)
 			this.object.getObjectByName('mixamorigRightHand').attach(this.sword)
-			this.progress['sword'] = 100
+			this.progress['sword'] = 99.9
+			this.animate()
 		}, xhr => {
-			this.progress['sword'] = xhr.loaded / (xhr.total || 1) * 100
+			this.progress['sword'] = xhr.loaded / (xhr.total || 1) * 99
 		}, error => {
 			console.error(error)
 		})
@@ -89,17 +90,22 @@ export class Player extends Entity {
 			this.fbxLoader.load(`/models/hero/${el}.fbx`, fbx => {
 				this.animations[el] = this.mixer.clipAction(fbx.animations[0])
 				this.animations[el].name = el
-				if (el == 'idle') {
-					this.lastAction = this.animations[el]
-					this.animations[el].play()
-				}
 				this.progress[el] = 100
+				if (el == 'idle') this.animate()
 			}, xhr => {
-				this.progress[el] = parseInt(xhr.loaded / (xhr.total || 1)) * 100
+				this.progress[el] = parseInt(xhr.loaded / (xhr.total || 1)) * 99
 			}, error => {
 				console.error(error)
 			})
 		})
+	}
+
+	animate() {
+		if ((this.progress['idle'] || 0) < 100) return
+		if ((this.progress['sword'] || 0) < 99.9) return
+		this.lastAction = this.animations['idle']
+		this.animations['idle'].play()
+		this.progress['sword'] = 100
 	}
 
 	initControls() {
