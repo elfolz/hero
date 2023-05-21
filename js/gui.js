@@ -83,7 +83,7 @@ function initGUI() {
 	}
 	document.querySelector('#menu-button-force-refresh').onclick = e => {
 		e.stopPropagation()
-		location.reload(true)
+		caches.delete('hero').then(() => location.reload(true) )
 	}
 	window.refreshControlsMenu()
 }
