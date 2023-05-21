@@ -6,6 +6,7 @@ import randomInt from '/js/helpers/randomInt.js'
 export class EnemyHumanoid extends Entity {
 
 	loadingElements = 6
+	animationModels = ['idle', 'walk', 'attack', 'hit', 'die']
 
 	constructor(player, callback, onload) {
 		super(callback, onload)
@@ -17,7 +18,7 @@ export class EnemyHumanoid extends Entity {
 	loadModel() {
 		this.gltfLoader.load('/models/humanoid/humanoid.glb', gltf => {
 			this.object = gltf.scene
-			this.object.encoding = THREE.sRGBEncoding
+			this.object.colorSpace = THREE.sRGBEColorSpace
 			this.object.traverse(el => {if (el.isMesh) el.castShadow = true})
 			this.object.position.set(0, 0, 20)
 			this.object.lookAt(0, 0, -1)
@@ -49,54 +50,27 @@ export class EnemyHumanoid extends Entity {
 			this.pendingSounds.splice(0)
 			this.progress['foe'] = 100
 		}, xhr => {
-			this.progress['foe'] = (xhr.loaded / xhr.total) * 99
+			this.progress['foe'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
 		})
 	}
 
 	loadAnimations() {
-		this.fbxLoader.load('/models/humanoid/idle.fbx', fbx => {
-			this.animations['idle'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['idle'].name = 'idle'
-			this.lastAction = this.animations['idle']
-			this.animations['idle'].play()
-		}, xhr => {
-			this.progress['idle'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/humanoid/walk.fbx', fbx => {
-			this.animations['walk'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['walk'].name = 'walk'
-		}, xhr => {
-			this.progress['walk'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/humanoid/attack.fbx', fbx => {
-			this.animations['attack'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['attack'].name = 'attack'
-		}, xhr => {
-			this.progress['attack'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/humanoid/hit.fbx', fbx => {
-			this.animations['hit'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['hit'].name = 'hit'
-		}, xhr => {
-			this.progress['hit'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/humanoid/die.fbx', fbx => {
-			this.animations['die'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['die'].name = 'die'
-		}, xhr => {
-			this.progress['die'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
+		this.animationModels.forEach(el => {
+			this.fbxLoader.load(`/models/humanoid/${el}.fbx`, fbx => {
+				this.animations[el] = this.mixer.clipAction(fbx.animations[0])
+				this.animations[el].name = el
+				if (el == 'idle') {
+					this.lastAction = this.animations[el]
+					this.animations[el].play()
+				}
+				this.progress[el] = 100
+			}, xhr => {
+				this.progress[el] = xhr.loaded / (xhr.total || 1) * 100
+			}, error => {
+				console.error(error)
+			})
 		})
 	}
 

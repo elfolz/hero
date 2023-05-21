@@ -16,4 +16,4 @@ if (location.protocol.startsWith('https')) {
 	}
 }
 
-window.onbeforeunload = async () => await window.rtc.disconnect()
+//window.onbeforeunload = async () => await window.rtc.disconnect()

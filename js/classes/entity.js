@@ -8,6 +8,7 @@ import randomInt from '/js/helpers/randomInt.js'
 export class Entity {
 
 	loadingElements = 1
+	animationModels = []
 
 	constructor(callback, onload) {
 		this.callback = callback
@@ -28,7 +29,7 @@ export class Entity {
 		this.pendingSounds = []
 		this.setupLoading()
 		this.loadModel()
-		this.setupDecalMaterial()
+		/* this.setupDecalMaterial() */
 	}
 
 	setupLoading() {
@@ -65,7 +66,7 @@ export class Entity {
 	update(clockDelta) {
 		if (this.dead) return
 		if (!window.game.pause) this.mixer?.update(clockDelta)
-		this.updateActions()
+		if (this.object) this.updateActions()
 	}
 
 	executeCrossFade(newAction, duration=0.25, loop='repeat') {
@@ -84,13 +85,11 @@ export class Entity {
 	}
 
 	synchronizeCrossFade(newAction, duration=0.25, loop='repeat') {
-		this.mixer.addEventListener('loop', onLoopFinished)
+		this.mixer.addEventListener('finished', onLoopFinished)
 		const vm = this
 		function onLoopFinished(event) {
-			if (event.action == vm.lastAction) {
-				vm.mixer.removeEventListener('loop', onLoopFinished)
-				vm.executeCrossFade(newAction, duration, loop)
-			}
+			vm.mixer.removeEventListener('finished', onLoopFinished)
+			vm.executeCrossFade(newAction, duration, loop)
 		}
 	}
 

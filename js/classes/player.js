@@ -8,6 +8,7 @@ import device from '/js/helpers/device.js'
 export class Player extends Entity {
 
 	loadingElements = 16
+	animationModels = ['idle', 'running', 'walkingBack', 'jumping', 'jumpingRunning', 'backflip', 'kick', 'rolling', 'outwardSlash', 'inwardSlash', 'stomachHit', 'dieing', 'drinking', 'walking']
 
 	constructor(camera, callback, onload) {
 		super(callback, onload)
@@ -29,7 +30,7 @@ export class Player extends Entity {
 	loadModel() {
 		this.gltfLoader.load('/models/hero/hero.glb', gltf => {
 			this.object = gltf.scene
-			this.object.encoding = THREE.sRGBEncoding
+			this.object.colorSpace = THREE.sRGBEColorSpace
 			this.object.traverse(el => {if (el.isMesh) el.castShadow = true})
 			this.camera.position.set(0, this.object.position.y+5, this.object.position.z-15)
 			this.camera.lookAt(0, 5, 0)
@@ -56,7 +57,7 @@ export class Player extends Entity {
 			this.callback(this.object)
 			this.progress['player'] = 100
 		}, xhr => {
-			this.progress['player'] = (xhr.loaded / xhr.total) * 99
+			this.progress['player'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -65,191 +66,40 @@ export class Player extends Entity {
 	loadWeapon() {
 		this.gltfLoader.load('/models/equips/sword.glb', fbx => {
 			this.sword = fbx.scene
-			this.sword.encoding = THREE.sRGBEncoding
+			this.sword.colorSpace = THREE.sRGBEColorSpace
 			this.sword.traverse(el => {
 				if (!el.isMesh) return
 				el.castShadow = true
 				if (!this.weapon) this.weapon = el
 			})
 			this.weapon.geometry.computeBoundingBox()
-			this.sword.rotation.y = Math.PI / 2
-			this.sword.position.set(this.object.position.x-3.3, this.object.position.y-0.1, this.object.position.z-5.6)
+			this.sword.rotation.x = Math.PI / 2
+			this.sword.position.set(this.object.position.x-1, this.object.position.y+3.2, this.object.position.z-0.2)
 			this.object.getObjectByName('mixamorigRightHand').attach(this.sword)
 			this.progress['sword'] = 100
 		}, xhr => {
-			this.progress['sword'] = (xhr.loaded / xhr.total) * 99
+			this.progress['sword'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
 		})
 	}
 
 	loadAnimations() {
-		this.fbxLoader.load('/models/hero/idle.fbx', fbx => {
-			this.animations['idle'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['idle'].name = 'idle'
-			this.lastAction = this.animations['idle']
-			this.animations['idle'].play()
-		}, xhr => {
-			this.progress['idle'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
+		this.animationModels.forEach(el => {
+			this.fbxLoader.load(`/models/hero/${el}.fbx`, fbx => {
+				this.animations[el] = this.mixer.clipAction(fbx.animations[0])
+				this.animations[el].name = el
+				if (el == 'idle') {
+					this.lastAction = this.animations[el]
+					this.animations[el].play()
+				}
+				this.progress[el] = 100
+			}, xhr => {
+				this.progress[el] = parseInt(xhr.loaded / (xhr.total || 1)) * 100
+			}, error => {
+				console.error(error)
+			})
 		})
-		this.fbxLoader.load('/models/hero/running.fbx', fbx => {
-			this.animations['run'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['run'].name = 'run'
-		}, xhr => {
-			this.progress['running'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/walkingBack.fbx', fbx => {
-			this.animations['step-back'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['step-back'].name = 'step-back'
-		}, xhr => {
-			this.progress['step-back'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/jumping.fbx', fbx => {
-			this.animations['jump'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['jump'].name = 'jump'
-		}, xhr => {
-			this.progress['jump'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/jumpingRunning.fbx', fbx => {
-			this.animations['jump-running'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['jump-running'].name = 'jump-running'
-		}, xhr => {
-			this.progress['jump-running'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/backflip.fbx', fbx => {
-			this.animations['backflip'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['backflip'].name = 'backflip'
-		}, xhr => {
-			this.progress['backflip'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/kick.fbx', fbx => {
-			this.animations['kick'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['kick'].name = 'kick'
-		}, xhr => {
-			this.progress['kick'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/rolling.fbx', fbx => {
-			this.animations['roll'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['roll'].name = 'roll'
-		}, xhr => {
-			this.progress['roll'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/outwardSlash.fbx', fbx => {
-			this.animations['outward-slash'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['outward-slash'].name = 'outward-slash'
-		}, xhr => {
-			this.progress['outward-slash'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/inwardSlash.fbx', fbx => {
-			this.animations['inward-slash'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['inward-slash'].name = 'inward-slash'
-		}, xhr => {
-			this.progress['inward-slash'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/stomachHit.fbx', fbx => {
-			this.animations['stomach-hit'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['stomach-hit'].name = 'stomach-hit'
-		}, xhr => {
-			this.progress['stomach-hit'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/die.fbx', fbx => {
-			this.animations['die'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['die'].name = 'die'
-		}, xhr => {
-			this.progress['die'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/drinking.fbx', fbx => {
-			this.animations['heal'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['heal'].name = 'heal'
-		}, xhr => {
-			this.progress['heal'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/walking.fbx', fbx => {
-			this.animations['walk'] = this.mixer.clipAction(fbx.animations[0])
-			this.animations['walk'].name = 'walk'
-		}, xhr => {
-			this.progress['walk'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		/* this.fbxLoader.load('/models/hero/punchingRight.fbx', fbx => {
-			let animation = fbx.animations[0]
-			hero.punchRightAction = hero.mixer.clipAction(animation)
-			hero.punchRightAction.name = 'punch-right'
-		}, xhr => {
-			this.progress['punchingRight'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/punchingLeft.fbx', fbx => {
-			let animation = fbx.animations[0]
-			hero.punchLeftAction = hero.mixer.clipAction(animation)
-			hero.punchLeftAction.name = 'punch-left'
-		}, xhr => {
-			this.progress['punchingLeft'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			reject(error)
-		})
-		this.fbxLoader.load('/models/hero/withdrawSword.fbx', fbx => {
-			let animation = fbx.animations[0]
-			withdrawSwordAction = hero.mixer.clipAction(animation)
-			withdrawSwordAction.name = 'withdrawSword'
-		}, xhr => {
-			this.progress['withdrawSword'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/sheathSword.fbx', fbx => {
-			let animation = fbx.animations[0]
-			sheathSwordAction = hero.mixer.clipAction(animation)
-			sheathSwordAction.name = 'sheathSword'
-		}, xhr => {
-			this.progress['sheathSword'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		}) */
-		/* this.fbxLoader.load('/models/hero/turningLeft.fbx', fbx => {
-			let animation = fbx.animations[0]
-			rotateLeftAction = hero.mixer.clipAction(animation)
-		}, xhr => {
-			this.progress['turningLeft'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		})
-		this.fbxLoader.load('/models/hero/turningRight.fbx', fbx => {
-			let animation = fbx.animations[0]
-			rotateRightAction = hero.mixer.clipAction(animation)
-		}, xhr => {
-			this.progress['turningRight'] = (xhr.loaded / xhr.total) * 100
-		}, error => {
-			console.error(error)
-		}) */
 	}
 
 	initControls() {
@@ -272,18 +122,16 @@ export class Player extends Entity {
 		window.onkeydown = e => {
 			window.refreshControlsMenu()
 			this.keysPressed[e.keyCode] = true
-			if (this.keysPressed[inputSettings.keyboard.keyToggleSword] && !this.actions.includes('toggle-sword')) this.actions.push('toggle-sword')
 			if (this.keysPressed[inputSettings.keyboard.keySlash] && !this.actions.includes('slash')) this.actions.push('slash')
-			/* if (this.keysPressed[inputSettings.keyboard.keyRun] && !this.actions.includes('run')) this.actions.push('run') */
-			if (this.keysPressed[inputSettings.keyboard.keyTurnLeft] && !this.actions.includes('turn-left')) this.actions.push('turn-left')
-			if (this.keysPressed[inputSettings.keyboard.keyTurnRight] && !this.actions.includes('turn-right')) this.actions.push('turn-right')
-			if (this.keysPressed[inputSettings.keyboard.keyWalk] && !this.actions.includes('walk')) this.actions.push('walk')
+			if (this.keysPressed[inputSettings.keyboard.keyTurnLeft] && !this.actions.includes('turningLeft')) this.actions.push('turningLeft')
+			if (this.keysPressed[inputSettings.keyboard.keyTurnRight] && !this.actions.includes('turningRight')) this.actions.push('turningRight')
+			if (this.keysPressed[inputSettings.keyboard.keyWalk] && !this.actions.includes('walking')) this.actions.push('walking')
 			if (this.keysPressed[inputSettings.keyboard.keyBackflip] && !this.actions.includes('backflip')) this.actions.push('backflip')
-			if (this.keysPressed[inputSettings.keyboard.keyStepBack] && !this.actions.includes('step-back')) this.actions.push('step-back')
-			if (this.keysPressed[inputSettings.keyboard.keyJump] && !this.actions.includes('jump')) this.actions.push('jump')
+			if (this.keysPressed[inputSettings.keyboard.keyStepBack] && !this.actions.includes('walkingBack')) this.actions.push('walkingBack')
+			if (this.keysPressed[inputSettings.keyboard.keyJump] && !this.actions.includes('jumping')) this.actions.push('jumping')
 			if (this.keysPressed[inputSettings.keyboard.keyKick] && !this.actions.includes('kick')) this.actions.push('kick')
-			if (this.keysPressed[inputSettings.keyboard.keyRoll] && !this.actions.includes('roll')) this.actions.push('roll')
-			if (this.keysPressed[inputSettings.keyboard.keyHeal] && !this.actions.includes('heal')) this.actions.push('heal')
+			if (this.keysPressed[inputSettings.keyboard.keyRoll] && !this.actions.includes('rolling')) this.actions.push('rolling')
+			if (this.keysPressed[inputSettings.keyboard.keyHeal] && !this.actions.includes('drinking')) this.actions.push('drinking')
 			if (this.keysPressed[inputSettings.keyboard.keyPause]) {
 				window.game.togglePause()
 			}
@@ -293,22 +141,20 @@ export class Player extends Entity {
 		}
 		window.onkeyup = e => {
 			this.keysPressed[e.keyCode] = false
-			if (e.keyCode == inputSettings.keyboard.keyToggleSword) this.actions.splice(this.actions.findIndex(el => el == 'toggle-sword'), 1)
 			if (e.keyCode == inputSettings.keyboard.keySlash) this.actions.splice(this.actions.findIndex(el => el == 'slash'), 1)
-			/* if (e.keyCode == inputSettings.keyboard.keyRun) this.actions.splice(this.actions.findIndex(el => el == 'run'), 1) */
-			if (e.keyCode == inputSettings.keyboard.keyTurnLeft) this.actions.splice(this.actions.findIndex(el => el == 'turn-left'), 1)
-			if (e.keyCode == inputSettings.keyboard.keyTurnRight) this.actions.splice(this.actions.findIndex(el => el == 'turn-right'), 1)
-			if (e.keyCode == inputSettings.keyboard.keyWalk) this.actions.splice(this.actions.findIndex(el => el == 'walk'), 1)
+			if (e.keyCode == inputSettings.keyboard.keyTurnLeft) this.actions.splice(this.actions.findIndex(el => el == 'turningLeft'), 1)
+			if (e.keyCode == inputSettings.keyboard.keyTurnRight) this.actions.splice(this.actions.findIndex(el => el == 'turningRight'), 1)
+			if (e.keyCode == inputSettings.keyboard.keyWalk) this.actions.splice(this.actions.findIndex(el => el == 'walking'), 1)
 			if (e.keyCode == inputSettings.keyboard.keyBackflip) this.actions.splice(this.actions.findIndex(el => el == 'backflip'), 1)
-			if (e.keyCode == inputSettings.keyboard.keyStepBack) this.actions.splice(this.actions.findIndex(el => el == 'step-back'), 1)
-			if (e.keyCode == inputSettings.keyboard.keyJump) this.actions.splice(this.actions.findIndex(el => el == 'jump'), 1)
+			if (e.keyCode == inputSettings.keyboard.keyStepBack) this.actions.splice(this.actions.findIndex(el => el == 'walkingBack'), 1)
+			if (e.keyCode == inputSettings.keyboard.keyJump) this.actions.splice(this.actions.findIndex(el => el == 'jumping'), 1)
 			if (e.keyCode == inputSettings.keyboard.keyKick) this.actions.splice(this.actions.findIndex(el => el == 'kick'), 1)
-			if (e.keyCode == inputSettings.keyboard.keyRoll) this.actions.splice(this.actions.findIndex(el => el == 'roll'), 1)
-			if (e.keyCode == inputSettings.keyboard.keyHeal) this.actions.splice(this.actions.findIndex(el => el == 'heal'), 1)
+			if (e.keyCode == inputSettings.keyboard.keyRoll) this.actions.splice(this.actions.findIndex(el => el == 'rolling'), 1)
+			if (e.keyCode == inputSettings.keyboard.keyHeal) this.actions.splice(this.actions.findIndex(el => el == 'drinking'), 1)
 		}
 		const buttonForward = document.querySelector('#button-forward')
 		buttonForward.ontouchstart = e => {
-			if (!this.actions.includes('walk')) this.actions.push('walk')
+			if (!this.actions.includes('walking')) this.actions.push('walking')
 			buttonForward.classList.add('active')
 		}
 		buttonForward.ontouchmove = e => {
@@ -318,47 +164,47 @@ export class Player extends Entity {
 			}
 			if (!buttonForward.posX && buttonForward.getClientRects()) buttonForward.posX = buttonForward.getClientRects()[0].x
 			if (e.changedTouches[0].pageX < (buttonForward.posX)) {
-				if (this.actions.includes('turn-left')) return
-				this.actions.push('turn-left')
+				if (this.actions.includes('turningLeft')) return
+				this.actions.push('turningLeft')
 				document.querySelector('#button-left').classList.add('active')
-			} else if (this.actions.includes('turn-left')) {
-				this.actions.splice(this.actions.findIndex(el => el == 'turn-left'), 1)
+			} else if (this.actions.includes('turningLeft')) {
+				this.actions.splice(this.actions.findIndex(el => el == 'turningLeft'), 1)
 				document.querySelector('#button-left').classList.remove('active')
 			}
 			if (e.changedTouches[0].pageX > (buttonForward.posX+64)) {
-				if (this.actions.includes('turn-right')) return
-				this.actions.push('turn-right')
+				if (this.actions.includes('turningRight')) return
+				this.actions.push('turningRight')
 				document.querySelector('#button-right').classList.add('active')
-			} else if (this.actions.includes('turn-right')) {
-				this.actions.splice(this.actions.findIndex(el => el == 'turn-right'), 1)
+			} else if (this.actions.includes('turningRight')) {
+				this.actions.splice(this.actions.findIndex(el => el == 'turningRight'), 1)
 				document.querySelector('#button-right').classList.remove('active')
 			}
 		}
 		buttonForward.ontouchend = e => {
-			this.actions.splice(this.actions.findIndex(el => el == 'walk'), 1)
-			if (this.actions.includes('turn-left')) this.actions.splice(this.actions.findIndex(el => el == 'turn-left'), 1)
-			if (this.actions.includes('turn-right')) this.actions.splice(this.actions.findIndex(el => el == 'turn-right'), 1)
+			this.actions.splice(this.actions.findIndex(el => el == 'walking'), 1)
+			if (this.actions.includes('turningLeft')) this.actions.splice(this.actions.findIndex(el => el == 'turningLeft'), 1)
+			if (this.actions.includes('turningRight')) this.actions.splice(this.actions.findIndex(el => el == 'turningRight'), 1)
 			buttonForward.classList.remove('active')
 			document.querySelector('#button-left').classList.remove('active')
 			document.querySelector('#button-right').classList.remove('active')
 		}
 		document.querySelector('#button-backward').ontouchstart = e => {
-			if (!this.actions.includes('step-back')) this.actions.push('step-back')
+			if (!this.actions.includes('walkingBack')) this.actions.push('walkingBack')
 		}
 		document.querySelector('#button-backward').ontouchend = e => {
-			this.actions.splice(this.actions.findIndex(el => el == 'step-back'), 1)
+			this.actions.splice(this.actions.findIndex(el => el == 'walkingBack'), 1)
 		}
 		document.querySelector('#button-left').ontouchstart = e => {
-			if (!this.actions.includes('turn-left')) this.actions.push('turn-left')
+			if (!this.actions.includes('turningLeft')) this.actions.push('turningLeft')
 		}
 		document.querySelector('#button-left').ontouchend = e => {
-			this.actions.splice(this.actions.findIndex(el => el == 'turn-left'), 1)
+			this.actions.splice(this.actions.findIndex(el => el == 'turningLeft'), 1)
 		}
 		document.querySelector('#button-right').ontouchstart = e => {
-			if (!this.actions.includes('turn-right')) this.actions.push('turn-right')
+			if (!this.actions.includes('turningRight')) this.actions.push('turningRight')
 		}
 		document.querySelector('#button-right').ontouchend = e => {
-			this.actions.splice(this.actions.findIndex(el => el == 'turn-right'), 1)
+			this.actions.splice(this.actions.findIndex(el => el == 'turningRight'), 1)
 		}
 		/* document.querySelector('#button-roll').ontouchstart = e => {
 			if (!this.actions.includes('roll')) this.actions.push('roll')
@@ -373,17 +219,11 @@ export class Player extends Entity {
 			this.actions.splice(this.actions.findIndex(el => el == 'slash'), 1)
 		}
 		document.querySelector('#button-heal').ontouchstart = e => {
-			if (!this.actions.includes('heal')) this.actions.push('heal')
+			if (!this.actions.includes('drinking')) this.actions.push('drinking')
 		}
 		document.querySelector('#button-heal').ontouchend = e => {
-			this.actions.splice(this.actions.findIndex(el => el == 'heal'), 1)
+			this.actions.splice(this.actions.findIndex(el => el == 'drinking'), 1)
 		}
-		/* document.querySelector('#button-run').ontouchstart = e => {
-			if (!this.actions.includes('run')) this.actions.push('run')
-		}
-		document.querySelector('#button-run').ontouchend = e => {
-			this.actions.splice(this.actions.findIndex(el => el == 'run'), 1)
-		} */
 		document.querySelector('#button-kick').ontouchstart = e => {
 			if (!this.actions.includes('kick')) this.actions.push('kick')
 		}
@@ -391,10 +231,10 @@ export class Player extends Entity {
 			this.actions.splice(this.actions.findIndex(el => el == 'kick'), 1)
 		}
 		document.querySelector('#button-jump').ontouchstart = e => {
-			if (!this.actions.includes('jump')) this.actions.push('jump')
+			if (!this.actions.includes('jumping')) this.actions.push('jumping')
 		}
 		document.querySelector('#button-jump').ontouchend = e => {
-			this.actions.splice(this.actions.findIndex(el => el == 'jump'), 1)
+			this.actions.splice(this.actions.findIndex(el => el == 'jumping'), 1)
 		}
 	}
 
@@ -403,36 +243,36 @@ export class Player extends Entity {
 		if (!this.gamepad || !this.gamepadSettings) return
 		if (this.gamepadLastUpdate <= this.gamepad.timestamp) return
 		if (this.gamepad.axes[this.gamepadSettings.YAxes] <= -0.05 || this.gamepad.buttons[this.gamepadSettings.UP]?.pressed) {
-			if (!this.actions.includes('walk')) this.actions.push('walk')
-		} else if (this.actions.includes('walk')) {
-			this.actions.splice(this.actions.findIndex(el => el == 'walk'), 1)
+			if (!this.actions.includes('walking')) this.actions.push('walking')
+		} else if (this.actions.includes('walking')) {
+			this.actions.splice(this.actions.findIndex(el => el == 'walking'), 1)
 		}
 		if (this.gamepad.axes[this.gamepadSettings.YAxes] >= 0.5 || this.gamepad.buttons[this.gamepadSettings.DOWN]?.pressed) {
-			if (!this.actions.includes('step-back')) this.actions.push('step-back')
-		} else if (this.actions.includes('step-back')) {
-			this.actions.splice(this.actions.findIndex(el => el == 'step-back'), 1)
+			if (!this.actions.includes('walkingBack')) this.actions.push('walkingBack')
+		} else if (this.actions.includes('walkingBack')) {
+			this.actions.splice(this.actions.findIndex(el => el == 'walkingBack'), 1)
 		}
 		if (this.gamepad.axes[this.gamepadSettings.XAxes] <= -0.05 || this.gamepad.buttons[this.gamepadSettings.LEFT]?.pressed) {
-			if (!this.actions.includes('turn-left')) this.actions.push('turn-left')
-		} else if (this.actions.includes('turn-left')) {
-			this.actions.splice(this.actions.findIndex(el => el == 'turn-left'), 1)
+			if (!this.actions.includes('turningLeft')) this.actions.push('turningLeft')
+		} else if (this.actions.includes('turningLeft')) {
+			this.actions.splice(this.actions.findIndex(el => el == 'turningLeft'), 1)
 		}
 		if (this.gamepad.axes[this.gamepadSettings.XAxes] >= 0.05 || this.gamepad.buttons[this.gamepadSettings.RIGHT]?.pressed) {
-			if (!this.actions.includes('turn-right')) this.actions.push('turn-right')
-		} else if (this.actions.includes('turn-right')) {
-			this.actions.splice(this.actions.findIndex(el => el == 'turn-right'), 1)
+			if (!this.actions.includes('turningRight')) this.actions.push('turningRight')
+		} else if (this.actions.includes('turningRight')) {
+			this.actions.splice(this.actions.findIndex(el => el == 'turningRight'), 1)
 		}
 		if (this.gamepad.buttons[this.gamepadSettings.A].pressed) {
 			if (performance.now() < this.healLastUpdate) return
-			if (!this.actions.includes('jump')) this.actions.push('jump')
+			if (!this.actions.includes('jumping')) this.actions.push('jumping')
 			this.healLastUpdate = performance.now() + 250
-		} else if (this.actions.includes('jump')) {
-			this.actions.splice(this.actions.findIndex(el => el == 'jump'), 1)
+		} else if (this.actions.includes('jumping')) {
+			this.actions.splice(this.actions.findIndex(el => el == 'jumping'), 1)
 		}
 		if (this.gamepad.buttons[this.gamepadSettings.B].pressed) {
-			if (!this.actions.includes('roll')) this.actions.push('roll')
-		} else if (this.actions.includes('roll')) {
-			this.actions.splice(this.actions.findIndex(el => el == 'roll'), 1)
+			if (!this.actions.includes('rolling')) this.actions.push('rolling')
+		} else if (this.actions.includes('rolling')) {
+			this.actions.splice(this.actions.findIndex(el => el == 'rolling'), 1)
 		}
 		if (this.gamepad.buttons[this.gamepadSettings.X].pressed) {
 			if (!this.actions.includes('backflip')) this.actions.push('backflip')
@@ -440,9 +280,9 @@ export class Player extends Entity {
 			this.actions.splice(this.actions.findIndex(el => el == 'backflip'), 1)
 		}
 		if (this.gamepad.buttons[this.gamepadSettings.Y].pressed) {
-			if (!this.actions.includes('heal')) this.actions.push('heal')
-		} else if (this.actions.includes('heal')) {
-			this.actions.splice(this.actions.findIndex(el => el == 'heal'), 1)
+			if (!this.actions.includes('drinking')) this.actions.push('drinking')
+		} else if (this.actions.includes('drinking')) {
+			this.actions.splice(this.actions.findIndex(el => el == 'drinking'), 1)
 		}
 		if (this.gamepad.buttons[this.gamepadSettings.RB].pressed) {
 			if (!this.actions.includes('slash')) this.actions.push('slash')
@@ -462,27 +302,27 @@ export class Player extends Entity {
 
 	updateActions() {
 		if (window.game.pause) return
-		let w = this.actions.includes('walk')
+		let w = this.actions.includes('walking')
 		let s = this.actions.includes('slash')
 		let k = this.actions.includes('kick')
-		let h = this.actions.includes('heal')
-		let t = this.actions.some(el => ['turn-left', 'turn-right'].includes(el))
-		let sb = this.actions.includes('step-back')
+		let h = this.actions.includes('drinking')
+		let t = this.actions.some(el => ['turningLeft', 'turningRight'].includes(el))
+		let sb = this.actions.includes('walkingBack')
 		let b = this.actions.includes('backflip')
-		let j = this.actions.includes('jump')
-		let rl = this.actions.includes('roll')
+		let j = this.actions.includes('jumping')
+		let rl = this.actions.includes('rolling')
 		if (this.actions.length <= 0) this.synchronizeCrossFade(this.animations['idle'])
 		if (!this.waitForAnimation && h && this.potions > 0) {
 			this.isHealing = true
 			this.waitForAnimation = true
-			this.executeCrossFade(this.animations['heal'], 0.1, 'once')
+			this.executeCrossFade(this.animations['drinking'], 0.1, 'once')
 			setTimeout(() => {this.setupHeal()}, window.game.delay * 750)
 		} else if (!this.waitForAnimation && s) {
 			let animationDelay = 0.1
 			this.isSlashing = true
 			this.waitForAnimation = true
 			this.playAttackSE()
-			let action = this.lastAction.name == 'outward-slash' ? this.animations['inward-slash'] : this.animations['outward-slash']
+			let action = this.lastAction.name == 'outwardSlash' ? this.animations['inwardSlash'] : this.animations['outwardSlash']
 			this.executeCrossFade(action, animationDelay, 'once')
 			setTimeout(() => this.executeMelleeAttack(), window.game.delay * (animationDelay * 1000 * 4 / 3))
 		} else if (!this.waitForAnimation && k) {
@@ -496,11 +336,11 @@ export class Player extends Entity {
 			setTimeout(() => {this.updateWalk(false, true, 5)}, window.game.delay * 250)
 		}
 		if (this.waitForAnimation || this.isSlashing || this.isKicking || this.isBackingflip) return
-		if (this.actions.includes('turn-left')) this.object.rotation.y += 0.025
-		if (this.actions.includes('turn-right')) this.object.rotation.y -= 0.025
+		if (this.actions.includes('turningLeft')) this.object.rotation.y += 0.025
+		if (this.actions.includes('turningRight')) this.object.rotation.y -= 0.025
 		if (w && !this.isWalking) {
 			this.isWalking = true
-			this.executeCrossFade(this.animations['run'])
+			this.executeCrossFade(this.animations['running'])
 		} else if (!w && this.isWalking) {
 			if (!t) this.executeCrossFade(this.animations['idle'])
 			this.isWalking = false
@@ -509,17 +349,17 @@ export class Player extends Entity {
 		if (w) this.updateWalk(true)
 		if (!this.waitForAnimation && rl && !this.isRolling) {
 			this.isRolling = true
-			this.executeCrossFade(this.animations['roll'], 0.25, 'once')
+			this.executeCrossFade(this.animations['rolling'], 0.25, 'once')
 		}
 		if (this.isRolling) return
 		if (!this.waitForAnimation && j && !this.isJumping) {
 			this.isJumping = true
-			this.executeCrossFade(w ? this.animations['jump-running'] : this.animations['jump'], 0.25, 'once')
+			this.executeCrossFade(w ? this.animations['jumpingRunning'] : this.animations['jumping'], 0.25, 'once')
 		}
 		if (w || this.isJumping) return
 		if (sb && !this.isSteppingBack) {
 			this.isSteppingBack = true
-			this.executeCrossFade(this.animations['step-back'])
+			this.executeCrossFade(this.animations['walkingBack'])
 		} else if (!sb && this.isSteppingBack) {
 			this.executeCrossFade(this.returnAction)
 			this.isSteppingBack = false
@@ -527,22 +367,14 @@ export class Player extends Entity {
 		if (sb) return this.updateWalk(false, true, 0.025)
 		if (!this.isRotating && t) {
 			this.isRotating = true
-			this.executeCrossFade(this.animations['walk'])
+			this.executeCrossFade(this.animations['walking'])
 		} else if (this.isRotating && !t) {
 			if (!w) this.executeCrossFade(this.returnAction)
 			this.isRotating = false
 		}
-		/* if (!this.waitForAnimation && !this.isTogglingSword && ts) {
-			this.isTogglingSword = true
-			this.waitForAnimation = true
-			 this.executeCrossFade(this.swordEquipped ? sheathSwordAction : withdrawSwordAction, 0.25, 'once')
-		} else if (this.isTogglingSword && !t) {
-			 this.executeCrossFade(this.returnAction)
-			this.isTogglingSword = false
-		} */
 	}
 
-	updateWalk(running=false, back=false, speed=0.1) {
+	updateWalk(running=false, back=false, speed=0.175) {
 		if (this.waitForAnimation) return
 		let dir = this.camera.getWorldDirection(this.object.position.clone())
 		if (back) dir.negate()
@@ -563,9 +395,9 @@ export class Player extends Entity {
 		this.refreshHPBar()
 		this.playDamageSE()
 		this.vibrate()
-		this.executeCrossFade(this.animations['stomach-hit'], 0.1, 'once')
+		this.executeCrossFade(this.animations['stomachHit'], 0.1, 'once')
 		if (this.hp <= 0 && !this.died) {
-			this.executeCrossFade(this.animations['die'], 1, 'once')
+			this.executeCrossFade(this.animations['dieing'], 1, 'once')
 			window.sound.playME(window.sound.gameoverBuffer)
 			this.died = true
 		}
@@ -626,7 +458,7 @@ export class Player extends Entity {
 	}
 
 	executeCrossFade(newAction, duration=0.25, loop='repeat') {
-		if (this.actions.some(el => ['walk', 'run', 'turn-left', 'turn-right', 'step-back'].includes(el)) && newAction?.name == 'idle') return
+		if (this.actions.some(el => ['walking', 'running', 'turningLeft', 'turningRight', 'walkingBack'].includes(el)) && newAction?.name == 'idle') return
 		super.executeCrossFade(newAction, duration, loop)
 	}
 
@@ -656,7 +488,6 @@ export class Player extends Entity {
 		this.isRolling = false
 		this.isJumping = false
 		this.beenHit = false
-		this.isTogglingSword = false
 		this.isSlashing = false
 		this.isKicking = false
 		this.isHealing = false
@@ -706,10 +537,10 @@ export class Player extends Entity {
 	}
 
 	get returnAction() {
-		if (this.actions.some(el => ['walk', 'turn-left', 'turn-right'].includes(el))) {
-			return this.animations['run']
-		} else if (this.actions.includes('step-back')) {
-			return this.animations['step-back']
+		if (this.actions.some(el => ['walking', 'turningLeft', 'turningRight'].includes(el))) {
+			return this.animations['running']
+		} else if (this.actions.includes('walkingBack')) {
+			return this.animations['walkingBack']
 		} else {
 			return this.animations['idle']
 		}

@@ -16,7 +16,8 @@ export class Support extends Entity {
 	loadModel() {
 		this.gltfLoader.load('/models/support/knight.glb', gltf => {
 			this.object = gltf.scene
-			this.object.encoding = THREE.sRGBEncoding
+			this.object.colorSpace = THREE.sRGBEColorSpace
+			this.object.scale.set(3.75, 3.75, 3.75)
 			this.object.traverse(el => {if (el.isMesh) el.castShadow = true})
 			this.object.position.set(2, 0, 0)
 			this.mixer = new THREE.AnimationMixer(this.object)
@@ -38,7 +39,7 @@ export class Support extends Entity {
 			this.callback(this.object)
 			this.progress['support'] = 100
 		}, xhr => {
-			this.progress['support'] = (xhr.loaded / xhr.total) * 99
+			this.progress['support'] = xhr.loaded / (xhr.total || 1) * 99
 		}, error => {
 			console.error(error)
 		})
@@ -47,7 +48,7 @@ export class Support extends Entity {
 	loadWeapon() {
 		this.gltfLoader.load('/models/equips/damascusSword.glb', fbx => {
 			this.sword = fbx.scene
-			this.sword.encoding = THREE.sRGBEncoding
+			this.sword.colorSpace = THREE.sRGBEColorSpace
 			this.sword.traverse(el => {
 				if (!el.isMesh) return
 				el.castShadow = true
@@ -61,7 +62,7 @@ export class Support extends Entity {
 			this.object.getObjectByName('mixamorigRightHand').attach(this.sword)
 			this.progress['sword'] = 100
 		}, xhr => {
-			this.progress['sword'] = (xhr.loaded / xhr.total) * 99
+			this.progress['sword'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -74,7 +75,7 @@ export class Support extends Entity {
 			this.lastAction = this.animations['idle']
 			this.animations['idle'].play()
 		}, xhr => {
-			this.progress['idle'] = (xhr.loaded / xhr.total) * 100
+			this.progress['idle'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -82,7 +83,7 @@ export class Support extends Entity {
 			this.animations['backflip'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['backflip'].name = 'backflip'
 		}, xhr => {
-			this.progress['backflip'] = (xhr.loaded / xhr.total) * 100
+			this.progress['backflip'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -90,7 +91,7 @@ export class Support extends Entity {
 			this.animations['die'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['die'].name = 'die'
 		}, xhr => {
-			this.progress['dieing'] = (xhr.loaded / xhr.total) * 100
+			this.progress['dieing'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -98,7 +99,7 @@ export class Support extends Entity {
 			this.animations['drinking'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['drinking'].name = 'drinking'
 		}, xhr => {
-			this.progress['drinking'] = (xhr.loaded / xhr.total) * 100
+			this.progress['drinking'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -106,7 +107,7 @@ export class Support extends Entity {
 			this.animations['inwardSlash'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['inwardSlash'].name = 'inwardSlash'
 		}, xhr => {
-			this.progress['inwardSlash'] = (xhr.loaded / xhr.total) * 100
+			this.progress['inwardSlash'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -114,7 +115,7 @@ export class Support extends Entity {
 			this.animations['jumping'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['jumping'].name = 'jumping'
 		}, xhr => {
-			this.progress['jumping'] = (xhr.loaded / xhr.total) * 100
+			this.progress['jumping'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -122,7 +123,7 @@ export class Support extends Entity {
 			this.animations['jumpingRunning'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['jumpingRunning'].name = 'jumpingRunning'
 		}, xhr => {
-			this.progress['jumpingRunning'] = (xhr.loaded / xhr.total) * 100
+			this.progress['jumpingRunning'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -130,7 +131,7 @@ export class Support extends Entity {
 			this.animations['outwardSlash'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['outwardSlash'].name = 'outwardSlash'
 		}, xhr => {
-			this.progress['outwardSlash'] = (xhr.loaded / xhr.total) * 100
+			this.progress['outwardSlash'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -138,7 +139,7 @@ export class Support extends Entity {
 			this.animations['rolling'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['rolling'].name = 'rolling'
 		}, xhr => {
-			this.progress['rolling'] = (xhr.loaded / xhr.total) * 100
+			this.progress['rolling'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
 		})
@@ -146,7 +147,7 @@ export class Support extends Entity {
 			this.animations['run'] = this.mixer.clipAction(fbx.animations[0])
 			this.animations['run'].name = 'run'
 		}, xhr => {
-			this.progress['running'] = (xhr.loaded / xhr.total) * 100
+			this.progress['running'] = xhr.loaded / (xhr.total || 1) * 100
 		}, error => {
 			console.error(error)
 		})
