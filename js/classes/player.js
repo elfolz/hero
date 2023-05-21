@@ -73,10 +73,9 @@ export class Player extends Entity {
 				if (!this.weapon) this.weapon = el
 			})
 			this.weapon.geometry.computeBoundingBox()
-			this.sword.rotation.y = Math.PI / 2
-			this.sword.position.set(this.object.position.x-1.1, this.object.position.y+3.5, this.object.position.z-0.5)
+			this.sword.rotation.x = Math.PI / 2
+			this.sword.position.set(this.object.position.x-1, this.object.position.y+3.2, this.object.position.z-0.2)
 			this.object.getObjectByName('mixamorigRightHand').attach(this.sword)
-
 			this.progress['sword'] = 100
 		}, xhr => {
 			this.progress['sword'] = xhr.loaded / (xhr.total || 1) * 100
