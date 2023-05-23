@@ -31,15 +31,12 @@ html {
 }
 body {
 	margin: 0;
-	padding-top: env(safe-area-inset-top, 0);
-	padding-bottom: env(safe-area-inset-bottom, 0);
-	background-color: #000;
-	background-size: cover;
 	width: 100vw;
 	height: 100vh;
-}
-body.loaded {
+	padding-top: env(safe-area-inset-top, 0);
+	padding-bottom: env(safe-area-inset-bottom, 0);
 	background-image: url("/textures/moon.webp");
+	background-size: cover;
 }
 canvas[data-engine~="three.js"] {
 	width: 100vw;

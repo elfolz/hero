@@ -153,13 +153,14 @@ export class Game {
 
 	initGame() {
 		if (this.initiated) return
-		document.body.classList.add('loaded')
-		document.body.removeChild(document.querySelector('figure'))
-		document.querySelector('header').style.removeProperty('display')
-		if (!device.isPC) document.querySelectorAll('footer').forEach(el => el.style.removeProperty('display'))
-		this.player.refreshHPBar()
 		this.resizeScene()
 		this.update()
+		setTimeout(() => {
+			if (!device.isPC) document.querySelectorAll('footer').forEach(el => el.style.removeProperty('display'))
+			document.querySelector('header').style.removeProperty('display')
+			document.body.removeChild(document.querySelector('#loading'))
+			this.player.refreshHPBar()
+		}, 250)
 		this.initiated = true
 	}
 

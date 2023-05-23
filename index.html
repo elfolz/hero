@@ -41,22 +41,30 @@
 				background-color: #000;
 				border-radius: 6px;
 			}
-			figure {
+			#loading {
 				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background-color: #000;
+				z-index: 100;
+			}
+			#loading figure {
+				position: absolute;
 				top: 50%;
 				left: 50%;
 				width: 50vw;
 				text-align: center;
 				transform: translate(-50%, -50%);
 				margin: 0;
-				z-index: 100;
 			}
-			figure span {
+			#loading figure span {
 				display: inline-block;
 				perspective: 1000px;
 				margin-bottom: 12px;
 			}
-			figure img {
+			#loading figure img {
 				display: block;
 				margin: 0;
 				width: 192px;
@@ -74,12 +82,14 @@
 		</style>
 	</head>
 	<body>
-		<figure>
-			<span>
-				<img src="/img/icons/alpha.webp" alt="Hero">
-			</span>
-			<progress value="0" max="100"></progress>
-		</figure>
+		<main id="loading">
+			<figure>
+				<span>
+					<img src="/img/icons/alpha.webp" alt="Hero">
+				</span>
+				<progress value="0" max="100"></progress>
+			</figure>
+		</main>
 		<header style="display:none;">
 			<main id="hpbar"></main>
 			<canvas id="fps" width="80" height="20"></canvas>
