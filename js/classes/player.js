@@ -93,7 +93,7 @@ export class Player extends Entity {
 				this.progress[el] = 100
 				if (el == 'idle') this.animate()
 			}, xhr => {
-				this.progress[el] = parseInt(xhr.loaded / (xhr.total || 1)) * 100
+				this.progress[el] = parseInt(xhr.loaded / (xhr.total || 1)) * 99
 			}, error => {
 				console.error(error)
 			})

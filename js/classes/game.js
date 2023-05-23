@@ -123,30 +123,15 @@ export class Game {
 				this.scene.add(ground)
 				if (!this.progress['ground']) this.progress['ground'] = 100
 			}, xhr => {
-				this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 100 / 2
+				this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 99 / 2
 			}, error => {
 				console.error(error)
 			})
 		}, xhr => {
-			this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 100 / 2
+			this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 99 / 2
 		}, error => {
 			console.error(error)
 		})
-		/* this.textureLoader.load('/textures/ground.webp', texture => {
-			texture.wrapS = THREE.RepeatWrapping
-			texture.wrapT = THREE.RepeatWrapping
-			texture.colorSpace = THREE.SRGBColorSpace
-			texture.repeat.set(10, 10)
-			const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshLambertMaterial({map: texture}))
-			ground.rotation.x = - Math.PI / 2
-			ground.receiveShadow = true
-			this.scene.add(ground)
-			if (!this.progress['ground']) this.progress['ground'] = 100
-		}, xhr => {
-			this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 100
-		}, error => {
-			console.error(error)
-		}) */
 		this.player = new Player(this.camera,
 			e => {
 				this.scene.add(e)
