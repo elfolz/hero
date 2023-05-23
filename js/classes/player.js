@@ -76,10 +76,10 @@ export class Player extends Entity {
 			this.sword.rotation.y = Math.PI / 6
 			this.sword.position.set(this.object.position.x-2.6, this.object.position.y+0.6, this.object.position.z-4)
 			this.object.getObjectByName('mixamorigRightHand').attach(this.sword)
-			this.progress['sword'] = 99.9
+			this.progress['sword'] = 99
 			this.animate()
 		}, xhr => {
-			this.progress['sword'] = xhr.loaded / (xhr.total || 1) * 100
+			this.progress['sword'] = xhr.loaded / (xhr.total || 1) * 98
 		}, error => {
 			console.error(error)
 		})
@@ -100,10 +100,9 @@ export class Player extends Entity {
 		})
 	}
 
-
 	animate() {
 		if ((this.progress['idle'] || 0) < 100) return
-		if ((this.progress['sword'] || 0) < 99.9) return
+		if ((this.progress['sword'] || 0) < 99) return
 		this.lastAction = this.animations['idle']
 		this.animations['idle'].play()
 		this.progress['sword'] = 100
