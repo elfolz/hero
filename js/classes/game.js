@@ -13,7 +13,7 @@ export class Game {
 		this.lastFrameTime = performance.now()
 		this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
 		this.clock = new THREE.Clock()
-		this.ambientLight = new THREE.AmbientLight(0xffffff, 0.025)
+		this.ambientLight = new THREE.AmbientLight(0xffffff, 0.1)
 		this.dirLight = new THREE.DirectionalLight(0xffffff, 0.1)
 		this.textureLoader = new THREE.TextureLoader()
 		this.scene = new THREE.Scene()
@@ -102,8 +102,8 @@ export class Game {
 	loadModels() {
 		textureLoader({
 			repeat: 10,
-			aoMapIntensity: 5,
-			emissiveIntensity: 5,
+			aoMapIntensity: 3,
+			emissiveIntensity: 3,
 			flatShading: true,
 			displacementScale: 1.5,
 			displacementBias: -0.15,
