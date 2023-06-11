@@ -3,6 +3,7 @@ import * as THREE from '/js/modules/three.module.js'
 import { EnemyHumanoid } from '/js/classes/enemyHumanoid.js'
 import { Player } from '/js/classes/player.js'
 import device from '/js/helpers/device.js'
+import textureLoader from '/js/classes/textureLoader.js'
 
 export class Game {
 
@@ -12,8 +13,8 @@ export class Game {
 		this.lastFrameTime = performance.now()
 		this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
 		this.clock = new THREE.Clock()
-		this.hemisphereLight = new THREE.HemisphereLight(0xddeeff, 0x000000, 0.25)
-		this.dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
+		this.ambientLight = new THREE.AmbientLight(0xffffff, 0.025)
+		this.dirLight = new THREE.DirectionalLight(0xffffff, 0.1)
 		this.textureLoader = new THREE.TextureLoader()
 		this.scene = new THREE.Scene()
 		this.fps = 0
@@ -37,13 +38,9 @@ export class Game {
 		this.scene.background = null
 		this.renderer.outputColorSpace = THREE.SRGBColorSpace
 		this.renderer.shadowMap.enabled = true
-		this.renderer.setClearColor(0x000000, 0)
-		this.renderer.shadowMap.enabled = true
-		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
-		this.hemisphereLight.position.set(0, 100, 100)
 		this.dirLight.position.set(0, 100, 100)
 		this.dirLight.castShadow = true
-		this.scene.add(this.hemisphereLight)
+		this.scene.add(this.ambientLight)
 		this.scene.add(this.dirLight)
 		window.window.refreshAntialiasing(this.antialiasing, false)
 	}
@@ -103,34 +100,28 @@ export class Game {
 	}
 
 	loadModels() {
-		this.textureLoader.load('/textures/tileable1.webp', texture => {
-			this.textureLoader.load('/textures/tileable1_nm.webp', textureNm => {
-				texture.colorSpace = THREE.SRGBColorSpace
-				texture.wrapS = THREE.MirroredRepeatWrapping
-				texture.wrapT = THREE.MirroredRepeatWrapping
-				texture.repeat.set(5, 5)
-				textureNm.colorSpace = THREE.SRGBColorSpace
-				textureNm.wrapS = THREE.MirroredRepeatWrapping
-				textureNm.wrapT = THREE.MirroredRepeatWrapping
-				textureNm.repeat.set(5, 5)
-				const material = new THREE.MeshPhongMaterial({
-					map: texture,
-					normalMap: textureNm
-				})
-				const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), material)
-				ground.rotation.x = - Math.PI / 2
-				ground.receiveShadow = true
-				this.scene.add(ground)
-				if (!this.progress['ground']) this.progress['ground'] = 100
-			}, xhr => {
-				this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 99 / 2
-			}, error => {
-				console.error(error)
-			})
-		}, xhr => {
-			this.progress['ground'] = xhr.loaded / (xhr.total || 1) * 99 / 2
-		}, error => {
-			console.error(error)
+		textureLoader({
+			repeat: 10,
+			aoMapIntensity: 5,
+			emissiveIntensity: 5,
+			flatShading: true,
+			displacementScale: 1.5,
+			displacementBias: -0.15,
+			normalScale: 10,
+			textures: [
+			{type: 'aoMap', texture: 'GroundForestRoots001_AO_1K.webp'},
+			{type: 'emissiveMap', texture: 'GroundForestRoots001_GLOSS_1K.webp'},
+			{type: 'displacementMap', texture: 'GroundForestRoots001_DISP_1K.webp'},
+			{type: 'map', texture: 'GroundForestRoots001_COL_1K.webp'},
+			{type: 'normalMap', texture: 'GroundForestRoots001_NRM_1K.webp'},
+			{type: 'specularMap', texture: 'GroundForestRoots001_REFL_1K.webp'}
+		]})
+		.then(response => {
+			const geometry = new THREE.Mesh(new THREE.PlaneGeometry(200, 200, 200, 200), response)
+			geometry.rotation.x = - Math.PI / 2
+			geometry.receiveShadow = true
+			this.scene.add(geometry)
+			if (!this.progress['ground']) this.progress['ground'] = 100
 		})
 		this.player = new Player(this.camera,
 			e => {
