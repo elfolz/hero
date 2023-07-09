@@ -1,9 +1,9 @@
 'use strict'
-import * as THREE from '/js/modules/three.module.js'
-import { EnemyHumanoid } from '/js/classes/enemyHumanoid.js'
-import { Player } from '/js/classes/player.js'
-import device from '/js/helpers/device.js'
-import textureLoader from '/js/classes/textureLoader.js'
+import * as THREE from '../modules/three.module.js'
+import { EnemyHumanoid } from '../classes/enemyHumanoid.js'
+import { Player } from '../classes/player.js'
+import device from '../helpers/device.js'
+import textureLoader from '../classes/textureLoader.js'
 
 export class Game {
 
@@ -104,18 +104,18 @@ export class Game {
 			repeat: 10,
 			aoMapIntensity: 3,
 			emissiveIntensity: 3,
-			flatShading: true,
 			displacementScale: 1.5,
 			displacementBias: -0.15,
 			normalScale: 10,
 			textures: [
-			{type: 'aoMap', texture: 'GroundForestRoots001_AO_1K.webp'},
-			{type: 'emissiveMap', texture: 'GroundForestRoots001_GLOSS_1K.webp'},
-			{type: 'displacementMap', texture: 'GroundForestRoots001_DISP_1K.webp'},
-			{type: 'map', texture: 'GroundForestRoots001_COL_1K.webp'},
-			{type: 'normalMap', texture: 'GroundForestRoots001_NRM_1K.webp'},
-			{type: 'specularMap', texture: 'GroundForestRoots001_REFL_1K.webp'}
-		]})
+				{type: 'aoMap', texture: 'GroundForestRoots001_AO_1K.webp'},
+				{type: 'emissiveMap', texture: 'GroundForestRoots001_GLOSS_1K.webp'},
+				{type: 'displacementMap', texture: 'GroundForestRoots001_DISP_1K.webp'},
+				{type: 'map', texture: 'GroundForestRoots001_COL_1K.webp'},
+				{type: 'normalMap', texture: 'GroundForestRoots001_NRM_1K.webp'},
+				{type: 'specularMap', texture: 'GroundForestRoots001_REFL_1K.webp'}
+			]
+		})
 		.then(response => {
 			const geometry = new THREE.Mesh(new THREE.PlaneGeometry(200, 200, 200, 200), response)
 			geometry.rotation.x = - Math.PI / 2

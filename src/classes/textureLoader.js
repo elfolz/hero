@@ -1,11 +1,13 @@
-import { TextureLoader, SRGBColorSpace, RepeatWrapping, Mesh, MeshLambertMaterial, PlaneGeometry, Vector2 } from '/js/modules/three.module.js'
+import { TextureLoader, SRGBColorSpace, RepeatWrapping, MeshLambertMaterial, Vector2 } from '../modules/three.module.js'
 
+const availableTextureTypes = ['aoMap', 'emissiveMap', 'displacementMap', 'map', 'normalMap', 'specularMap']
 const process = []
 const textureLoader = new TextureLoader()
 
 export default (args) => {
 	if (!args.textures) return
 	args.textures.forEach(el => {
+		if (!availableTextureTypes.includes(el.type)) return
 		process.push(
 			new Promise((resolve, reject) => {
 				textureLoader.load(`/textures/${el.texture}`, texture => {
@@ -27,7 +29,6 @@ export default (args) => {
 			const material = new MeshLambertMaterial()
 			if (args.aoMapIntensity) material.aoMapIntensity = args.aoMapIntensity
 			if (args.emissiveIntensity) material.emissiveIntensity = args.emissiveIntensity
-			if (args.flatShading) material.flatShading = args.flatShading
 			if (args.displacementScale) material.displacementScale = args.displacementScale
 			if (args.displacementBias) material.displacementBias = args.displacementBias
 			if (typeof args.normalScale == 'object') material.normalScale = new Vector2(args.normalScale[0], args.normalScale[1])

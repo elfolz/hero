@@ -1,5 +1,5 @@
 'use strict'
-import { AudioListener } from '/js/modules/three.module.js'
+import { AudioListener } from '../modules/three.module.js'
 
 export class Sound {
 
@@ -20,7 +20,7 @@ export class Sound {
 		this.seGain.connect(this.audioContext.destination)
 		this.audio.srcObject = destination.stream
 		this.audio.play()
-		fetch('/audio/bgm/bgm.mp3')
+		fetch('./audio/bgm/bgm.mp3', {cache: 'force-cache'})
 		.then(response => {
 			response.arrayBuffer()
 			.then(buffer => {
@@ -31,7 +31,7 @@ export class Sound {
 				})
 			})
 		})
-		fetch('/audio/me/gameover.mp3')
+		fetch('./audio/me/gameover.mp3', {cache: 'force-cache'})
 		.then(response => {
 			response.arrayBuffer()
 			.then(buffer => {

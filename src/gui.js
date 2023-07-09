@@ -1,5 +1,5 @@
 'use strict'
-import device from '/js/helpers/device.js'
+import device from './helpers/device.js'
 
 var wakeLockObj
 

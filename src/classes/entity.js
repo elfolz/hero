@@ -1,9 +1,9 @@
 'use strict'
-import * as THREE from '/js/modules/three.module.js'
-import { GLTFLoader } from '/js/modules/gltfLoader.module.js'
-import { FBXLoader } from '/js/modules/fbxLoader.module.js'
-import { DecalGeometry } from '/js/modules/decalGeometry.module.js'
-import randomInt from '/js/helpers/randomInt.js'
+import * as THREE from '../modules/three.module.js'
+import { GLTFLoader } from '../modules/gltfLoader.module.js'
+import { FBXLoader } from '../modules/fbxLoader.module.js'
+import { DecalGeometry } from '../modules/decalGeometry.module.js'
+import randomInt from '../helpers/randomInt.js'
 
 export class Entity {
 
@@ -132,7 +132,7 @@ export class Entity {
 	async fetchAudio(key, url, positional=false, refDistance=10, maxDistance=100) {
 		if (!window.sound?.audioContext) return
 		try {
-			let response = await fetch(url)
+			let response = await fetch(url, {cache: 'force-cache'})
 			let buffer = await response.arrayBuffer()
 			let data = await window.sound.audioContext.decodeAudioData(buffer)
 			this.audios[key] = data

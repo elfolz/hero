@@ -1,9 +1,9 @@
 'use strict'
-import * as THREE from '/js/modules/three.module.js'
-import { Entity } from '/js/classes/entity.js'
-import inputSettings from '/js/settings/input.js'
-import randomInt from '/js/helpers/randomInt.js'
-import device from '/js/helpers/device.js'
+import * as THREE from '../modules/three.module.js'
+import { Entity } from '../classes/entity.js'
+import inputSettings from '../settings/input.js'
+import randomInt from '../helpers/randomInt.js'
+import device from '../helpers/device.js'
 
 export class Player extends Entity {
 
@@ -28,9 +28,9 @@ export class Player extends Entity {
 	}
 
 	loadModel() {
-		this.gltfLoader.load('/models/hero/hero.glb', gltf => {
+		this.gltfLoader.load('./models/hero/hero.glb', gltf => {
 			this.object = gltf.scene
-			this.object.colorSpace = THREE.sRGBEColorSpace
+			this.object.colorSpace = THREE.SRGBColorSpace
 			this.object.traverse(el => {if (el.isMesh) el.castShadow = true})
 			this.camera.position.set(0, this.object.position.y+5, this.object.position.z-15)
 			this.camera.lookAt(0, 5, 0)
@@ -64,9 +64,9 @@ export class Player extends Entity {
 	}
 
 	loadWeapon() {
-		this.gltfLoader.load('/models/equips/sword.glb', fbx => {
+		this.gltfLoader.load('./models/equips/sword.glb', fbx => {
 			this.sword = fbx.scene
-			this.sword.colorSpace = THREE.sRGBEColorSpace
+			this.sword.colorSpace = THREE.SRGBColorSpace
 			this.sword.traverse(el => {
 				if (!el.isMesh) return
 				el.castShadow = true
@@ -87,7 +87,7 @@ export class Player extends Entity {
 
 	loadAnimations() {
 		this.animationModels.forEach(el => {
-			this.fbxLoader.load(`/models/hero/${el}.fbx`, fbx => {
+			this.fbxLoader.load(`./models/hero/${el}.fbx`, fbx => {
 				this.animations[el] = this.mixer.clipAction(fbx.animations[0])
 				this.animations[el].name = el
 				this.progress[el] = 100
@@ -461,6 +461,7 @@ export class Player extends Entity {
 	}
 
 	executeCrossFade(newAction, duration=0.25, loop='repeat') {
+		if (!newAction) return
 		if (this.actions.some(el => ['walking', 'running', 'turningLeft', 'turningRight', 'walkingBack'].includes(el)) && newAction.name == 'idle') return
 		super.executeCrossFade(newAction, duration, loop)
 	}
@@ -499,13 +500,13 @@ export class Player extends Entity {
 
 	initAudio() {
 		for (let i=0; i<=4; i++) {
-			this.fetchAudio(`attack-${i}`, `/audio/hero/attack/${i}.mp3`)
-			this.fetchAudio(`damage-${i}`, `/audio/hero/damage/${i}.mp3`)
+			this.fetchAudio(`attack-${i}`, `./audio/hero/attack/${i}.mp3`)
+			this.fetchAudio(`damage-${i}`, `./audio/hero/damage/${i}.mp3`)
 		}
 		for (let i=0; i<=3; i++) {
-			this.fetchAudio(`slash-${i}`, `/audio/weapons/slash-${i}.mp3`)
+			this.fetchAudio(`slash-${i}`, `./audio/weapons/slash-${i}.mp3`)
 		}
-		this.fetchAudio(`heal`, `/audio/misc/drinking.mp3`)
+		this.fetchAudio(`heal`, `./audio/misc/drinking.mp3`)
 	}
 
 	vibrate(magnetude=100, duration=0.1) {

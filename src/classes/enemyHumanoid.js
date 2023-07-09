@@ -1,7 +1,7 @@
 'use strict'
-import * as THREE from '/js/modules/three.module.js'
-import { Entity } from '/js/classes/entity.js'
-import randomInt from '/js/helpers/randomInt.js'
+import * as THREE from '../modules/three.module.js'
+import { Entity } from '../classes/entity.js'
+import randomInt from '../helpers/randomInt.js'
 
 export class EnemyHumanoid extends Entity {
 
@@ -16,9 +16,9 @@ export class EnemyHumanoid extends Entity {
 	}
 
 	loadModel() {
-		this.gltfLoader.load('/models/humanoid/humanoid.glb', gltf => {
+		this.gltfLoader.load('./models/humanoid/humanoid.glb', gltf => {
 			this.object = gltf.scene
-			this.object.colorSpace = THREE.sRGBEColorSpace
+			this.object.colorSpace = THREE.SRGBColorSpace
 			this.object.traverse(el => {if (el.isMesh) el.castShadow = true})
 			this.object.position.set(0, 0, 20)
 			this.object.lookAt(0, 0, -1)
@@ -58,7 +58,7 @@ export class EnemyHumanoid extends Entity {
 
 	loadAnimations() {
 		this.animationModels.forEach(el => {
-			this.fbxLoader.load(`/models/humanoid/${el}.fbx`, fbx => {
+			this.fbxLoader.load(`./models/humanoid/${el}.fbx`, fbx => {
 				this.animations[el] = this.mixer.clipAction(fbx.animations[0])
 				this.animations[el].name = el
 				if (el == 'idle') {
@@ -124,7 +124,7 @@ export class EnemyHumanoid extends Entity {
 
 	initAudio() {
 		for (let i=0; i<9; i++) {
-			this.fetchAudio(`attack-${i}`, `/audio/monster/homanoid-${i}.mp3`, true)
+			this.fetchAudio(`attack-${i}`, `./audio/monster/homanoid-${i}.mp3`, true)
 		}
 	}
 

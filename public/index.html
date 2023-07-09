@@ -6,15 +6,10 @@
 		<meta name="description" content="Hero - Desenvolvimento de game 3D no navegador">
 		<link rel="manifest" href="/manifest.json">
 		<link rel="icon" type="image/x-icon" href="/favicon.ico">
-		<link rel="apple-touch-icon" href="/img/icons/android-chrome-192x192.png">
-		<link rel="preload" as="style" href="/stylesheet.css" onload="this.rel='stylesheet'">
+		<link rel="apple-touch-icon" href="./img/icons/android-chrome-192x192.png">
+		<link rel="preload" as="style" href="./stylesheet.css" onload="this.rel='stylesheet'">
 		<link rel="preload" as="style" href="https://fonts.googleapis.com/icon?family=Material+Icons" onload="this.rel='stylesheet'">
 		<link rel="preload" as="font" href="/font.woff" type="font/woff" crossorigin>
-		<link rel="preload" as="script" href="/js/classes/sound.js" crossorigin>
-		<link rel="preload" as="script" href="/js/classes/game.js" crossorigin>
-		<link rel="preload" as="script" href="/js/classes/player.js" crossorigin>
-		<link rel="preload" as="script" href="/js/gui.js" crossorigin>
-		<link rel="preload" as="script" href="/js/main.js" crossorigin>
 		<meta property="og:url" content="https://hero.elfolz.app.br" />
 		<meta property="og:title" content="Hero">
 		<meta property="og:image" content="https://hero.elfolz.app.br/img/icons/android-chrome-512x512.png">
@@ -85,7 +80,7 @@
 		<main id="loading">
 			<figure>
 				<span>
-					<img src="/img/icons/alpha.webp" alt="Hero">
+					<img src="./img/icons/alpha.webp" alt="Hero">
 				</span>
 				<progress value="0" max="100"></progress>
 			</figure>
@@ -164,7 +159,7 @@
 		</footer>
 		<main id="dialog-controller">
 			<section id="keyboard">
-				<img src="/img/keyboard.svg">
+				<img src="./img/keyboard.svg">
 				<label data-key="W">Andar</label>
 				<label data-key="R">Rolar</label>
 				<label data-key="A">Esq.</label>
@@ -178,7 +173,7 @@
 				<label data-key="ESC">Pausa</label>
 			</section>
 			<section id="gamepad">
-				<img src="/img/controller.svg">
+				<img src="./img/controller.svg">
 				<label data-key="ANALOG">Mover</label>
 				<label data-key="A">Pular</label>
 				<label data-key="B">Rolar</label>
@@ -194,6 +189,5 @@
 		</main>
 		<main id="glass">PAUSA</main>
 		<main id="game-over"><span>Game Over</span></main>
-		<script src="/js/main.js" type="module"></script>
 	</body>
 </html>
