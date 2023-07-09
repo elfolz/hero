@@ -1,4 +1,7 @@
 'use strict'
+
+import './stylesheet.scss'
+
 import './gui.js'
 import { Sound } from './classes/sound.js'
 import { Game } from './classes/game.js'

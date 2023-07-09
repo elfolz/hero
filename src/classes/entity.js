@@ -7,9 +7,6 @@ import randomInt from '../helpers/randomInt.js'
 
 export class Entity {
 
-	loadingElements = 1
-	animationModels = []
-
 	constructor(callback, onload) {
 		this.callback = callback
 		this.onload = onload

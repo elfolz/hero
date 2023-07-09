@@ -52,12 +52,11 @@ export class Player extends Entity {
 			this.pillar.geometry.computeBoundingBox()
 
 			this.onFinishActions()
-			this.loadAnimations()
 			this.loadWeapon()
 			this.callback(this.object)
 			this.progress['player'] = 100
 		}, xhr => {
-			this.progress['player'] = xhr.loaded / (xhr.total || 1) * 100
+			this.progress['player'] = parseInt(xhr.loaded / (xhr.total || 1)) * 99
 		}, error => {
 			console.error(error)
 		})
@@ -76,10 +75,10 @@ export class Player extends Entity {
 			this.sword.rotation.y = Math.PI / 6
 			this.sword.position.set(this.object.position.x-2.6, this.object.position.y+0.6, this.object.position.z-4)
 			this.object.getObjectByName('mixamorigRightHand').attach(this.sword)
-			this.progress['sword'] = 99
-			this.animate()
+			this.progress['sword'] = 100
+			this.loadAnimations()
 		}, xhr => {
-			this.progress['sword'] = xhr.loaded / (xhr.total || 1) * 98
+			this.progress['sword'] = parseInt(xhr.loaded / (xhr.total || 1)) * 99
 		}, error => {
 			console.error(error)
 		})
@@ -91,21 +90,16 @@ export class Player extends Entity {
 				this.animations[el] = this.mixer.clipAction(fbx.animations[0])
 				this.animations[el].name = el
 				this.progress[el] = 100
-				if (el == 'idle') this.animate()
+				if (el == 'idle') {
+					this.lastAction = this.animations['idle']
+					this.animations['idle'].play()
+				}
 			}, xhr => {
 				this.progress[el] = parseInt(xhr.loaded / (xhr.total || 1)) * 99
 			}, error => {
 				console.error(error)
 			})
 		})
-	}
-
-	animate() {
-		if ((this.progress['idle'] || 0) < 100) return
-		if ((this.progress['sword'] || 0) < 99) return
-		this.lastAction = this.animations['idle']
-		this.animations['idle'].play()
-		this.progress['sword'] = 100
 	}
 
 	initControls() {
@@ -325,7 +319,7 @@ export class Player extends Entity {
 			this.isSlashing = true
 			this.waitForAnimation = true
 			this.playAttackSE()
-			let action = this.lastAction.name == 'outwardSlash' ? this.animations['inwardSlash'] : this.animations['outwardSlash']
+			let action = this.lastAction?.name == 'outwardSlash' ? this.animations['inwardSlash'] : this.animations['outwardSlash']
 			this.executeCrossFade(action, animationDelay, 'once')
 			setTimeout(() => this.executeMelleeAttack(), window.game.delay * (animationDelay * 1000 * 4 / 3))
 		} else if (!this.waitForAnimation && k) {

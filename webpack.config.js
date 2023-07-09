@@ -1,17 +1,13 @@
+const { InjectManifest } = require('workbox-webpack-plugin')
+const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 const HtmlWebpackInjector = require('html-webpack-injector')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const TerserPlugin = require("terser-webpack-plugin")
 const CopyPlugin = require("copy-webpack-plugin")
 const path = require('path')
 
-module.exports = {
-	entry: './src/main.js',
-	output: {
-		path: path.resolve(__dirname, 'dist'),
-		filename: '[name].[contenthash].js',
-		clean: true
-	},
-	plugins: [
+module.exports = (env, args) => {
+	const plugins = [
 		new CopyPlugin({
 			patterns: [{
 				from: '**/*',
@@ -24,6 +20,9 @@ module.exports = {
 				}
 			}],
 		}),
+		new MiniCssExtractPlugin({
+			filename: '[name].[contenthash].css'
+		}),
 		new HtmlWebpackPlugin({
 			template: './public/index.html',
 			filename: 'index.html',
@@ -34,37 +33,81 @@ module.exports = {
 			},
 			minify: {
 				collapseWhitespace: true,
+				collapseInlineTagWhitespace: true,
 				keepClosingSlash: true,
 				removeComments: true,
 				removeRedundantAttributes: true,
 				removeScriptTypeAttributes: true,
 				removeStyleLinkTypeAttributes: true,
 				useShortDoctype: true,
-				minifyCSS: true
+				minifyCSS: true,
+				minifyJS: true
 			}
 		}),
 		new HtmlWebpackInjector()
-	],
-	optimization: {
-		minimizer: [
-			new TerserPlugin({
-				parallel: true,
-				extractComments: false,
-				terserOptions: {
-					format: {
-						comments: false
-					}
+	]
+	if (args.mode == 'production') {
+		plugins.push(new InjectManifest({
+			maximumFileSizeToCacheInBytes: 30000000,
+			swSrc: './src/service-worker.js',
+			exclude: [
+				/.*\.json$/gi,
+				/\.nojekyll/gi,
+				/robots\.txt/gi,
+				/CNAME/gi
+			]
+		}))
+	}
+	return {
+		mode: args.mode,
+		entry: './src/main.js',
+		output: {
+			path: path.resolve(__dirname, 'dist'),
+			filename: '[name].[contenthash].js',
+			clean: true
+		},
+		plugins: plugins,
+		module: {
+			rules: [
+				{
+					test: /\.s?css$/i,
+					use: [
+						{
+							loader: MiniCssExtractPlugin.loader
+						},
+						{
+							loader: 'css-loader',
+							options: {
+								url: false
+							}
+						},
+						'sass-loader'
+					]
 				}
-			})
-		]
-	},
-	devServer: {
-		port: 9090,
-		static: {
-			directory: path.resolve(__dirname, 'public')
+			]
+		},
+		optimization: {
+			minimizer: [
+				new TerserPlugin({
+					parallel: true,
+					extractComments: false,
+					terserOptions: {
+						format: {
+							comments: false
+						}
+					}
+				})
+			]
+		},
+		devServer: {
+			port: 8090,
+			static: {
+				directory: path.resolve(__dirname, 'public')
+			},
+			headers: { 'Content-Encoding': 'none' }
+		},
+		performance: {
+			hints: false
 		}
-	},
-	performance: {
-		hints: false
 	}
 }
