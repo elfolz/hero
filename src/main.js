@@ -10,9 +10,10 @@ window.sound = new Sound()
 window.game = new Game()
 
 if (location.protocol.startsWith('https')) {
+	var swUpdating = false
 	navigator.serviceWorker.register('service-worker.js')
-	navigator.serviceWorker.onmessage = e => {
-		console.info('Update found!')
-		if (e?.data == 'update') location.reload(true)
-	}
+	.then(reg => {
+		if (reg.installing) swUpdating = true
+		else if (reg.active && swUpdating) location.reload()
+	})
 }
