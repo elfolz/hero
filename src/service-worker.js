@@ -6,4 +6,4 @@ precacheAndRoute(self.__WB_MANIFEST)
 
 registerRoute(new RegExp(/.*\.(otf|ttf|woff|woff2|jpg|png|webp|gif|glb|fbx)$/, 'gi'), new CacheFirst())
 
-self.addEventListener('install', () => { self.skipWaiting() })
+self.skipWaiting()
