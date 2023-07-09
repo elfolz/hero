@@ -13,7 +13,7 @@ if (location.protocol.startsWith('https')) {
 	var swUpdating = false
 	navigator.serviceWorker.register('service-worker.js')
 	.then(reg => {
-		if (reg.installing) swUpdating = true
-		else if (reg.active && swUpdating) location.reload()
+		reg.onupdatefound = () => {swUpdating = true}
+		if (reg.active && swUpdating) location.reload()
 	})
 }
