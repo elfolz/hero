@@ -21,15 +21,15 @@ module.exports = (env, args) => {
 			}],
 		}),
 		new MiniCssExtractPlugin({
-			filename: '[name].[contenthash].css'
+			filename: 'css/[name].[contenthash].css'
 		}),
 		new HtmlWebpackPlugin({
 			template: './public/index.html',
 			filename: 'index.html',
-			chunks: ['main'],
 			scriptLoading: 'module',
+			chunks: ['main'],
 			chunksConfig: {
-				defer: ['main']
+				async: ['main']
 			},
 			minify: {
 				collapseWhitespace: true,
@@ -61,9 +61,13 @@ module.exports = (env, args) => {
 	return {
 		mode: args.mode,
 		entry: './src/main.js',
+		experiments: {
+			outputModule: true,
+		},
 		output: {
 			path: path.resolve(__dirname, 'dist'),
-			filename: '[name].[contenthash].js',
+			filename: 'js/[name].[contenthash].js',
+			module: true,
 			clean: true
 		},
 		plugins: plugins,
@@ -87,6 +91,10 @@ module.exports = (env, args) => {
 			]
 		},
 		optimization: {
+			splitChunks: {
+				chunks: 'all',
+				maxSize: 200000
+			},
 			minimizer: [
 				new TerserPlugin({
 					parallel: true,
@@ -104,7 +112,7 @@ module.exports = (env, args) => {
 			static: {
 				directory: path.resolve(__dirname, 'public')
 			},
-			headers: { 'Content-Encoding': 'none' }
+			headers: {'Content-Encoding': 'none'}
 		},
 		performance: {
 			hints: false
