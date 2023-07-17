@@ -112,7 +112,7 @@ header {
 			cursor: pointer;
 			border-radius: 4px;
 			transition: all 250ms ease-in-out;
-			&:is(:hover, :active, .active) {
+			&:is(:hover, :active, :focus, .active) {
 				background-color: var(--color-bg);
 			}
 			span {

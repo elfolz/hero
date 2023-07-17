@@ -31,31 +31,26 @@ export class Game {
 	}
 
 	initRender() {
-		let antialiasing = localStorage.getItem('antialiasing')
-		if (antialiasing == undefined && device.cpuCores >= 4) antialiasing = 'true'
-		this.antialiasing = antialiasing == 'true'
-		this.renderer = new THREE.WebGLRenderer({alpha: true, antialias: this.antialiasing})
-		this.scene.background = null
+		this.renderer = new THREE.WebGLRenderer({alpha: true})
 		this.renderer.outputColorSpace = THREE.SRGBColorSpace
 		this.renderer.shadowMap.enabled = true
 		this.dirLight.position.set(0, 100, 100)
 		this.dirLight.castShadow = true
 		this.scene.add(this.ambientLight)
 		this.scene.add(this.dirLight)
-		window.window.refreshAntialiasing(this.antialiasing, false)
+		this.scene.background = null
+		this.refreshAntialiasing()
 	}
 
-	refreshFPS() {
+	refreshFPS(propagate=true) {
 		let fps = localStorage.getItem('fpsLimit')
 		if (fps == '60') this.fpsLimit = 1 / 60
 		else if (fps == '30') this.fpsLimit = 1 / 30
-		//else if (device.isPC) fps = 0
-		else if (device.cpuCores >= 4 || device.isApple) {this.fpsLimit = 1 / 60; fps = 60}
-		else {this.fpsLimit = 1 / 30; fpsl = 30}
-		window.refreshFPS(fps, false)
+		else {this.fpsLimit = 0; fps = 0}
+		if (propagate) window.refreshFPS(fps, false)
 	}
 
-	refreshResolution() {
+	refreshResolution(propagate=true) {
 		let resolution = localStorage.getItem('resolution')
 		if (resolution == '1') {
 			this.screenWidth = parseInt(window.innerWidth / 4 * 3)
@@ -68,10 +63,10 @@ export class Game {
 			this.screenWidth = window.innerWidth
 			this.screenHeight = window.innerHeight
 		}
-		window.refreshResolution(resolution, false)
+		if (propagate) window.refreshResolution(resolution, false)
 	}
 
-	refreshPixelDensity() {
+	refreshPixelDensity(propagate=true) {
 		let pixelDensity = localStorage.getItem('pixelDensity')
 		if (pixelDensity == '0') this.pixelDensity = window.devicePixelRatio
 		else if (pixelDensity == '1') this.pixelDensity = (window.devicePixelRatio / 4 * 3)
@@ -79,7 +74,14 @@ export class Game {
 		else if (device.cpuCores >= 4 && device.memory >= 6) {this.pixelDensity = window.devicePixelRatio; pixelDensity = 0}
 		else if (device.cpuCores < 4) {this.pixelDensity = (window.devicePixelRatio / 4 * 3); pixelDensity = 1}
 		else {this.pixelDensity = 1; pixelDensity = 2}
-		window.refreshPixelDensity(pixelDensity, false)
+		if (propagate) window.refreshPixelDensity(pixelDensity, false)
+	}
+
+	refreshAntialiasing(propagate=true) {
+		let antialiasing = localStorage.getItem('antialiasing')
+		if (antialiasing == undefined && device.cpuCores >= 4) antialiasing = 'true'
+		this.renderer.antialias = antialiasing == 'true'
+		if (propagate) window.window.refreshAntialiasing(antialiasing == 'true', false)
 	}
 
 	setupLoading() {

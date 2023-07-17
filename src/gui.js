@@ -10,80 +10,41 @@ function initGUI() {
 	}
 	document.querySelector('#button-config').onclick = e => {
 		e.stopPropagation()
-		document.querySelector('#menu-config').classList.toggle('opened')
+		window.toggleMenuConfig()
 	}
 	document.querySelector('#menu-button-music-off').onclick = e => {
 		e.stopPropagation()
-		localStorage.setItem('bgm', 'false')
-		document.querySelector('#menu-button-music-off').classList.add('off')
-		document.querySelector('#menu-button-music-on').classList.remove('off')
-		window.sound.stopBGM()
+		window.executeMenuConfig('music-off')
 	}
 	document.querySelector('#menu-button-music-on').onclick = e => {
 		e.stopPropagation()
-		localStorage.setItem('bgm', 'true')
-		document.querySelector('#menu-button-music-on').classList.add('off')
-		document.querySelector('#menu-button-music-off').classList.remove('off')
-		window.sound.playBGM()
+		window.executeMenuConfig('music-on')
 	}
 	document.querySelector('#menu-button-controls').onclick = e => {
-		document.querySelector('#dialog-controller').classList.add('opened')
+		window.executeMenuConfig('controls')
 	}
 	document.querySelector('#dialog-controller button').onclick = e => {
 		document.querySelector('#dialog-controller').classList.remove('opened')
 	}
 	document.querySelector('#menu-button-fps').onclick = e => {
 		e.stopPropagation()
-		if (!window.game.fpsLimit) {
-			window.game.fpsLimit = 1/60
-			window.refreshFPS(60)
-		} else if (window.game.fpsLimit == 1/60) {
-			window.game.fpsLimit = 1/30
-			window.refreshFPS(30)
-		} else if (window.game.fpsLimit == 1/30) {
-			window.game.fpsLimit = 0
-			window.refreshFPS(0)
-		}
+		window.executeMenuConfig('fps')
 	}
 	document.querySelector('#menu-button-resolution').onclick = e => {
 		e.stopPropagation()
-		if (!window.game.resolution) {
-			window.game.resolution = 1
-			window.refreshResolution(1)
-		} else if (window.game.resolution == 1) {
-			window.game.resolution = 2
-			window.refreshResolution(2)
-		} else if (window.game.resolution == 2) {
-			window.game.resolution = 0
-			window.refreshResolution(0)
-		}
-		window.game.resizeScene()
+		window.executeMenuConfig('resolution')
 	}
 	document.querySelector('#menu-button-pixel_density').onclick = e => {
 		e.stopPropagation()
-		if (!window.game.pixelDensity) {
-			window.game.pixelDensity = 1
-			window.refreshPixelDensity(1)
-		} else if (window.game.pixelDensity == 1) {
-			window.game.pixelDensity = 2
-			window.refreshPixelDensity(2)
-		} else if (window.game.pixelDensity == 2) {
-			window.game.pixelDensity = 0
-			window.refreshPixelDensity(0)
-		}
-		window.game.resizeScene()
+		window.executeMenuConfig('pixel_density')
 	}
 	document.querySelector('#menu-button-antialiasing').onclick = e => {
 		e.stopPropagation()
-		if (window.game.antialiasing) {
-			window.refreshAntialiasing(false)
-		} else {
-			window.refreshAntialiasing(true)
-		}
+		window.executeMenuConfig('antialiasing')
 	}
-	document.querySelector('#menu-button-force-refresh').onclick = e => {
+	document.querySelector('#menu-button-force_refresh').onclick = e => {
 		e.stopPropagation()
-		caches.delete('hero').then(() => location.reload(true) )
+		window.executeMenuConfig('force_refresh')
 	}
 	window.refreshControlsMenu()
 }
@@ -91,6 +52,92 @@ function initGUI() {
 function lockScreen() {
 	if (document.hidden) return
 	if ('wakeLock' in navigator) navigator.wakeLock.request('screen').then(el => wakeLockObj = el)
+}
+
+window.menuConfigOpened = function() {
+	return document.querySelector('#menu-config').classList.contains('opened')
+}
+
+window.toggleMenuConfig = function(activeFirstOption=false) {
+	const el = document.querySelector('#menu-config')
+	el.classList.toggle('opened')
+	el.classList.contains('opened') ? window.sound.playClick() : window.sound.playCancel()
+	if (activeFirstOption && el.classList.contains('opened')) el.firstChild.classList.add('active')
+	else el.childNodes.forEach(el => el.classList.remove('active'))
+}
+
+window.navigateMenuConfig = function(nextIndex) {
+	const els = Array.from(document.querySelector('#menu-config').childNodes).filter(el => !el.classList.contains('off'))
+	const currentIndex = els.findIndex(el => el.classList.contains('active'))
+	let activeIndex
+	if (nextIndex > 0 && currentIndex < (els.length-1)) activeIndex = currentIndex + 1
+	else if (nextIndex < 0 && currentIndex > 0) activeIndex = currentIndex - 1
+	if (activeIndex >= 0) {
+		window.sound.playCursor()
+		document.querySelector('#menu-config').childNodes.forEach(el => el.classList.remove('active'))
+		els[activeIndex].classList.add('active')
+	}
+}
+
+window.executeMenuConfig = function(index) {
+	if (!index) index = Array.from(document.querySelector('#menu-config').childNodes).find(el => el.classList.contains('active')).id
+	if (index.includes('music-on')) {
+		localStorage.setItem('bgm', 'true')
+		document.querySelector('#menu-button-music-on').classList.add('off')
+		document.querySelector('#menu-button-music-off').classList.remove('off')
+		document.querySelector('#menu-config').childNodes.forEach(el => el.classList.remove('active'))
+		document.querySelector('#menu-config').childNodes[1].classList.add('active')
+		window.sound.playBGM()
+	} else if (index.includes('music-off')) {
+		localStorage.setItem('bgm', 'false')
+		document.querySelector('#menu-button-music-off').classList.add('off')
+		document.querySelector('#menu-button-music-on').classList.remove('off')
+		document.querySelector('#menu-config').childNodes.forEach(el => el.classList.remove('active'))
+		document.querySelector('#menu-config').childNodes[0].classList.add('active')
+		window.sound.stopBGM()
+	} else if (index.includes('controls')) {
+		let el = document.querySelector('#dialog-controller')
+		el.classList.toggle('opened')
+		el.classList.contains('opened') ? window.sound.playClick() : window.sound.playCancel()
+	} else if (index.includes('fps')) {
+		if (!localStorage.getItem('fpsLimit') || localStorage.getItem('fpsLimit') == '0') {
+			window.refreshFPS(60)
+		} else if (localStorage.getItem('fpsLimit') == '60') {
+			window.refreshFPS(30)
+		} else if (localStorage.getItem('fpsLimit') == '30') {
+			window.refreshFPS(0)
+		}
+		window.game.refreshFPS(false)
+	} else if (index.includes('resolution')) {
+		if (!localStorage.getItem('resolution') || localStorage.getItem('resolution') == '0') {
+			window.refreshResolution(1)
+		} else if (localStorage.getItem('resolution') == '1') {
+			window.refreshResolution(2)
+		} else if (localStorage.getItem('resolution') == '2') {
+			window.refreshResolution(0)
+		}
+		window.game.refreshResolution(false)
+		window.game.resizeScene()
+	} else if (index.includes('pixel_density')) {
+		if (!localStorage.getItem('pixelDensity') || localStorage.getItem('pixelDensity') == '0') {
+			window.refreshPixelDensity(1)
+		} else if (localStorage.getItem('pixelDensity') == '1') {
+			window.refreshPixelDensity(2)
+		} else if (localStorage.getItem('pixelDensity') == '2') {
+			window.refreshPixelDensity(0)
+		}
+		window.game.refreshPixelDensity()
+		window.game.resizeScene()
+	} else if (index.includes('antialiasing')) {
+		if (localStorage.getItem('antialiasing') == 'true') {
+			window.refreshAntialiasing(false)
+		} else {
+			window.refreshAntialiasing(true)
+		}
+		window.game.refreshAntialiasing(false)
+	} else if (index.includes('force_refresh')) {
+		caches.delete('hero').then(() => location.reload(true) )
+	}
 }
 
 window.refreshFPS = function(value, save=true) {
@@ -123,7 +170,6 @@ window.refreshAntialiasing = function(value, save=true) {
 	if (save) {
 		if (typeof value == 'boolean') localStorage.setItem('antialiasing', value.toString())
 		else localStorage.removeItem('antialiasing')
-		setTimeout(() => alert('Reinicie o jogo para aplicar as alterações'), 100)
 	}
 	let label = `Antialiasing ${value ? 'ligado' : 'desligado'}`
 	document.querySelector('#menu-button-antialiasing label').innerHTML = label
@@ -137,12 +183,12 @@ window.refreshAntialiasing = function(value, save=true) {
 }
 
 window.refreshControlsMenu = () => {
-	if (window.game?.player?.gamepad || device.isPC) {
+	if (window.game?.player?.gamepadConnected || device.isPC) {
 		document.querySelector('#menu-button-controls').style.removeProperty('display')
 	} else {
 		document.querySelector('#menu-button-controls').style.setProperty('display', 'none')
 	}
-	if (window.game?.player?.gamepad) {
+	if (window.game?.player?.gamepadConnected) {
 		document.querySelectorAll('#gamepad')?.forEach(el => el.style.removeProperty('display'))
 		document.querySelectorAll('#keyboard')?.forEach(el => el.style.setProperty('display', 'none'))
 	} else {

@@ -7,6 +7,8 @@ export class Sound {
 		this.audio = new Audio()
 		this.bgmVolume = 0.25
 		this.seVolume = 1
+		this.guiSEs = ['cursor', 'click', 'cancel']
+		this.ses = []
 	}
 
 	init() {
@@ -41,6 +43,18 @@ export class Sound {
 				})
 			})
 		})
+		this.guiSEs.forEach(el => {
+			fetch(`./audio/se/${el}.mp3`, {cache: 'force-cache'})
+			.then(response => {
+				response.arrayBuffer()
+				.then(buffer => {
+					this.audioContext.decodeAudioData(buffer)
+					.then(audioData => {
+						this.ses[el] = audioData
+					})
+				})
+			})
+		}, this)
 		this.audioListener = new AudioListener()
 		this.audioListener.setMasterVolume(this.seVolume)
 		if (window.game) {
@@ -96,6 +110,18 @@ export class Sound {
 			if (srcObject) srcObject.sePlaying = false
 		}
 		return src
+	}
+
+	playClick() {
+		this.playSE(this.ses['click'])
+	}
+
+	playCursor() {
+		this.playSE(this.ses['cursor'])
+	}
+
+	playCancel() {
+		this.playSE(this.ses['cancel'])
 	}
 
 	toggleVisibility() {

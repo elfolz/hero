@@ -106,12 +106,8 @@ export class Player extends Entity {
 		window.addEventListener('gamepadconnected', e => {
 			this.gamepadConnected = true
 			let vendorId = 'default'
-			let productId
 			let data = /vendor:\s(\w+)\sproduct:\s(\w+)/i.exec(e.gamepad.id)
-			if (data) {
-				vendorId = data[1]
-				productId = data[2]
-			}
+			if (data) vendorId = data[1]
 			this.gamepadSettings = inputSettings.gamepad[vendorId] ?? inputSettings.gamepad['default']
 			window.refreshControlsMenu()
 		})
@@ -120,7 +116,6 @@ export class Player extends Entity {
 			window.refreshControlsMenu()
 		})
 		window.onkeydown = e => {
-			window.refreshControlsMenu()
 			this.keysPressed[e.keyCode] = true
 			if (this.keysPressed[inputSettings.keyboard.keySlash] && !this.actions.includes('slash')) this.actions.push('slash')
 			if (this.keysPressed[inputSettings.keyboard.keyTurnLeft] && !this.actions.includes('turningLeft')) this.actions.push('turningLeft')
@@ -238,36 +233,47 @@ export class Player extends Entity {
 	updateGamepad() {
 		this.gamepad = navigator.getGamepads().find(el => el?.connected)
 		if (!this.gamepad || !this.gamepadSettings) return
-		if (this.gamepadLastUpdate <= this.gamepad.timestamp) return
-		if (this.gamepad.axes[this.gamepadSettings.YAxes] <= -0.05 || this.gamepad.buttons[this.gamepadSettings.UP]?.pressed) {
+		if (this.gamepadLastUpdate >= this.gamepad.timestamp) return
+		if (this.gamepad.axes[this.gamepadSettings.YAxes] <= -0.05) {
 			if (!this.actions.includes('walking')) this.actions.push('walking')
 		} else if (this.actions.includes('walking')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'walking'), 1)
 		}
-		if (this.gamepad.axes[this.gamepadSettings.YAxes] >= 0.5 || this.gamepad.buttons[this.gamepadSettings.DOWN]?.pressed) {
+		if (this.gamepad.axes[this.gamepadSettings.YAxes] >= 0.5) {
 			if (!this.actions.includes('walkingBack')) this.actions.push('walkingBack')
 		} else if (this.actions.includes('walkingBack')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'walkingBack'), 1)
 		}
-		if (this.gamepad.axes[this.gamepadSettings.XAxes] <= -0.05 || this.gamepad.buttons[this.gamepadSettings.LEFT]?.pressed) {
+		if (this.gamepad.axes[this.gamepadSettings.XAxes] <= -0.05) {
 			if (!this.actions.includes('turningLeft')) this.actions.push('turningLeft')
 		} else if (this.actions.includes('turningLeft')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'turningLeft'), 1)
 		}
-		if (this.gamepad.axes[this.gamepadSettings.XAxes] >= 0.05 || this.gamepad.buttons[this.gamepadSettings.RIGHT]?.pressed) {
+		if (this.gamepad.axes[this.gamepadSettings.XAxes] >= 0.05) {
 			if (!this.actions.includes('turningRight')) this.actions.push('turningRight')
 		} else if (this.actions.includes('turningRight')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'turningRight'), 1)
 		}
 		if (this.gamepad.buttons[this.gamepadSettings.A].pressed) {
-			if (performance.now() < this.healLastUpdate) return
-			if (!this.actions.includes('jumping')) this.actions.push('jumping')
-			this.healLastUpdate = performance.now() + 250
+			if (window.menuConfigOpened()) {
+				window.executeMenuConfig()
+			} else {
+				if (performance.now() < this.healLastUpdate) return
+				if (!this.actions.includes('jumping')) this.actions.push('jumping')
+				this.healLastUpdate = performance.now() + 250
+			}
 		} else if (this.actions.includes('jumping')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'jumping'), 1)
 		}
 		if (this.gamepad.buttons[this.gamepadSettings.B].pressed) {
-			if (!this.actions.includes('rolling')) this.actions.push('rolling')
+			if (document.querySelector('#dialog-controller').classList.contains('opened')) {
+				document.querySelector('#dialog-controller').classList.remove('opened')
+				window.sound.playCancel()
+			} else if (window.menuConfigOpened()) {
+				window.toggleMenuConfig()
+			} else {
+				if (!this.actions.includes('rolling')) this.actions.push('rolling')
+			}
 		} else if (this.actions.includes('rolling')) {
 			this.actions.splice(this.actions.findIndex(el => el == 'rolling'), 1)
 		}
@@ -294,11 +300,18 @@ export class Player extends Entity {
 		if (this.gamepad.buttons[this.gamepadSettings.MENU].pressed) {
 			window.game.togglePause()
 		}
-		this.gamepadLastUpdate = this.gamepad.timestamp
+		if (this.gamepad.buttons[this.gamepadSettings.OPT].pressed) {
+			window.toggleMenuConfig(true)
+		}
+		if (window.menuConfigOpened()) {
+			if (this.gamepad.buttons[this.gamepadSettings.UP]?.pressed) window.navigateMenuConfig(-1)
+			if (this.gamepad.buttons[this.gamepadSettings.DOWN]?.pressed)  window.navigateMenuConfig(1)
+		}
+		this.gamepadLastUpdate = this.gamepad.timestamp + 100
 	}
 
 	updateActions() {
-		if (window.game.pause) return
+		if (window.game.paused) return
 		let w = this.actions.includes('walking')
 		let s = this.actions.includes('slash')
 		let k = this.actions.includes('kick')

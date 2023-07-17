@@ -20,7 +20,7 @@ if (location.protocol.startsWith('https')) {
 		if (reg.installing) {
 			console.info('SW installing...')
 		} else if (reg.active && swUpdating) {
-			console.info('SW updated. Reloading.')
+			console.info('SW updated. Reloading...')
 			location.reload()
 		}
 	})
