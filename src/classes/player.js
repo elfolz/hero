@@ -234,6 +234,7 @@ export class Player extends Entity {
 		this.gamepad = navigator.getGamepads().find(el => el?.connected)
 		if (!this.gamepad || !this.gamepadSettings) return
 		if (this.gamepadLastUpdate >= this.gamepad.timestamp) return
+		if (!window.sound.initialized && this.gamepad.buttons.some(el => el.pressed)) window.sound.init()
 		if (this.gamepad.axes[this.gamepadSettings.YAxes] <= -0.05) {
 			if (!this.actions.includes('walking')) this.actions.push('walking')
 		} else if (this.actions.includes('walking')) {
@@ -386,11 +387,11 @@ export class Player extends Entity {
 
 	updateWalk(running=false, back=false, speed=0.175) {
 		if (this.waitForAnimation) return
-		let dir = this.camera.getWorldDirection(this.object.position.clone())
+		const fpsSpeed = Math.min(60 * speed / window.game.fps, speed)
+		const dir = this.camera.getWorldDirection(this.object.position.clone())
 		if (back) dir.negate()
-		if (window.game.fps < 45) speed = speed + (5 / window.game.fps)
-		let step = dir.multiplyScalar(running ? speed*2.5 : speed)
-		let pos = this.object.position.clone()
+		const step = dir.multiplyScalar(running ? fpsSpeed*2.5 : fpsSpeed)
+		const pos = this.object.position.clone()
 		pos.add(step)
 		if (pos.x >= (200/2-1) || pos.x <= ((200/2-1)*-1)) return
 		if (pos.z >= (200/2-1) || pos.z <= ((200/2-1)*-1)) return

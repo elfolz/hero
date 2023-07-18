@@ -4,6 +4,7 @@ import { AudioListener } from '../modules/three.module.js'
 export class Sound {
 
 	constructor() {
+		this.initialized = false
 		this.audio = new Audio()
 		this.bgmVolume = 0.25
 		this.seVolume = 1
@@ -12,6 +13,7 @@ export class Sound {
 	}
 
 	init() {
+		if (this.initialized) return
 		this.audioContext = new AudioContext()
 		this.bgmGain = this.audioContext.createGain()
 		this.bgmGain.gain.value = this.bgmVolume
@@ -61,6 +63,7 @@ export class Sound {
 			window.game.camera.add(this.audioListener)
 			window.game.initAudio()
 		}
+		this.initialized = true
 	}
 
 	playBGM(restart=true) {

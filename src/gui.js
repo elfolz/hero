@@ -199,7 +199,6 @@ window.refreshControlsMenu = () => {
 
 document.onclick = () => {
 	document.querySelector('#menu-config').classList.remove('opened')
-	if (window.firstClick) return
 	/* if (!navigator.standalone) {
 		if ('requestFullscreen' in document.documentElement && !device.isPC && !device.isLocalhost) {
 			document.documentElement.requestFullscreen({navigationUI: 'hide'})
@@ -209,8 +208,7 @@ document.onclick = () => {
 			.catch(e => {})
 		}
 	} */
-	window.sound.init()
-	window.firstClick = true
+	if (!window.sound.initialized) window.sound.init()
 }
 
 document.onvisibilitychange = () => {

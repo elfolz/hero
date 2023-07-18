@@ -90,10 +90,13 @@ export class Entity {
 		}
 	}
 
-	updateObjectFollow(target, collided, speed=0.001) {
-		let pos = target.object.position.clone()
-		let dir = this.object.position.clone().sub(pos)
-		let step = dir.multiplyScalar(collided ? speed : speed * -1)
+	updateObjectFollow(target, collided, speed) {
+		if (!speed && this.movingSpeed) speed = this.movingSpeed
+		else if (!speed) speed = 0.01
+		const fpsSpeed = Math.min(60 * speed / window.game.fps, speed)
+		const pos = target.object.position.clone()
+		const dir = this.object.position.clone().sub(pos)
+		const step = dir.multiplyScalar(collided ? fpsSpeed : fpsSpeed * -1)
 		this.object.lookAt(pos)
 		this.object.position.add(step)
 	}
