@@ -56,7 +56,7 @@ export class Player extends Entity {
 			this.callback(this.object)
 			this.progress['player'] = 100
 		}, xhr => {
-			this.progress['player'] = parseInt(xhr.loaded / (xhr.total || 1)) * 99
+			if (xhr.total) this.progress['player'] = xhr.loaded / xhr.total * 99
 		}, error => {
 			console.error(error)
 		})
@@ -78,7 +78,7 @@ export class Player extends Entity {
 			this.progress['sword'] = 100
 			this.loadAnimations()
 		}, xhr => {
-			this.progress['sword'] = parseInt(xhr.loaded / (xhr.total || 1)) * 99
+			if (xhr.total) this.progress['sword'] = xhr.loaded / xhr.total * 99
 		}, error => {
 			console.error(error)
 		})
@@ -95,7 +95,7 @@ export class Player extends Entity {
 					this.animations['idle'].play()
 				}
 			}, xhr => {
-				this.progress[el] = parseInt(xhr.loaded / (xhr.total || 1)) * 99
+				if (xhr.total) this.progress[el] = xhr.loaded / xhr.total * 99
 			}, error => {
 				console.error(error)
 			})

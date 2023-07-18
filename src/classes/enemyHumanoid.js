@@ -51,7 +51,7 @@ export class EnemyHumanoid extends Entity {
 			this.pendingSounds.splice(0)
 			this.progress['foe'] = 100
 		}, xhr => {
-			this.progress['foe'] = parseInt(xhr.loaded / (xhr.total || 1)) * 99
+			if (xhr.total) this.progress['foe'] = xhr.loaded / xhr.total * 99
 		}, error => {
 			console.error(error)
 		})
@@ -68,7 +68,7 @@ export class EnemyHumanoid extends Entity {
 				}
 				this.progress[el] = 100
 			}, xhr => {
-				this.progress[el] = parseInt(xhr.loaded / (xhr.total || 1)) * 99
+				if (xhr.total) this.progress[el] = xhr.loaded / xhr.total * 99
 			}, error => {
 				console.error(error)
 			})
