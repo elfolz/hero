@@ -224,17 +224,9 @@ document.onvisibilitychange = () => {
 	}
 }
 
-document.onreadystatechange = () => {
-	if (document.readyState == 'complete') initGUI()
-}
-
-window.oncontextmenu = e => {e.preventDefault(); return false}
-
-if ('screen' in window) {
-	screen.orientation.onchange = () => {
-		window.game?.refreshResolution()
-		window.game?.resizeScene()
-	}
-}
+document.onreadystatechange = () => { if (document.readyState == 'complete') initGUI() }
+window.oncontextmenu = e => { e.preventDefault(); return false }
+window.onresize = () => { window.game?.refreshResolution(false, true) }
+if ('screen' in window) screen.orientation.onchange = () => { window.game?.refreshResolution(false, true) }
 
 lockScreen()

@@ -421,7 +421,6 @@ export class Player extends Entity {
 		this.hp += this.maxhp / 2
 		if (this.hp > this.maxhp) this.hp = this.maxhp
 		this.refreshHPBar()
-		
 	}
 
 	playAttackSE() {

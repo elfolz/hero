@@ -2,8 +2,9 @@
 import * as THREE from '../modules/three.module.js'
 import { EnemyHumanoid } from '../classes/enemyHumanoid.js'
 import { Player } from '../classes/player.js'
-import device from '../helpers/device.js'
+import { OrbitControls } from '../modules/orbitControls.js'
 import textureLoader from '../classes/textureLoader.js'
+import device from '../helpers/device.js'
 
 export class Game {
 
@@ -26,7 +27,6 @@ export class Game {
 		this.refreshResolution()
 		this.refreshPixelDensity()
 		this.setupLoading()
-		window.onresize = () => this.resizeScene()
 		document.body.appendChild(this.renderer.domElement)
 	}
 
@@ -34,6 +34,10 @@ export class Game {
 		this.renderer = new THREE.WebGLRenderer({alpha: true})
 		this.renderer.outputColorSpace = THREE.SRGBColorSpace
 		this.renderer.shadowMap.enabled = true
+		/* this.controls = new OrbitControls(this.camera, this.renderer.domElement)
+		this.controls.enableRotate = true
+		this.controls.enableZoom = false
+		this.controls.maxPolarAngle = (Math.PI / 2) - 0.1 */
 		this.dirLight.position.set(0, 100, 100)
 		this.dirLight.castShadow = true
 		this.scene.add(this.ambientLight)
@@ -50,7 +54,7 @@ export class Game {
 		if (propagate) window.refreshFPS(fps, false)
 	}
 
-	refreshResolution(propagate=true) {
+	refreshResolution(propagate=true, resizeScene=false) {
 		let resolution = localStorage.getItem('resolution')
 		if (resolution == '1') {
 			this.screenWidth = parseInt(window.innerWidth / 4 * 3)
@@ -64,6 +68,7 @@ export class Game {
 			this.screenHeight = window.innerHeight
 		}
 		if (propagate) window.refreshResolution(resolution, false)
+		if (resizeScene) setTimeout(() => this.resizeScene(), 10)
 	}
 
 	refreshPixelDensity(propagate=true) {
@@ -165,6 +170,7 @@ export class Game {
 		if (this.fpsLimit && this.clockDelta < this.fpsLimit) return
 		this.renderer.render(this.scene, this.camera)
 		this.player.update(this.clockDelta)
+		//this.controls.update()
 		if (!this.paused) {
 			this.updateFPSCounter()
 			this.enemy.update(this.clockDelta)
