@@ -12,7 +12,7 @@ export class Game {
 
 	constructor() {
 		this.lastFrameTime = performance.now()
-		this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+		this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000)
 		this.clock = new THREE.Clock()
 		this.ambientLight = new THREE.AmbientLight(0xffffff, 0.1)
 		this.dirLight = new THREE.DirectionalLight(0xffffff, 0.1)
@@ -170,7 +170,7 @@ export class Game {
 		if (this.fpsLimit && this.clockDelta < this.fpsLimit) return
 		this.renderer.render(this.scene, this.camera)
 		this.player.update(this.clockDelta)
-		//this.controls.update()
+		/* this.controls.update() */
 		if (!this.paused) {
 			this.updateFPSCounter()
 			this.enemy.update(this.clockDelta)

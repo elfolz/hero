@@ -32,8 +32,8 @@ export class Player extends Entity {
 			this.object = gltf.scene
 			this.object.colorSpace = THREE.SRGBColorSpace
 			this.object.traverse(el => {if (el.isMesh) el.castShadow = true})
-			this.camera.position.set(0, this.object.position.y+5, this.object.position.z-15)
-			this.camera.lookAt(0, 5, 0)
+			this.camera.position.set(this.object.position.x, this.object.position.y+6.65, this.object.position.z-20)
+			this.camera.lookAt(0, 6.65, 0)
 			this.object.add(this.camera)
 			this.mixer = new THREE.AnimationMixer(this.object)
 
@@ -198,12 +198,6 @@ export class Player extends Entity {
 		document.querySelector('#button-right').ontouchend = e => {
 			this.actions.splice(this.actions.findIndex(el => el == 'turningRight'), 1)
 		}
-		/* document.querySelector('#button-roll').ontouchstart = e => {
-			if (!this.actions.includes('roll')) this.actions.push('roll')
-		}
-		document.querySelector('#button-roll').ontouchend = e => {
-			this.actions.splice(this.actions.findIndex(el => el == 'roll'), 1)
-		} */
 		document.querySelector('#button-attack').ontouchstart = e => {
 			if (!this.actions.includes('slash')) this.actions.push('slash')
 		}
@@ -216,11 +210,17 @@ export class Player extends Entity {
 		document.querySelector('#button-heal').ontouchend = e => {
 			this.actions.splice(this.actions.findIndex(el => el == 'drinking'), 1)
 		}
-		document.querySelector('#button-kick').ontouchstart = e => {
+		/* document.querySelector('#button-kick').ontouchstart = e => {
 			if (!this.actions.includes('kick')) this.actions.push('kick')
 		}
 		document.querySelector('#button-kick').ontouchend = e => {
 			this.actions.splice(this.actions.findIndex(el => el == 'kick'), 1)
+		} */
+		document.querySelector('#button-roll').ontouchstart = e => {
+			if (!this.actions.includes('rolling')) this.actions.push('rolling')
+		}
+		document.querySelector('#button-roll').ontouchend = e => {
+			this.actions.splice(this.actions.findIndex(el => el == 'rolling'), 1)
 		}
 		document.querySelector('#button-jump').ontouchstart = e => {
 			if (!this.actions.includes('jumping')) this.actions.push('jumping')
@@ -234,7 +234,10 @@ export class Player extends Entity {
 		this.gamepad = navigator.getGamepads().find(el => el?.connected)
 		if (!this.gamepad || !this.gamepadSettings) return
 		if (this.gamepadLastUpdate >= this.gamepad.timestamp) return
-		if (!window.sound.initialized && this.gamepad.buttons.some(el => el.pressed)) window.sound.init()
+		if (this.gamepad.buttons.some(el => el.pressed)) {
+			if (!window.sound.initialized) window.sound.init()
+			if (!document.fullscreenElement) window.setFullscreen()
+		}
 		if (this.gamepad.axes[this.gamepadSettings.YAxes] <= -0.05) {
 			if (!this.actions.includes('walking')) this.actions.push('walking')
 		} else if (this.actions.includes('walking')) {
@@ -393,8 +396,8 @@ export class Player extends Entity {
 		const step = dir.multiplyScalar(running ? fpsSpeed*2.5 : fpsSpeed)
 		const pos = this.object.position.clone()
 		pos.add(step)
-		if (pos.x >= (200/2-1) || pos.x <= ((200/2-1)*-1)) return
-		if (pos.z >= (200/2-1) || pos.z <= ((200/2-1)*-1)) return
+		if (pos.x >= 200/2-1 || pos.x <= (200/2-1)*-1) return
+		if (pos.z >= 200/2-1 || pos.z <= (200/2-1)*-1) return
 		this.object.position.add(step)
 	}
 

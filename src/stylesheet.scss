@@ -188,7 +188,7 @@ footer {
 		-webkit-backdrop-filter: blur(10px);
 		border-radius: 50%;
 		transition: background-color 250ms ease-in-out;
-		&:is(:hover, :active, .active) {
+		&:hover, &:active, &.active {
 			background-color: var(--color-button);
 			box-shadow: 0 0 48px var(--color-button);
 		}

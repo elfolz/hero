@@ -197,17 +197,21 @@ window.refreshControlsMenu = () => {
 	}
 }
 
+window.setFullscreen = () => {
+	if (navigator.standalone) return
+	if (document.fullscreenElement) return
+	if (device.isPC || device.isLocalhost) return
+	if (!'requestFullscreen' in document.documentElement) return
+	document.documentElement.requestFullscreen({navigationUI: 'hide'})
+	.then(() => {
+		return screen.orientation.lock('landscape')
+	})
+	.catch(e => {})
+}
+
 document.onclick = () => {
 	document.querySelector('#menu-config').classList.remove('opened')
-	/* if (!navigator.standalone) {
-		if ('requestFullscreen' in document.documentElement && !device.isPC && !device.isLocalhost) {
-			document.documentElement.requestFullscreen({navigationUI: 'hide'})
-			.then(() => {
-				return screen.orientation.lock('landscape')
-			})
-			.catch(e => {})
-		}
-	} */
+	if (!document.fullscreenElement) window.setFullscreen()
 	if (!window.sound.initialized) window.sound.init()
 }
 

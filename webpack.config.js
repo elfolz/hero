@@ -109,10 +109,14 @@ module.exports = (env, args) => {
 		},
 		devServer: {
 			port: 8090,
+			headers: {'Content-Encoding': 'none'},
 			static: {
 				directory: path.resolve(__dirname, 'public')
 			},
-			headers: {'Content-Encoding': 'none'}
+			/* https: {
+				key: path.resolve(__dirname, 'cert', 'dev.key'),
+				cert: path.resolve(__dirname, 'cert', 'dev.cert')
+			} */
 		},
 		performance: {
 			hints: false

@@ -6,7 +6,7 @@ import randomInt from '../helpers/randomInt.js'
 export class EnemyHumanoid extends Entity {
 
 	loadingElements = 6
-	movingSpeed = 0.001
+	movingSpeed = 0.005
 	animationModels = ['idle', 'walk', 'attack', 'hit', 'die']
 
 	constructor(player, callback, onload) {
