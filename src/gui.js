@@ -4,6 +4,10 @@ import device from './helpers/device.js'
 var wakeLockObj
 
 function initGUI() {
+	document.querySelector('#loading button').onclick = () => {
+		window.sound.playClick()
+		window.game.initGame()
+	}
 	if (localStorage.getItem('bgm') == 'false') {
 		document.querySelector('#menu-button-music-on').classList.remove('off')
 		document.querySelector('#menu-button-music-off').classList.add('off')
@@ -210,7 +214,10 @@ window.setFullscreen = () => {
 }
 
 document.onclick = () => {
-	document.querySelector('#menu-config').classList.remove('opened')
+	if (window.menuConfigOpened()) {
+		document.querySelector('#menu-config').classList.remove('opened')
+		window.sound.playCancel()
+	}
 	if (!document.fullscreenElement) window.setFullscreen()
 	if (!window.sound.initialized) window.sound.init()
 }

@@ -109,7 +109,10 @@ module.exports = (env, args) => {
 		},
 		devServer: {
 			port: 8090,
-			headers: {'Content-Encoding': 'none'},
+			headers: {
+				'Content-Encoding': 'none',
+				'X-Content-Type-Options': 'nosniff'
+			},
 			static: {
 				directory: path.resolve(__dirname, 'public')
 			},

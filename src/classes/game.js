@@ -99,7 +99,10 @@ export class Game {
 				let total = values.reduce((a, b) => a + b, 0)
 				total = total / vm.loadingElements
 				if (progressbar) progressbar.value = parseInt(total || 0)
-				if (total >= 100) vm.initGame()
+				if (total >= 100) {
+					progressbar.style.setProperty('display', 'none')
+					document.querySelector('#loading button').style.removeProperty('display')
+				}
 				return true
 			}
 		})
