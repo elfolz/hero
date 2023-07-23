@@ -5,12 +5,12 @@ import randomInt from '../helpers/randomInt.js'
 
 export class EnemyHumanoid extends Entity {
 
-	loadingElements = 6
 	movingSpeed = 0.005
 	animationModels = ['idle', 'walk', 'attack', 'hit', 'die']
 
 	constructor(player, callback, onload) {
 		super(callback, onload)
+		this.loadingElements = this.animationModels.length + 1
 		this.player = player
 		this.hp = 100
 		this.maxhp = 100
@@ -25,18 +25,15 @@ export class EnemyHumanoid extends Entity {
 			this.object.lookAt(0, 0, -1)
 			this.mixer = new THREE.AnimationMixer(this.object)
 
-			this.collider = new THREE.Mesh(new THREE.SphereGeometry(1.1), new THREE.MeshBasicMaterial({visible: false}))
-			this.collider.name = 'collider'
-			this.object.add(this.collider)
-			this.collider.geometry.computeBoundingBox()
+			this.hitbox[0] = new THREE.Mesh(new THREE.SphereGeometry(1.1), new THREE.MeshBasicMaterial({visible: window.debugging, color: 0x00ff00}))
+			this.object.add(this.hitbox[0])
+			this.hitbox[0].geometry.computeBoundingBox()
 
-			this.pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 2.6), new THREE.MeshBasicMaterial({visible: false}))
-			this.pillar.name = 'pillar'
-			this.pillar.rotation.x = (Math.PI / 2) - 0.12
-			this.pillar.position.z -= 5.5
-			this.object.add(this.pillar)
-			this.object.getObjectByName('mixamorigSpine1').attach(this.pillar)
-			this.pillar.geometry.computeBoundingBox()
+			this.hitbox[1] = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 3.2), new THREE.MeshBasicMaterial({visible: window.debugging, color: 0xff0000}))
+			this.hitbox[1].position.z -= 5.4
+			this.object.add(this.hitbox[1])
+			this.object.getObjectByName('mixamorigSpine1').attach(this.hitbox[1])
+			this.hitbox[1].geometry.computeBoundingBox()
 
 			this.weapon = new THREE.Mesh(new THREE.SphereGeometry(0.35), new THREE.MeshBasicMaterial({visible: false}))
 			this.weapon.name = 'weapon'
@@ -107,7 +104,7 @@ export class EnemyHumanoid extends Entity {
 		if (check?.distance < 200 && !this.isWalking) {
 			this.isWalking = true
 			this.executeCrossFade(this.animations['walk'])
-		} else if (check?.distance >= 200 && this.isWalking) {
+		} else if (check?.distance && this.isWalking) {
 			this.isWalking = false
 			this.synchronizeCrossFade(this.animations['idle'])
 		}

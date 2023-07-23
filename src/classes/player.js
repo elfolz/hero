@@ -7,11 +7,11 @@ import device from '../helpers/device.js'
 
 export class Player extends Entity {
 
-	loadingElements = 16
 	animationModels = ['idle', 'running', 'walkingBack', 'jumping', 'jumpingRunning', 'backflip', 'kick', 'rolling', 'outwardSlash', 'inwardSlash', 'stomachHit', 'dieing', 'drinking', 'walking']
 
 	constructor(camera, callback, onload) {
 		super(callback, onload)
+		this.loadingElements = this.animationModels.length + 2
 		this.camera = camera
 		this.actions = []
 		this.keysPressed = {}
@@ -37,19 +37,15 @@ export class Player extends Entity {
 			this.object.add(this.camera)
 			this.mixer = new THREE.AnimationMixer(this.object)
 
-			this.collider = new THREE.Mesh(new THREE.SphereGeometry(0.8), new THREE.MeshBasicMaterial({visible: false}))
-			this.collider.name = 'collider'
-			this.object.add(this.collider)
-			this.collider.geometry.computeBoundingBox()
+			this.hitbox[0] = new THREE.Mesh(new THREE.SphereGeometry(1.1), new THREE.MeshBasicMaterial({visible: window.debugging, color: 0x00ff00}))
+			this.object.add(this.hitbox[0])
+			this.hitbox[0].geometry.computeBoundingBox()
 
-			this.pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 2.5), new THREE.MeshBasicMaterial({visible: false}))
-			this.pillar.name = 'pillar'
-			this.pillar.rotation.x = (Math.PI / 2) - 0.25
-			this.pillar.rotation.y += 0.25
-			this.pillar.position.z -= 4.8
-			this.object.add(this.pillar)
-			this.object.getObjectByName('mixamorigSpine1').attach(this.pillar)
-			this.pillar.geometry.computeBoundingBox()
+			this.hitbox[1] = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 3), new THREE.MeshBasicMaterial({visible: window.debugging, color: 0xff0000}))
+			this.hitbox[1].position.z -= 4.6
+			this.object.add(this.hitbox[1])
+			this.object.getObjectByName('mixamorigSpine1').attach(this.hitbox[1])
+			this.hitbox[1].geometry.computeBoundingBox()
 
 			this.onFinishActions()
 			this.loadWeapon()

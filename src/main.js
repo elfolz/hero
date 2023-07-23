@@ -9,6 +9,8 @@ import { Game } from './classes/game.js'
 window.sound = new Sound()
 window.game = new Game()
 
+window.debugging = location.search.includes('debug')
+
 if (location.protocol.startsWith('https')) {
 	var swUpdating = false
 	navigator.serviceWorker.register('service-worker.js')

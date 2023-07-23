@@ -24,6 +24,7 @@ export class Entity {
 		this.animations = []
 		this.audios = {}
 		this.pendingSounds = []
+		this.hitbox = {}
 		this.setupLoading()
 		this.loadModel()
 		this.setupDecalMaterial()
@@ -102,30 +103,30 @@ export class Entity {
 	}
 
 	getDistance(target) {
-		if (!this.collider || !target.collider) return
+		if (!this.hitbox[0] || !target.hitbox[0]) return
 		if (this.lastCollisionUpdate > (performance.now()-500)) return
 		this.lastCollisionUpdate = performance.now()
-		let verts = this.collider.geometry.attributes.position
+		let verts = this.hitbox[0].geometry.attributes.position
 		for (let i = 0; i < verts.count; i++) {
 			let localVertex = this.vertex.fromBufferAttribute(verts, i)
 			let globalVertex = localVertex.applyMatrix4(this.object.matrix)
 			let directionVector = globalVertex.sub(this.object.position)
 			this.caster.set(this.object.position, directionVector.normalize())
-			let collisionResults = this.caster.intersectObjects([target.collider])
+			let collisionResults = this.caster.intersectObjects([target.hitbox[0]])
 			let collided = collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()
 			if (collisionResults.length > 0) return {distance: collisionResults[0].distance, collided: collided}
 		}
 		return
 	}
 
-	hasHit(target, src='weapon', dest='pillar') {
-		if (!this[src] || !target[dest]) return
+	hasHit(target, src='weapon') {
+		if (!this[src] || !target.hitbox[1]) return
 		this[src].updateMatrixWorld(true)
-		target[dest].updateMatrixWorld(true)
+		target.hitbox[1].updateMatrixWorld(true)
 		this.box1.copy(this[src].geometry.boundingBox)
 		this.box1.applyMatrix4(this[src].matrixWorld)
-		this.box2.copy(target[dest].geometry.boundingBox)
-		this.box2.applyMatrix4(target[dest].matrixWorld)
+		this.box2.copy(target.hitbox[1].geometry.boundingBox)
+		this.box2.applyMatrix4(target.hitbox[1].matrixWorld)
 		return this.box1.intersectsBox(this.box2)
 	}
 
@@ -137,9 +138,7 @@ export class Entity {
 			let data = await window.sound.audioContext.decodeAudioData(buffer)
 			this.audios[key] = data
 			if (positional) this.setPositionalAudio(key, data, refDistance, maxDistance)
-		} catch(error) {
-			console.log(error)
-		}
+		} catch(error) {}
 	}
 
 	setPositionalAudio(name, data, refDistance=10, maxDistance=100) {
@@ -158,20 +157,20 @@ export class Entity {
 	}
 
 	setupBlood() {
-		if (!this.pillar) return
-		this.position = this.pillar.position.clone()
-		/* this.position = this.pillar.position.clone() */
+		if (!this.hitbox[1]) return
+		this.position = this.hitbox[1].position.clone()
+		/* this.position = this.hitbox[1].position.clone() */
 		/* this.position.x += randomInt(-1, 1, false)
 		this.position.y += randomInt(-1, 1, false)
 		this.position.z -=5//+= randomInt(-5, 5, false) */
 		this.roration.z = Math.random() * 2 * Math.PI
 		let s = randomInt(3, 5, false)
 		this.scale.set(s, s, s)
-		const decalGeometry = new DecalGeometry(this.pillar, this.position, this.roration, this.scale)
+		const decalGeometry = new DecalGeometry(this.hitbox[1], this.position, this.roration, this.scale)
 		const decal = new THREE.Mesh(decalGeometry, this.decalMaterial)
 		decal.receiveShadow = true
 		window.game.scene.add(decal)
-		/* this.pillar.add(decal) */
+		/* this.hitbox[1].add(decal) */
 	}
 
 	loadModel() {}

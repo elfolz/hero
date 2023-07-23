@@ -36,8 +36,8 @@ export class Game {
 		this.renderer.shadowMap.enabled = true
 		/* this.controls = new OrbitControls(this.camera, this.renderer.domElement)
 		this.controls.enableRotate = true
-		this.controls.enableZoom = false
-		this.controls.maxPolarAngle = (Math.PI / 2) - 0.1 */
+		this.controls.enableZoom = false */
+		/* this.controls.maxPolarAngle = (Math.PI / 2) - 0.1 */
 		this.dirLight.position.set(0, 100, 100)
 		this.dirLight.castShadow = true
 		this.scene.add(this.ambientLight)
@@ -100,9 +100,13 @@ export class Game {
 				total = total / vm.loadingElements
 				if (progressbar) progressbar.value = parseInt(total || 0)
 				if (total >= 100) {
-					progressbar.style.setProperty('display', 'none')
-					if (device.isMobile) document.querySelector('#loading button').innerHTML = 'Começar'
-					document.querySelector('#loading button').style.removeProperty('display')
+					if (device.isLocalhost) {
+						vm.initGame()
+					} else {
+						progressbar.style.setProperty('display', 'none')
+						if (device.isMobile) document.querySelector('#loading button').innerHTML = 'Começar'
+						document.querySelector('#loading button').style.removeProperty('display')
+					}
 				}
 				return true
 			}
