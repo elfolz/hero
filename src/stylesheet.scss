@@ -243,20 +243,21 @@ progress::-webkit-progress-value {
 		text-align: center;
 		transform: translate(-50%, -50%);
 		margin: 0;
-		img {
-			display: block;
-			margin: 0;
-			width: 192px;
-			height: auto;
-			animation: loading 3s linear infinite;
-		}
 		span {
 			display: inline-block;
 			perspective: 1000px;
 			margin-bottom: 12px;
+			> img {
+				display: block;
+				margin: 0;
+				width: 192px;
+				height: auto;
+				animation: loading 3s linear infinite;
+			}
 		}
 		button {
-			display: block;
+			display: flex;
+			align-items: center;
 			color: #fff;
 			padding: 12px;
 			margin: 0 auto;
@@ -265,6 +266,11 @@ progress::-webkit-progress-value {
 			background-color: var(--color-primary);
 			&:hover {
 				background-color: var(--color-primary-lighten);
+			}
+			img {
+				margin-right: 12px;
+				width: 24px;
+				height: auto;
 			}
 		}
 	}

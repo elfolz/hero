@@ -101,6 +101,8 @@ export class Game {
 				if (progressbar) progressbar.value = parseInt(total || 0)
 				if (total >= 100) {
 					progressbar.style.setProperty('display', 'none')
+					if (navigator.getGamepads().some(el => el?.connected)) document.querySelector('#loading button img').src = '/img/a.svg'
+					else if (device.isMobile) document.querySelector('#loading button img').style.setProperty('display', 'none')
 					document.querySelector('#loading button').style.removeProperty('display')
 				}
 				return true

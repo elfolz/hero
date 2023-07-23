@@ -6,7 +6,7 @@
 		<meta name="description" content="Hero - Desenvolvimento de game 3D no navegador">
 		<link rel="manifest" href="/manifest.json">
 		<link rel="icon" type="image/x-icon" href="/favicon.ico">
-		<link rel="apple-touch-icon" href="./img/icons/android-chrome-192x192.png">
+		<link rel="apple-touch-icon" href="/img/icons/android-chrome-192x192.png">
 		<link rel="preload" as="style" href="https://fonts.googleapis.com/icon?family=Material+Icons" onload="this.rel='stylesheet'">
 		<link rel="preload" as="font" href="/font.woff" type="font/woff" crossorigin>
 		<meta property="og:url" content="https://hero.elfolz.app.br" />
@@ -24,10 +24,13 @@
 		<main id="loading">
 			<figure>
 				<span>
-					<img src="./img/icons/alpha.webp" alt="Hero">
+					<img src="/img/icons/alpha.webp" alt="Hero">
 				</span>
 				<progress value="0" max="100"></progress>
-				<button style="display:none;">Começar</button>
+				<button style="display:none;">
+					<img src="/img/return.svg">
+					Começar
+				</button>
 			</figure>
 		</main>
 		<header style="display:none;">
@@ -104,7 +107,7 @@
 		</footer>
 		<main id="dialog-controller">
 			<section id="keyboard">
-				<img src="./img/keyboard.svg">
+				<img src="/img/keyboard.svg">
 				<label data-key="W">Andar</label>
 				<label data-key="R">Rolar</label>
 				<label data-key="A">Esq.</label>
@@ -118,7 +121,7 @@
 				<label data-key="ESC">Pausa</label>
 			</section>
 			<section id="gamepad">
-				<img src="./img/controller.svg">
+				<img src="/img/controller.svg">
 				<label data-key="ANALOG">Mover</label>
 				<label data-key="A">Pular</label>
 				<label data-key="B">Rolar</label>
