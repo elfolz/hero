@@ -218,8 +218,6 @@ document.onclick = () => {
 		document.querySelector('#menu-config').classList.remove('opened')
 		window.sound.playCancel()
 	}
-	if (!document.fullscreenElement) window.setFullscreen()
-	if (!window.sound.initialized) window.sound.init()
 }
 
 document.onvisibilitychange = () => {
@@ -239,5 +237,10 @@ document.onreadystatechange = () => { if (document.readyState == 'complete') ini
 window.oncontextmenu = e => { e.preventDefault(); return false }
 window.onresize = () => { window.game?.refreshResolution(false, true) }
 if ('screen' in window) screen.orientation.onchange = () => { window.game?.refreshResolution(false, true) }
+
+document.addEventListener('click', () => {
+	window.setFullscreen()
+	window.sound.init()
+}, {once: true})
 
 lockScreen()

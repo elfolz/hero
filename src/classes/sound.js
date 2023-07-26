@@ -6,24 +6,15 @@ export class Sound {
 	constructor() {
 		this.initialized = false
 		this.audio = new Audio()
+		this.audioContext = new AudioContext()
 		this.bgmVolume = 0.25
 		this.seVolume = 1
 		this.guiSEs = ['cursor', 'click', 'cancel']
 		this.ses = []
+		this.load()
 	}
 
-	init() {
-		if (this.initialized) return
-		this.audioContext = new AudioContext()
-		this.bgmGain = this.audioContext.createGain()
-		this.bgmGain.gain.value = this.bgmVolume
-		this.seGain = this.audioContext.createGain()
-		this.seGain.gain.value = this.seVolume
-		const destination = this.audioContext.createMediaStreamDestination()
-		this.bgmGain.connect(this.audioContext.destination)
-		this.seGain.connect(this.audioContext.destination)
-		this.audio.srcObject = destination.stream
-		this.audio.play()
+	load() {
 		fetch('./audio/bgm/bgm.mp3', {cache: 'force-cache'})
 		.then(response => {
 			response.arrayBuffer()
@@ -31,7 +22,7 @@ export class Sound {
 				this.audioContext.decodeAudioData(buffer)
 				.then(audioData => {
 					this.bgmBuffer = audioData
-					this.playBGM()
+					if (this.initialized) this.playBGM()
 				})
 			})
 		})
@@ -57,12 +48,26 @@ export class Sound {
 				})
 			})
 		}, this)
+	}
+
+	init() {
+		if (this.initialized) return
+		this.bgmGain = this.audioContext.createGain()
+		this.bgmGain.gain.value = this.bgmVolume
+		this.seGain = this.audioContext.createGain()
+		this.seGain.gain.value = this.seVolume
+		const destination = this.audioContext.createMediaStreamDestination()
+		this.bgmGain.connect(this.audioContext.destination)
+		this.seGain.connect(this.audioContext.destination)
+		this.audio.srcObject = destination.stream
+		this.audio.play()
 		this.audioListener = new AudioListener()
 		this.audioListener.setMasterVolume(this.seVolume)
 		if (window.game) {
 			window.game.camera.add(this.audioListener)
 			window.game.initAudio()
 		}
+		this.playBGM()
 		this.initialized = true
 	}
 
