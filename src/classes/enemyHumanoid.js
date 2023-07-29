@@ -17,46 +17,56 @@ export class EnemyHumanoid extends Entity {
 	}
 
 	loadModel() {
-		this.gltfLoader.load('./models/humanoid/humanoid.glb', gltf => {
-			this.object = gltf.scene
-			this.object.colorSpace = THREE.SRGBColorSpace
-			this.object.traverse(el => {if (el.isMesh) el.castShadow = true})
-			this.object.position.set(0, 0, 20)
-			this.object.lookAt(0, 0, -1)
-			this.mixer = new THREE.AnimationMixer(this.object)
+		fetch('./models/humanoid/humanoid.glb', {cache: 'force-cache'})
+		.then(response => response.arrayBuffer() )
+		.then(response => {
+			this.gltfLoader.parse(response, null, gltf => {
+				this.object = gltf.scene
+				this.object.colorSpace = THREE.SRGBColorSpace
+				this.object.traverse(el => {if (el.isMesh) el.castShadow = true})
+				this.object.position.set(0, 0, 20)
+				this.object.lookAt(0, 0, -1)
+				this.mixer = new THREE.AnimationMixer(this.object)
 
-			this.hitbox[0] = new THREE.Mesh(new THREE.SphereGeometry(1.1), new THREE.MeshBasicMaterial({visible: window.debugging, color: 0x00ff00}))
-			this.object.add(this.hitbox[0])
-			this.hitbox[0].geometry.computeBoundingBox()
+				this.hitbox[0] = new THREE.Mesh(new THREE.SphereGeometry(1.1), new THREE.MeshBasicMaterial({visible: window.debugging, color: 0x00ff00}))
+				this.object.add(this.hitbox[0])
+				this.hitbox[0].geometry.computeBoundingBox()
 
-			this.hitbox[1] = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 3.2), new THREE.MeshBasicMaterial({visible: window.debugging, color: 0xff0000}))
-			this.hitbox[1].position.z -= 5.4
-			this.object.add(this.hitbox[1])
-			this.object.getObjectByName('mixamorigSpine1').attach(this.hitbox[1])
-			this.hitbox[1].geometry.computeBoundingBox()
+				this.hitbox[1] = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 3.2), new THREE.MeshBasicMaterial({visible: window.debugging, color: 0xff0000}))
+				this.hitbox[1].position.z -= 5.4
+				this.object.add(this.hitbox[1])
+				this.object.getObjectByName('mixamorigSpine1').attach(this.hitbox[1])
+				this.hitbox[1].geometry.computeBoundingBox()
 
-			this.weapon = new THREE.Mesh(new THREE.SphereGeometry(0.35), new THREE.MeshBasicMaterial({visible: false}))
-			this.weapon.name = 'weapon'
-			this.weapon.position.set(this.object.position.x+3.7, this.object.position.y-0.3, this.object.position.z+6.5)
-			this.object.getObjectByName('mixamorigRightHand').attach(this.weapon)
-			this.weapon.geometry.computeBoundingBox()
+				this.weapon = new THREE.Mesh(new THREE.SphereGeometry(0.35), new THREE.MeshBasicMaterial({visible: false}))
+				this.weapon.name = 'weapon'
+				this.weapon.position.set(this.object.position.x+3.7, this.object.position.y-0.3, this.object.position.z+6.5)
+				this.object.getObjectByName('mixamorigRightHand').attach(this.weapon)
+				this.weapon.geometry.computeBoundingBox()
 
-			this.onFinishActions()
-			this.loadAnimations()
-			this.callback(this.object)
-			this.pendingSounds.forEach(el => this.object.add(el))
-			this.pendingSounds.splice(0)
-			this.progress['foe'] = 100
-		}, xhr => {
-			if (xhr.total) this.progress['foe'] = xhr.loaded / xhr.total * 99
-		}, error => {
-			console.error(error)
+				this.onFinishActions()
+				this.loadAnimations()
+				this.callback(this.object)
+				this.pendingSounds.forEach(el => this.object.add(el))
+				this.pendingSounds.splice(0)
+				this.progress['foe'] = 100
+			}, xhr => {
+				if (xhr.total) this.progress['foe'] = xhr.loaded / xhr.total * 99
+			}, error => {
+				console.error(error)
+			})
+		})
+		.catch(error => {
+			console.log(error)
 		})
 	}
 
 	loadAnimations() {
 		this.animationModels.forEach(el => {
-			this.fbxLoader.load(`./models/humanoid/${el}.fbx`, fbx => {
+			fetch(`./models/humanoid/${el}.fbx`, {cache: 'force-cache'})
+			.then(response => response.arrayBuffer() )
+			.then(response => {
+				const fbx = this.fbxLoader.parse(response)
 				this.animations[el] = this.mixer.clipAction(fbx.animations[0])
 				this.animations[el].name = el
 				if (el == 'idle') {
@@ -64,10 +74,9 @@ export class EnemyHumanoid extends Entity {
 					this.animations[el].play()
 				}
 				this.progress[el] = 100
-			}, xhr => {
-				if (xhr.total) this.progress[el] = xhr.loaded / xhr.total * 99
-			}, error => {
-				console.error(error)
+			})
+			.catch(error => {
+				console.log(error)
 			})
 		})
 	}

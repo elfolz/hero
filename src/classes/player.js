@@ -28,61 +28,78 @@ export class Player extends Entity {
 	}
 
 	loadModel() {
-		this.gltfLoader.load('./models/hero/hero.glb', gltf => {
-			this.object = gltf.scene
-			this.object.colorSpace = THREE.SRGBColorSpace
-			this.object.traverse(el => {if (el.isMesh) el.castShadow = true})
-			this.camera.position.set(this.object.position.x, this.object.position.y+6.65, this.object.position.z-20)
-			this.camera.lookAt(0, 6.65, 0)
-			this.object.add(this.camera)
-			this.mixer = new THREE.AnimationMixer(this.object)
+		fetch('./models/hero/hero.glb', {cache: 'force-cache'})
+		.then(response => response.arrayBuffer() )
+		.then(response => {
+			this.gltfLoader.parse(response, null, gltf => {
+				this.object = gltf.scene
+				this.object.colorSpace = THREE.SRGBColorSpace
+				this.object.traverse(el => {if (el.isMesh) el.castShadow = true})
+				this.camera.position.set(this.object.position.x, this.object.position.y+6.65, this.object.position.z-20)
+				this.camera.lookAt(0, 6.65, 0)
+				this.object.add(this.camera)
+				this.mixer = new THREE.AnimationMixer(this.object)
 
-			this.hitbox[0] = new THREE.Mesh(new THREE.SphereGeometry(1.1), new THREE.MeshBasicMaterial({visible: window.debugging, color: 0x00ff00}))
-			this.object.add(this.hitbox[0])
-			this.hitbox[0].geometry.computeBoundingBox()
+				this.hitbox[0] = new THREE.Mesh(new THREE.SphereGeometry(1.1), new THREE.MeshBasicMaterial({visible: window.debugging, color: 0x00ff00}))
+				this.object.add(this.hitbox[0])
+				this.hitbox[0].geometry.computeBoundingBox()
 
-			this.hitbox[1] = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 3), new THREE.MeshBasicMaterial({visible: window.debugging, color: 0xff0000}))
-			this.hitbox[1].position.z -= 4.6
-			this.object.add(this.hitbox[1])
-			this.object.getObjectByName('mixamorigSpine1').attach(this.hitbox[1])
-			this.hitbox[1].geometry.computeBoundingBox()
+				this.hitbox[1] = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 3), new THREE.MeshBasicMaterial({visible: window.debugging, color: 0xff0000}))
+				this.hitbox[1].position.z -= 4.6
+				this.object.add(this.hitbox[1])
+				this.object.getObjectByName('mixamorigSpine1').attach(this.hitbox[1])
+				this.hitbox[1].geometry.computeBoundingBox()
 
-			this.onFinishActions()
-			this.loadWeapon()
-			this.callback(this.object)
-			this.progress['player'] = 100
-		}, xhr => {
-			if (xhr.total) this.progress['player'] = xhr.loaded / xhr.total * 99
-		}, error => {
-			console.error(error)
+				this.onFinishActions()
+				this.loadWeapon()
+				this.callback(this.object)
+				this.progress['player'] = 100
+			}, xhr => {
+				if (xhr.total) this.progress['player'] = xhr.loaded / xhr.total * 99
+			}, error => {
+				console.error(error)
+			})
+		})
+		.catch(error => {
+			console.log(error)
 		})
 	}
 
 	loadWeapon() {
-		this.gltfLoader.load('./models/equips/sword.glb', fbx => {
-			this.sword = fbx.scene
-			this.sword.colorSpace = THREE.SRGBColorSpace
-			this.sword.traverse(el => {
-				if (!el.isMesh) return
-				el.castShadow = true
-				if (!this.weapon) this.weapon = el
+		fetch('./models/equips/sword.glb', {cache: 'force-cache'})
+		.then(response => response.arrayBuffer() )
+		.then(response => {
+			this.gltfLoader.parse(response, null, fbx => {
+				this.sword = fbx.scene
+				this.sword.colorSpace = THREE.SRGBColorSpace
+				this.sword.traverse(el => {
+					if (!el.isMesh) return
+					el.castShadow = true
+					if (!this.weapon) this.weapon = el
+				})
+				this.weapon.geometry.computeBoundingBox()
+				this.sword.rotation.y = Math.PI / 6
+				this.sword.position.set(this.object.position.x-2.6, this.object.position.y+0.6, this.object.position.z-4)
+				this.object.getObjectByName('mixamorigRightHand').attach(this.sword)
+				this.progress['sword'] = 100
+				this.loadAnimations()
+			}, xhr => {
+				if (xhr.total) this.progress['sword'] = xhr.loaded / xhr.total * 99
+			}, error => {
+				console.error(error)
 			})
-			this.weapon.geometry.computeBoundingBox()
-			this.sword.rotation.y = Math.PI / 6
-			this.sword.position.set(this.object.position.x-2.6, this.object.position.y+0.6, this.object.position.z-4)
-			this.object.getObjectByName('mixamorigRightHand').attach(this.sword)
-			this.progress['sword'] = 100
-			this.loadAnimations()
-		}, xhr => {
-			if (xhr.total) this.progress['sword'] = xhr.loaded / xhr.total * 99
-		}, error => {
-			console.error(error)
+		})
+		.catch(error => {
+			console.log(error)
 		})
 	}
 
 	loadAnimations() {
 		this.animationModels.forEach(el => {
-			this.fbxLoader.load(`./models/hero/${el}.fbx`, fbx => {
+			fetch(`./models/hero/${el}.fbx`, {cache: 'force-cache'})
+			.then(response => response.arrayBuffer() )
+			.then(response => {
+				const fbx = this.fbxLoader.parse(response)
 				this.animations[el] = this.mixer.clipAction(fbx.animations[0])
 				this.animations[el].name = el
 				this.progress[el] = 100
@@ -90,10 +107,9 @@ export class Player extends Entity {
 					this.lastAction = this.animations['idle']
 					this.animations['idle'].play()
 				}
-			}, xhr => {
-				if (xhr.total) this.progress[el] = xhr.loaded / xhr.total * 99
-			}, error => {
-				console.error(error)
+			})
+			.catch(error => {
+				console.log(error)
 			})
 		})
 	}
