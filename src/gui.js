@@ -157,7 +157,7 @@ window.refreshResolution = function(value, save=true) {
 		if (typeof value == 'number') localStorage.setItem('resolution', value)
 		else localStorage.removeItem('resolution')
 	}
-	let label = `${value == 1 ? 'Média' : value == 2 ? 'Baixa' : 'Alta'} resolução`
+	let label = `${value == 1 ? 'Medium' : value == 2 ? 'Low' : 'High'} resolution`
 	document.querySelector('#menu-button-resolution label').innerHTML = label
 }
 
@@ -166,7 +166,7 @@ window.refreshPixelDensity = function(value, save=true) {
 		if (typeof value == 'number') localStorage.setItem('pixelDensity', value.toString())
 		else localStorage.removeItem('pixelDensity')
 	}
-	let label = `${value == 1 ? 'Média' : value == 2 ? 'Baixa' : 'Alta'} densidade de pixels`
+	let label = `${value == 1 ? 'Medium' : value == 2 ? 'Low' : 'High'} pixel density`
 	document.querySelector('#menu-button-pixel_density label').innerHTML = label
 }
 
@@ -175,7 +175,7 @@ window.refreshAntialiasing = function(value, save=true) {
 		if (typeof value == 'boolean') localStorage.setItem('antialiasing', value.toString())
 		else localStorage.removeItem('antialiasing')
 	}
-	let label = `Antialiasing ${value ? 'ligado' : 'desligado'}`
+	let label = `Antialiasing ${value ? 'on' : 'off'}`
 	document.querySelector('#menu-button-antialiasing label').innerHTML = label
 	if (value) {
 		document.querySelector('#antialiasing-on').style.removeProperty('display')

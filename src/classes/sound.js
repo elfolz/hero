@@ -1,5 +1,5 @@
 'use strict'
-import { AudioListener } from '../modules/three.module.js'
+import { AudioListener } from 'three'
 
 export class Sound {
 
@@ -87,11 +87,11 @@ export class Sound {
 	}
 
 	stopBGM() {
-		try {if (this.bgmSource) this.bgmSource.stop()} catch(e){}
+		try {this.bgmSource?.stop()} catch(e){}
 	}
 
 	playME(buffer) {
-		if (!buffer) return
+		if (!this.initialized || !buffer) return
 		this.stopBGM()
 		this.meSource = this.audioContext.createBufferSource()
 		this.meSource.buffer = buffer
@@ -107,7 +107,7 @@ export class Sound {
 	}
 
 	playSE(buffer, loop=false, srcObject) {
-		if (!this.audioContext || !buffer) return
+		if (!this.initialized || !this.audioContext || !buffer) return
 		const src = this.audioContext.createBufferSource()
 		src.buffer = buffer
 		src.loop = loop
@@ -135,9 +135,11 @@ export class Sound {
 	toggleVisibility() {
 		if (document.hidden) {
 			if (this.bgmGain) this.bgmGain.gain.value = 0
+			if (this.seGain) this.seGain.gain.value = 0
 			this.audioListener?.setMasterVolume(0)
 		} else {
 			if (this.bgmGain) this.bgmGain.gain.value = this.bgmVolume
+			if (this.seGain) this.seGain.gain.value = this.seVolume
 			this.audioListener?.setMasterVolume(this.seVolume)
 		}
 	}

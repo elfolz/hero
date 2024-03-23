@@ -1,8 +1,8 @@
 'use strict'
-import * as THREE from '../modules/three.module.js'
-import { GLTFLoader } from '../modules/gltfLoader.module.js'
-import { FBXLoader } from '../modules/fbxLoader.module.js'
-import { DecalGeometry } from '../modules/decalGeometry.module.js'
+import * as THREE from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
+import { DecalGeometry } from 'three/examples/jsm/geometries/DecalGeometry'
 import randomInt from '../helpers/randomInt.js'
 
 export class Entity {

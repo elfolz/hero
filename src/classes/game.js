@@ -1,8 +1,8 @@
 'use strict'
-import * as THREE from '../modules/three.module.js'
+import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { EnemyHumanoid } from '../classes/enemyHumanoid.js'
 import { Player } from '../classes/player.js'
-import { OrbitControls } from '../modules/orbitControls.js'
 import textureLoader from '../classes/textureLoader.js'
 import device from '../helpers/device.js'
 

@@ -1,5 +1,5 @@
 'use strict'
-import * as THREE from '../modules/three.module.js'
+import * as THREE from 'three'
 import { Entity } from '../classes/entity.js'
 import randomInt from '../helpers/randomInt.js'
 
